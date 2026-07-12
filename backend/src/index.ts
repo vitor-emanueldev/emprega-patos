@@ -1,8 +1,13 @@
 import express from "express";
 import { prisma } from "./prisma";
+import authRoutes from "./routes/auth.routes";
+
+
 
 const app = express();
 const PORTA = 3001;
+
+
 
 app.use(express.json());
 
@@ -18,6 +23,8 @@ app.get("/teste-banco", async (req, res) => {
     res.status(500).json({ status: "erro", detalhe: String(erro) });
   }
 });
+
+app.use(authRoutes);
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);
