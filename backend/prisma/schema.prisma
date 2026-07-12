@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  senha     String
+  createdAt DateTime  @default(now())
+
+  candidato Candidato?
+  empresa   Empresa?
+}
+
+model Candidato {
+  id             String    @id @default(cuid())
+  nome           String
+  telefone       String?
+  cpf            String?   @unique
+  dataNascimento DateTime?
+  habilidades    String[]
+  createdAt      DateTime  @default(now())
+
+  usuario     Usuario       @relation(fields: [usuarioId], references: [id])
+  usuarioId   String        @unique
+
+  candidaturas Candidatura[]
+}
+
+model Empresa {
+  id          String   @id @default(cuid())
+  nomeEmpresa String
+  cnpj        String   @unique
+  endereco    String?
+  createdAt   DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId String   @unique
+
+  vagas     Vaga[]
+}
+
+model Vaga {
+  id          String   @id @default(cuid())
+  cargo       String
+  descricao   String
+  salario     Float?
+  endereco    String
+  latitude    Float
+  longitude   Float
+  requisitos  String[]
+  status      String   @default("aberta")
+  createdAt   DateTime @default(now())
+
+  empresa     Empresa  @relation(fields: [empresaId], references: [id])
+  empresaId   String
+
+  candidaturas Candidatura[]
+}
+
+model Candidatura {
+  id        String   @id @default(cuid())
+  status    String   @default("pendente")
+  createdAt DateTime @default(now())
+
+  vaga        Vaga      @relation(fields: [vagaId], references: [id])
+  vagaId      String
+
+  candidato   Candidato @relation(fields: [candidatoId], references: [id])
+  candidatoId String
+
+  @@unique([vagaId, candidatoId])
+}
