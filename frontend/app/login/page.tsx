@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/api";
 import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const router = useRouter();
+  const { salvarLogin } = useAuth();
 
   async function handleLogin() {
     setErro("");
@@ -25,7 +27,7 @@ export default function LoginPage() {
     setCarregando(true);
     try {
       const dados = await login(email, senha);
-      localStorage.setItem("token", dados.token);
+      salvarLogin(dados.token, dados.usuario);
       router.push("/");
     } catch (erro) {
       setErro("Email ou senha inválidos");
@@ -60,7 +62,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 
@@ -71,7 +73,7 @@ export default function LoginPage() {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 

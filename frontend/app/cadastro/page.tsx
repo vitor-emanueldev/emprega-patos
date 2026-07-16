@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cadastrar } from "@/lib/api";
 import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -14,6 +15,7 @@ export default function CadastroPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const router = useRouter();
+  const { salvarLogin } = useAuth();
 
   async function handleCadastro() {
     setErro("");
@@ -31,7 +33,7 @@ export default function CadastroPage() {
     setCarregando(true);
     try {
       const dados = await cadastrar(nome, email, senha);
-      localStorage.setItem("token", dados.token);
+      salvarLogin(dados.token, dados.usuario);
       router.push("/");
     } catch (erro) {
       setErro("Não foi possível cadastrar. Verifique os dados.");
@@ -65,7 +67,7 @@ export default function CadastroPage() {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 
@@ -76,7 +78,7 @@ export default function CadastroPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 
@@ -87,7 +89,7 @@ export default function CadastroPage() {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 
@@ -98,7 +100,7 @@ export default function CadastroPage() {
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
 
