@@ -3,20 +3,13 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 
-const ETAPAS = ["Empresa", "Vaga", "Localização", "Revisão"];
+const ETAPAS = ["Vaga", "Localização", "Revisão"];
 const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário"];
 
 export default function PublicarVagaPage() {
   const [etapaAtual, setEtapaAtual] = useState(0);
 
-  // Etapa 0 - Empresa
-  const [nomeEmpresa, setNomeEmpresa] = useState("");
-  const [cnpj, setCnpj] = useState("");
-  const [setorEmpresa, setSetorEmpresa] = useState("");
-  const [descricaoEmpresa, setDescricaoEmpresa] = useState("");
-  const [telefoneEmpresa, setTelefoneEmpresa] = useState("");
-
-  // Etapa 1 - Vaga
+  // Etapa 0 - Vaga
   const [cargo, setCargo] = useState("");
   const [tipoContrato, setTipoContrato] = useState("CLT");
   const [area, setArea] = useState("");
@@ -25,15 +18,25 @@ export default function PublicarVagaPage() {
   const [cargaHoraria, setCargaHoraria] = useState("");
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
 
-  // Etapa 2 - Localização
+  // Etapa 1 - Localização
+  const [tipoEndereco, setTipoEndereco] = useState<"empresa" | "novo">("empresa");
+  const [mostrarOpcoesEndereco, setMostrarOpcoesEndereco] = useState(false);
   const [cep, setCep] = useState("");
   const [estadoCidade, setEstadoCidade] = useState("Paraíba - Patos");
   const [nomeRua, setNomeRua] = useState("");
   const [bairro, setBairro] = useState("");
   const [numero, setNumero] = useState("");
   const [complemento, setComplemento] = useState("");
-
   const [publicando, setPublicando] = useState(false);
+
+  const enderecoEmpresa = {
+    cep: "58700-000",
+    estadoCidade: "Paraíba - Patos",
+    nomeRua: "Rua Coronel José de Barros Dantas",
+    bairro: "Belo Horizonte",
+    numero: "45",
+    complemento: "Próximo à praça principal",
+  };
 
   function handleVoltar() {
     setEtapaAtual((prev) => Math.max(prev - 1, 0));
@@ -46,6 +49,7 @@ export default function PublicarVagaPage() {
   function handlePublicar() {
     setPublicando(true);
     // Aqui entra a chamada real pro backend (ex: criar vaga via lib/api.ts)
+    // A vaga deve ser vinculada à empresa já cadastrada (ex: via ID da empresa logada)
     setTimeout(() => setPublicando(false), 1000);
   }
 
@@ -98,65 +102,8 @@ export default function PublicarVagaPage() {
               })}
             </div>
 
-            {/* ETAPA 0 - EMPRESA */}
+            {/* ETAPA 0 - VAGA */}
             {etapaAtual === 0 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Nome da empresa *</label>
-                  <input
-                    value={nomeEmpresa}
-                    onChange={(e) => setNomeEmpresa(e.target.value)}
-                    placeholder="Guedes Shopping"
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">CNPJ *</label>
-                    <input
-                      value={cnpj}
-                      onChange={(e) => setCnpj(e.target.value)}
-                      placeholder="00.000.000/0001-00"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Setor de atuação *</label>
-                    <input
-                      value={setorEmpresa}
-                      onChange={(e) => setSetorEmpresa(e.target.value)}
-                      placeholder="Comércio"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Telefone/contato *</label>
-                  <input
-                    value={telefoneEmpresa}
-                    onChange={(e) => setTelefoneEmpresa(e.target.value)}
-                    placeholder="(83) 90000-0000"
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Descrição da empresa</label>
-                  <textarea
-                    value={descricaoEmpresa}
-                    onChange={(e) => setDescricaoEmpresa(e.target.value)}
-                    rows={4}
-                    placeholder="Conte um pouco sobre a empresa: o que ela faz, há quanto tempo está no mercado, etc."
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* ETAPA 1 - VAGA */}
-            {etapaAtual === 1 && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Cargo/título da vaga *</label>
@@ -244,85 +191,144 @@ export default function PublicarVagaPage() {
               </div>
             )}
 
-            {/* ETAPA 2 - LOCALIZAÇÃO */}
-            {etapaAtual === 2 && (
+            {/* ETAPA 1 - LOCALIZAÇÃO */}
+            {etapaAtual === 1 && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">CEP *</label>
-                  <input
-                    value={cep}
-                    onChange={(e) => setCep(e.target.value)}
-                    placeholder="58704-072"
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Estado - Cidade *</label>
-                  <input
-                    value={estadoCidade}
-                    onChange={(e) => setEstadoCidade(e.target.value)}
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Nome da rua *</label>
-                  <input
-                    value={nomeRua}
-                    onChange={(e) => setNomeRua(e.target.value)}
-                    placeholder="Rua Presidente Petrônio Portela"
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Bairro *</label>
-                    <input
-                      value={bairro}
-                      onChange={(e) => setBairro(e.target.value)}
-                      placeholder="Centro"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Número *</label>
-                    <input
-                      value={numero}
-                      onChange={(e) => setNumero(e.target.value)}
-                      placeholder="12"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                    />
-                  </div>
-                </div>
-
-                <div>
+                {/* Seletor: endereço da empresa ou novo endereço */}
+                <div className="relative">
                   <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                    Complemento/Referências próximas/Descrição do endereço *
+                    Endereço da vaga *
                   </label>
-                  <textarea
-                    value={complemento}
-                    onChange={(e) => setComplemento(e.target.value)}
-                    rows={4}
-                    placeholder="O prédio fica em frente ao açaí."
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarOpcoesEndereco((prev) => !prev)}
+                    className="w-full flex items-center justify-between rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                  >
+                    <span>
+                      {tipoEndereco === "empresa"
+                        ? `${enderecoEmpresa.nomeRua}, ${enderecoEmpresa.numero}`
+                        : "Adicionar novo endereço"}
+                    </span>
+                    <span className="text-slate-400">▾</span>
+                  </button>
+
+                  {mostrarOpcoesEndereco && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipoEndereco("empresa");
+                          setMostrarOpcoesEndereco(false);
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 ${
+                          tipoEndereco === "empresa" ? "text-[#0F2C4A] font-medium bg-slate-50" : "text-slate-600"
+                        }`}
+                      >
+                        {enderecoEmpresa.nomeRua}, {enderecoEmpresa.numero}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipoEndereco("novo");
+                          setMostrarOpcoesEndereco(false);
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 border-t border-slate-100 ${
+                          tipoEndereco === "novo" ? "text-[#0F2C4A] font-medium bg-slate-50" : "text-slate-600"
+                        }`}
+                      >
+                        Adicionar novo endereço
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {/* Endereço já cadastrado da empresa (somente visualização) */}
+                {tipoEndereco === "empresa" && (
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4 space-y-1">
+                    <p className="text-sm font-medium text-[#0F2C4A]">
+                      {enderecoEmpresa.nomeRua}, {enderecoEmpresa.numero}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {enderecoEmpresa.bairro} · {enderecoEmpresa.estadoCidade}
+                    </p>
+                    <p className="text-xs text-slate-500">CEP: {enderecoEmpresa.cep}</p>
+                    <p className="text-xs text-slate-500">{enderecoEmpresa.complemento}</p>
+                  </div>
+                )}
+
+                {/* Formulário de novo endereço */}
+                {tipoEndereco === "novo" && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">CEP *</label>
+                      <input
+                        value={cep}
+                        onChange={(e) => setCep(e.target.value)}
+                        placeholder="58704-072"
+                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Estado - Cidade *</label>
+                      <input
+                        value={estadoCidade}
+                        onChange={(e) => setEstadoCidade(e.target.value)}
+                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Nome da rua *</label>
+                      <input
+                        value={nomeRua}
+                        onChange={(e) => setNomeRua(e.target.value)}
+                        placeholder="Rua Presidente Petrônio Portela"
+                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Bairro *</label>
+                        <input
+                          value={bairro}
+                          onChange={(e) => setBairro(e.target.value)}
+                          placeholder="Centro"
+                          className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Número *</label>
+                        <input
+                          value={numero}
+                          onChange={(e) => setNumero(e.target.value)}
+                          placeholder="12"
+                          className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                        Complemento/Referências próximas/Descrição do endereço *
+                      </label>
+                      <textarea
+                        value={complemento}
+                        onChange={(e) => setComplemento(e.target.value)}
+                        rows={4}
+                        placeholder="O prédio fica em frente ao açaí."
+                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
-            {/* ETAPA 3 - REVISÃO */}
-            {etapaAtual === 3 && (
+            {/* ETAPA 2 - REVISÃO */}
+            {etapaAtual === 2 && (
               <div className="space-y-4">
-                <CampoRevisao label="Nome da empresa" valor={nomeEmpresa} />
-                <div className="grid grid-cols-2 gap-4">
-                  <CampoRevisao label="CNPJ" valor={cnpj} />
-                  <CampoRevisao label="Setor de atuação" valor={setorEmpresa} />
-                </div>
-                <CampoRevisao label="Telefone/contato" valor={telefoneEmpresa} />
-                <CampoRevisao label="Descrição da empresa" valor={descricaoEmpresa} textarea />
-
                 <CampoRevisao label="Cargo/título da vaga" valor={cargo} />
                 <CampoRevisao label="Tipo de contrato" valor={tipoContrato} />
 
@@ -338,16 +344,37 @@ export default function PublicarVagaPage() {
                   <CampoRevisao label="Vagas disponíveis" valor={vagasDisponiveis} />
                 </div>
 
-                <CampoRevisao label="CEP" valor={cep} />
-                <CampoRevisao label="Estado - Cidade" valor={estadoCidade} />
-                <CampoRevisao label="Nome da rua" valor={nomeRua} />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <CampoRevisao label="Bairro" valor={bairro} />
-                  <CampoRevisao label="Número" valor={numero} />
-                </div>
-
-                <CampoRevisao label="Complemento/Referências próximas/Descrição do endereço" valor={complemento} textarea />
+                {tipoEndereco === "empresa" ? (
+                  <>
+                    <CampoRevisao label="CEP" valor={enderecoEmpresa.cep} />
+                    <CampoRevisao label="Estado - Cidade" valor={enderecoEmpresa.estadoCidade} />
+                    <CampoRevisao label="Nome da rua" valor={enderecoEmpresa.nomeRua} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <CampoRevisao label="Bairro" valor={enderecoEmpresa.bairro} />
+                      <CampoRevisao label="Número" valor={enderecoEmpresa.numero} />
+                    </div>
+                    <CampoRevisao
+                      label="Complemento/Referências próximas/Descrição do endereço"
+                      valor={enderecoEmpresa.complemento}
+                      textarea
+                    />
+                  </>
+                ) : (
+                  <>
+                    <CampoRevisao label="CEP" valor={cep} />
+                    <CampoRevisao label="Estado - Cidade" valor={estadoCidade} />
+                    <CampoRevisao label="Nome da rua" valor={nomeRua} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <CampoRevisao label="Bairro" valor={bairro} />
+                      <CampoRevisao label="Número" valor={numero} />
+                    </div>
+                    <CampoRevisao
+                      label="Complemento/Referências próximas/Descrição do endereço"
+                      valor={complemento}
+                      textarea
+                    />
+                  </>
+                )}
               </div>
             )}
 
@@ -391,7 +418,8 @@ export default function PublicarVagaPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#0F2C4A]">{cargo || "Cargo"}</p>
-                  <p className="text-xs text-slate-500">{nomeEmpresa || "Sua empresa"}</p>
+                  {/* Nome da empresa deve vir da empresa já cadastrada/logada, não é mais preenchido aqui */}
+                  <p className="text-xs text-slate-500">Sua empresa</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-3 text-xs text-slate-600">
@@ -406,7 +434,7 @@ export default function PublicarVagaPage() {
               </p>
             </div>
 
-            {etapaAtual === 1 && salario && (
+            {etapaAtual === 0 && salario && (
               <div className="bg-yellow-300/90 rounded-lg mt-4 p-3">
                 <p className="text-[#0F2C4A] text-xs font-medium">
                   Essa vaga com salário intermediário recebe 3x mais candidatos em média
