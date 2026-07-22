@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { prisma } from "./prisma";
 import authRoutes from "./routes/auth.routes";
+import vagasRoutes from "./routes/vaga.routes";
 
 
 
@@ -26,6 +27,7 @@ app.get("/teste-banco", async (req, res) => {
 });
 
 app.use(authRoutes);
+app.use(vagasRoutes);
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);

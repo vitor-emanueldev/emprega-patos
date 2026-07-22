@@ -53,16 +53,19 @@ model Empresa {
 }
 
 model Vaga {
-  id          String   @id @default(cuid())
-  cargo       String
-  descricao   String
-  salario     Float?
-  endereco    String
-  latitude    Float
-  longitude   Float
-  requisitos  String[]
-  status      String   @default("aberta")
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  cargo        String
+  descricao    String
+  salario      Float?
+  endereco     String
+  latitude     Float
+  longitude    Float
+  requisitos   String[]
+  status       String   @default("aberta")
+  tipoContrato String
+  area         String
+  bairro       String
+  createdAt    DateTime @default(now())
 
   empresa     Empresa  @relation(fields: [empresaId], references: [id])
   empresaId   String
