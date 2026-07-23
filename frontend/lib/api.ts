@@ -28,6 +28,7 @@ export async function login(
 
   return dados;
 }
+
 export async function cadastrar(nome: string, email: string, senha: string) {
   const resposta = await fetch(`${API_URL}/auth/cadastro`, {
     method: "POST",
@@ -42,4 +43,54 @@ export async function cadastrar(nome: string, email: string, senha: string) {
   }
 
   return dados;
+}
+
+export async function verificarEmpresa(token: string) {
+  const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (resposta.status === 404) {
+    return null; // usuário não tem empresa cadastrada ainda
+  }
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao verificar empresa");
+  }
+
+  return dados;
+}
+
+export async function cadastrarEmpresa(
+  token: string,
+  dados: {
+    nomeEmpresa: string;
+    cnpj: string;
+    setor?: string;
+    descricao?: string;
+    telefone?: string;
+  }
+) {
+  const resposta = await fetch(`${API_URL}/empresas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao cadastrar empresa");
+  }
+
+  return resultado;
 }
