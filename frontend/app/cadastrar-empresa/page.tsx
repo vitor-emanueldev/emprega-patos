@@ -1,9 +1,12 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 
 export default function CadastrarEmpresaPage() {
+  const router = useRouter();
+
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [setorEmpresa, setSetorEmpresa] = useState("");
@@ -14,8 +17,7 @@ export default function CadastrarEmpresaPage() {
 
   function handleCadastrar() {
     setCadastrando(true);
-    // Aqui entra a chamada real pro backend (ex: criar empresa via lib/api.ts)
-    setTimeout(() => setCadastrando(false), 1000);
+    router.push("/publicar-vaga");
   }
 
   return (
@@ -88,7 +90,7 @@ export default function CadastrarEmpresaPage() {
               disabled={cadastrando}
               className="rounded-md bg-[#F0A93C] text-white font-semibold px-5 py-2.5 text-sm hover:bg-[#dd9a30] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {cadastrando ? "Cadastrando..." : "Cadastrar Empresa"}
+              {cadastrando ? "Redirecionando..." : "Cadastrar Empresa"}
             </button>
           </div>
         </div>
