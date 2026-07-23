@@ -44,6 +44,9 @@ model Empresa {
   nomeEmpresa String
   cnpj        String   @unique
   endereco    String?
+  setor       String?
+  descricao   String?
+  telefone    String?
   createdAt   DateTime @default(now())
 
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])

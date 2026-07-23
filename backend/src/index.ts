@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { prisma } from "./prisma";
 import authRoutes from "./routes/auth.routes";
+import empresaRoutes from "./routes/empresa.routes";
 import vagasRoutes from "./routes/vaga.routes";
 
 
@@ -12,6 +13,7 @@ const PORTA = 3001;
 
 app.use(cors());      
 app.use(express.json());
+
 
 app.get("/", (req, res) => {
   res.send("Backend do Emprega Patos rodando!");
@@ -27,7 +29,9 @@ app.get("/teste-banco", async (req, res) => {
 });
 
 app.use(authRoutes);
+app.use(empresaRoutes);
 app.use(vagasRoutes);
+
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);

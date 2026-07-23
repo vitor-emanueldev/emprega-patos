@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
+import { verificarEmpresa } from "@/lib/api";
 
 const ETAPAS = ["Vaga", "Localização", "Revisão"];
 const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário"];
 
 export default function PublicarVagaPage() {
+  const router = useRouter();
+  const { token } = useAuth();
+
+  const [verificando, setVerificando] = useState(true);
+
   const [etapaAtual, setEtapaAtual] = useState(0);
 
   // Etapa 0 - Vaga
@@ -51,6 +59,40 @@ export default function PublicarVagaPage() {
     // Aqui entra a chamada real pro backend (ex: criar vaga via lib/api.ts)
     // A vaga deve ser vinculada à empresa já cadastrada (ex: via ID da empresa logada)
     setTimeout(() => setPublicando(false), 1000);
+  }
+
+  useEffect(() => {
+    async function checar() {
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const empresa = await verificarEmpresa(token);
+
+        if (!empresa) {
+          router.push("/cadastrar-empresa");
+          return;
+        }
+      } catch (erro) {
+        console.error("Erro ao verificar empresa:", erro);
+        router.push("/cadastrar-empresa");
+      } finally {
+        setVerificando(false);
+      }
+    }
+
+    checar();
+  }, [token, router]);
+
+  if (verificando) {
+    return (
+      <div className="min-h-screen bg-[#0F2C4A]">
+        <Header />
+        <p className="text-white text-center pt-20">Carregando...</p>
+      </div>
+    );
   }
 
   return (

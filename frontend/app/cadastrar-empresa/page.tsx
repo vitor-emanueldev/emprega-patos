@@ -3,21 +3,48 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
+import { cadastrarEmpresa } from "@/lib/api";
 
 export default function CadastrarEmpresaPage() {
   const router = useRouter();
+  const { token } = useAuth();
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [setorEmpresa, setSetorEmpresa] = useState("");
   const [descricaoEmpresa, setDescricaoEmpresa] = useState("");
   const [telefoneEmpresa, setTelefoneEmpresa] = useState("");
+  const [erro, setErro] = useState("");
 
   const [cadastrando, setCadastrando] = useState(false);
 
-  function handleCadastrar() {
+  async function handleCadastrar() {
+    setErro("");
+
+    if (!token) {
+      setErro("Você precisa estar logado para cadastrar uma empresa.");
+      router.push("/login");
+      return;
+    }
+
     setCadastrando(true);
-    router.push("/publicar-vaga");
+    try {
+      await cadastrarEmpresa(token, {
+        nomeEmpresa,
+        cnpj,
+        setor: setorEmpresa,
+        descricao: descricaoEmpresa,
+        telefone: telefoneEmpresa,
+      });
+
+      router.push("/publicar-vaga");
+
+    } catch (erro: any) {
+      setErro(erro.message || "Erro ao cadastrar empresa");
+    } finally {
+      setCadastrando(false);
+    }
   }
 
   return (

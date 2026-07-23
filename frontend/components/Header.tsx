@@ -47,7 +47,7 @@ export default function Header() {
             </Link>
           )}
           <Link
-            href="/cadastrar-empresa"
+            href="/publicar-vaga"
             className="text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-[#123a63]"
           >
             Publicar Vaga
