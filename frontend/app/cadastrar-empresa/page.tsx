@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { cadastrarEmpresa } from "@/lib/api";
+import dynamic from "next/dynamic";
 
 export default function CadastrarEmpresaPage() {
   const router = useRouter();
@@ -16,36 +17,56 @@ export default function CadastrarEmpresaPage() {
   const [descricaoEmpresa, setDescricaoEmpresa] = useState("");
   const [telefoneEmpresa, setTelefoneEmpresa] = useState("");
   const [erro, setErro] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   const [cadastrando, setCadastrando] = useState(false);
 
-  async function handleCadastrar() {
-    setErro("");
+async function handleCadastrar() {
+  setErro("");
 
-    if (!token) {
-      setErro("Você precisa estar logado para cadastrar uma empresa.");
-      router.push("/login");
-      return;
-    }
-
-    setCadastrando(true);
-    try {
-      await cadastrarEmpresa(token, {
-        nomeEmpresa,
-        cnpj,
-        setor: setorEmpresa,
-        descricao: descricaoEmpresa,
-        telefone: telefoneEmpresa,
-      });
-
-      router.push("/publicar-vaga");
-
-    } catch (erro: any) {
-      setErro(erro.message || "Erro ao cadastrar empresa");
-    } finally {
-      setCadastrando(false);
-    }
+  if (!token) {
+    setErro("Você precisa estar logado para cadastrar uma empresa.");
+    router.push("/login");
+    return;
   }
+
+  if (latitude === null || longitude === null) {
+    setErro("Clique no mapa para marcar a localização da empresa.");
+    return;
+  }
+
+  setCadastrando(true);
+  try {
+    await cadastrarEmpresa(token, {
+      nomeEmpresa,
+      cnpj,
+      setor: setorEmpresa,
+      descricao: descricaoEmpresa,
+      telefone: telefoneEmpresa,
+      endereco,
+      latitude,
+      longitude,
+    });
+
+    router.push("/publicar-vaga");
+
+  } catch (erro: any) {
+    setErro(erro.message || "Erro ao cadastrar empresa");
+  } finally {
+    setCadastrando(false);
+  }
+}
+
+  const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-lg bg-slate-100 flex items-center justify-center text-sm text-slate-400" style={{ height: 280 }}>
+        Carregando mapa...
+      </div>
+    ),
+  });
 
   return (
     <div className="min-h-screen bg-[#0F2C4A]">
@@ -108,6 +129,37 @@ export default function CadastrarEmpresaPage() {
                 placeholder="Conte um pouco sobre a empresa: o que ela faz, há quanto tempo está no mercado, etc."
                 className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
               />
+            </div>
+            <div>
+              <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Endereço</label>
+              <input
+                value={endereco}
+                onChange={(e) => setEndereco(e.target.value)}
+                placeholder="Rua Presidente Petrônio Portela, 12 - Centro"
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                Localização no mapa *
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                Clique no mapa no ponto exato onde sua empresa fica.
+              </p>
+              <MapaSelecionarLocal
+                latitude={latitude}
+                longitude={longitude}
+                onSelecionar={(lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
+                }}
+              />
+              {latitude !== null && longitude !== null && (
+                <p className="text-xs text-slate-500 mt-2">
+                  Local selecionado: {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                </p>
+              )}
             </div>
           </div>
 

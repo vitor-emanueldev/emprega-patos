@@ -75,6 +75,9 @@ export async function cadastrarEmpresa(
     setor?: string;
     descricao?: string;
     telefone?: string;
+    endereco?: string;
+    latitude?: number;
+    longitude?: number;
   }
 ) {
   const resposta = await fetch(`${API_URL}/empresas`, {
@@ -93,4 +96,54 @@ export async function cadastrarEmpresa(
   }
 
   return resultado;
+}
+
+export type Vaga = {
+  id: string;
+  cargo: string;
+  descricao: string;
+  tipoContrato: string;
+  area: string;
+  salario: number | null;
+  endereco: string;
+  bairro: string;
+  latitude: number;
+  longitude: number;
+  requisitos: string[];
+  status: string;
+  createdAt: string;
+  empresa: {
+    nomeEmpresa: string;
+    setor?: string;
+  };
+};
+
+export async function listarVagas(): Promise<Vaga[]> {
+  const resposta = await fetch(`${API_URL}/vagas`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao carregar vagas");
+  }
+
+  return dados;
+}
+
+export async function detalhesVaga(id: string): Promise<Vaga> {
+  const resposta = await fetch(`${API_URL}/vagas/${id}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao carregar vaga");
+  }
+
+  return dados;
 }

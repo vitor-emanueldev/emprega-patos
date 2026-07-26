@@ -47,6 +47,8 @@ model Empresa {
   setor       String?
   descricao   String?
   telefone    String?
+  latitude    Float?
+  longitude   Float?
   createdAt   DateTime @default(now())
 
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])
