@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
+import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
 
 
 // Import dinâmico sem SSR — Leaflet (quando entrar) depende do window
@@ -19,11 +20,14 @@ const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
 const FILTROS_CONTRATO = ["Todos", "CLT", "PJ / Freelance", "Temporário"];
 
 export default function MapaPage() {
-    const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [vagas, setVagas] = useState<Vaga[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [busca, setBusca] = useState("");
   const [filtroContrato, setFiltroContrato] = useState("Todos");
+  const [filtroCategoria, setFiltroCategoria] = useState("Todas");
+  const [salarioMin, setSalarioMin] = useState("");
+  const [salarioMax, setSalarioMax] = useState("");
   const [vagaSelecionada, setVagaSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,8 +53,38 @@ export default function MapaPage() {
     const bateContrato =
       filtroContrato === "Todos" || vaga.tipoContrato === filtroContrato;
 
-    return bateBusca && bateContrato;
+    const bateCategoria =
+      filtroCategoria === "Todas" || vaga.area === filtroCategoria;
+
+    const min = salarioMin.trim() === "" ? null : Number(salarioMin);
+    const max = salarioMax.trim() === "" ? null : Number(salarioMax);
+
+    const bateSalarioMin =
+      min === null || (vaga.salario != null && vaga.salario >= min);
+    const bateSalarioMax =
+      max === null || (vaga.salario != null && vaga.salario <= max);
+
+    return (
+      bateBusca &&
+      bateContrato &&
+      bateCategoria &&
+      bateSalarioMin &&
+      bateSalarioMax
+    );
   });
+
+  const limparFiltros = () => {
+    setFiltroContrato("Todos");
+    setFiltroCategoria("Todas");
+    setSalarioMin("");
+    setSalarioMax("");
+  };
+
+  const temFiltroAtivo =
+    filtroContrato !== "Todos" ||
+    filtroCategoria !== "Todas" ||
+    salarioMin.trim() !== "" ||
+    salarioMax.trim() !== "";
 
   return (
     <div className="h-screen flex flex-col bg-[#0F2C4A]">
@@ -58,27 +92,96 @@ export default function MapaPage() {
 
       <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
         {/* Barra de filtros */}
-        <div className="bg-white rounded-xl shadow-md p-3 flex flex-col sm:flex-row gap-3">
-          <input
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar por cargo ou empresa..."
-            className="flex-1 rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-          />
-          <div className="flex gap-2 overflow-x-auto">
-            {FILTROS_CONTRATO.map((tipo) => (
-              <button
-                key={tipo}
-                onClick={() => setFiltroContrato(tipo)}
-                className={`whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium transition-colors ${
-                  filtroContrato === tipo
-                    ? "bg-[#0F2C4A] text-white"
-                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                }`}
+        <div className="bg-white rounded-xl shadow-md p-3 flex flex-col gap-3">
+          {/* Busca */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por cargo ou empresa..."
+              className="flex-1 rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+            />
+          </div>
+
+          {/* Contrato + Categoria + faixa salarial */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            {/* Tipo de contrato */}
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                Tipo de contrato
+              </label>
+              <select
+                value={filtroContrato}
+                onChange={(e) => setFiltroContrato(e.target.value)}
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               >
-                {tipo}
+                {FILTROS_CONTRATO.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Categoria */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                Categoria
+              </label>
+              <select
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+              >
+                <option value="Todas">Todas as categorias</option>
+                {CATEGORIAS_VAGA.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {categoria}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Faixa salarial */}
+            <div className="flex gap-2">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                  Salário mín. (R$)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={salarioMin}
+                  onChange={(e) => setSalarioMin(e.target.value)}
+                  placeholder="0"
+                  className="w-32 rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                  Salário máx. (R$)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={salarioMax}
+                  onChange={(e) => setSalarioMax(e.target.value)}
+                  placeholder="Sem limite"
+                  className="w-32 rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+            </div>
+
+            {temFiltroAtivo && (
+              <button
+                onClick={limparFiltros}
+                className="whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium text-[#1D6FA5] hover:bg-slate-100 transition-colors"
+              >
+                Limpar filtros
               </button>
-            ))}
+            )}
           </div>
         </div>
 
@@ -97,7 +200,7 @@ export default function MapaPage() {
             {!carregando && !erro && vagasFiltradas.length === 0 && (
               <div className="text-center py-10 px-4">
                 <p className="text-sm font-medium text-[#0F2C4A]">Nenhuma vaga encontrada</p>
-                <p className="text-xs text-slate-400 mt-1">Tente ajustar a busca ou o filtro de contrato.</p>
+                <p className="text-xs text-slate-400 mt-1">Tente ajustar a busca ou os filtros.</p>
               </div>
             )}
 
