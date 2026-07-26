@@ -42,8 +42,9 @@ model Candidato {
 model Empresa {
   id          String   @id @default(cuid())
   nomeEmpresa String
-  cnpj        String   @unique
+  cnpj        String?   @unique
   endereco    String?
+  bairro      String?
   setor       String?
   descricao   String?
   telefone    String?

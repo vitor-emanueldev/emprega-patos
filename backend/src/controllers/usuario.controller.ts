@@ -10,7 +10,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { nomeEmpresa, cnpj, endereco, setor, descricao, telefone, latitude, longitude } = req.body;
+  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude } = req.body;
 
   try {
     const empresaExistente = await prisma.empresa.findUnique({
@@ -26,6 +26,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
         nomeEmpresa,
         cnpj,
         endereco,
+        bairro,
         setor,
         descricao,
         telefone,

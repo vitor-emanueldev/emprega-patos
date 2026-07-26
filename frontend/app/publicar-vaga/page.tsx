@@ -2,18 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { verificarEmpresa } from "@/lib/api";
+import { verificarEmpresa, publicarVaga } from "@/lib/api";
+import { formatSalario, parseSalario } from "@/lib/masks";
+
+const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="rounded-lg bg-slate-100 flex items-center justify-center text-sm text-slate-400"
+      style={{ height: 280 }}
+    >
+      Carregando mapa...
+    </div>
+  ),
+});
 
 const ETAPAS = ["Vaga", "Localização", "Revisão"];
 const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário"];
+
+type Empresa = {
+  id: string;
+  nomeEmpresa: string;
+  endereco: string | null;
+  bairro: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 export default function PublicarVagaPage() {
   const router = useRouter();
   const { token } = useAuth();
 
   const [verificando, setVerificando] = useState(true);
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
 
   const [etapaAtual, setEtapaAtual] = useState(0);
 
@@ -27,39 +51,14 @@ export default function PublicarVagaPage() {
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
 
   // Etapa 1 - Localização
-  const [tipoEndereco, setTipoEndereco] = useState<"empresa" | "novo">("empresa");
-  const [mostrarOpcoesEndereco, setMostrarOpcoesEndereco] = useState(false);
-  const [cep, setCep] = useState("");
-  const [estadoCidade, setEstadoCidade] = useState("Paraíba - Patos");
-  const [nomeRua, setNomeRua] = useState("");
+  const [usarNovoLocal, setUsarNovoLocal] = useState(false);
+  const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
-  const [numero, setNumero] = useState("");
-  const [complemento, setComplemento] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
   const [publicando, setPublicando] = useState(false);
-
-  const enderecoEmpresa = {
-    cep: "58700-000",
-    estadoCidade: "Paraíba - Patos",
-    nomeRua: "Rua Coronel José de Barros Dantas",
-    bairro: "Belo Horizonte",
-    numero: "45",
-    complemento: "Próximo à praça principal",
-  };
-
-  function handleVoltar() {
-    setEtapaAtual((prev) => Math.max(prev - 1, 0));
-  }
-
-  function handleProximo() {
-    setEtapaAtual((prev) => Math.min(prev + 1, ETAPAS.length - 1));
-  }
-
-  function handlePublicar() {
-    setPublicando(true);
-    // Aqui entra a chamada real pro backend (ex: criar vaga via lib/api.ts)
-    // A vaga deve ser vinculada à empresa já cadastrada (ex: via ID da empresa logada)
-    setTimeout(() => setPublicando(false), 1000);
-  }
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     async function checar() {
@@ -69,12 +68,14 @@ export default function PublicarVagaPage() {
       }
 
       try {
-        const empresa = await verificarEmpresa(token);
+        const empresaEncontrada = await verificarEmpresa(token);
 
-        if (!empresa) {
+        if (!empresaEncontrada) {
           router.push("/cadastrar-empresa");
           return;
         }
+
+        setEmpresa(empresaEncontrada);
       } catch (erro) {
         console.error("Erro ao verificar empresa:", erro);
         router.push("/cadastrar-empresa");
@@ -86,6 +87,62 @@ export default function PublicarVagaPage() {
     checar();
   }, [token, router]);
 
+  function handleVoltar() {
+    setEtapaAtual((prev) => Math.max(prev - 1, 0));
+  }
+
+  function handleProximo() {
+    setEtapaAtual((prev) => Math.min(prev + 1, ETAPAS.length - 1));
+  }
+
+  async function handlePublicar() {
+    setErro("");
+
+    const enderecoFinal = usarNovoLocal ? endereco : empresa?.endereco ?? "";
+    const bairroFinal = usarNovoLocal ? bairro : empresa?.bairro ?? "";
+    const latitudeFinal = usarNovoLocal ? latitude : empresa?.latitude ?? null;
+    const longitudeFinal = usarNovoLocal ? longitude : empresa?.longitude ?? null;
+
+    if (!cargo || !tipoContrato || !area || !descricao) {
+      setErro("Preencha todos os campos obrigatórios da vaga.");
+      return;
+    }
+
+    if (!enderecoFinal || !bairroFinal || latitudeFinal === null || longitudeFinal === null) {
+      setErro("Selecione uma localização válida para a vaga.");
+      return;
+    }
+
+    if (!token) {
+      setErro("Sessão expirada. Faça login novamente.");
+      router.push("/login");
+      return;
+    }
+
+    setPublicando(true);
+    try {
+      await publicarVaga(token, {
+        cargo,
+        descricao,
+        tipoContrato,
+        area,
+        salario: parseSalario(salario),
+        endereco: enderecoFinal,
+        bairro: bairroFinal,
+        latitude: latitudeFinal,
+        longitude: longitudeFinal,
+        requisitos: [],
+      });
+
+      router.push("/vagas");
+
+    } catch (erro: any) {
+      setErro(erro.message || "Erro ao publicar vaga");
+    } finally {
+      setPublicando(false);
+    }
+  }
+
   if (verificando) {
     return (
       <div className="min-h-screen bg-[#0F2C4A]">
@@ -94,6 +151,9 @@ export default function PublicarVagaPage() {
       </div>
     );
   }
+
+  const enderecoExibicao = usarNovoLocal ? endereco : empresa?.endereco;
+  const bairroExibicao = usarNovoLocal ? bairro : empresa?.bairro;
 
   return (
     <div className="min-h-screen bg-[#0F2C4A]">
@@ -106,6 +166,12 @@ export default function PublicarVagaPage() {
             <p className="text-sm text-slate-500 mb-6">
               Preencha os dados abaixo para sua vaga ficar visível no mapa da cidade.
             </p>
+
+            {erro && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-4">
+                {erro}
+              </p>
+            )}
 
             {/* Stepper */}
             <div className="flex items-center mb-8">
@@ -188,18 +254,18 @@ export default function PublicarVagaPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário *</label>
+                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário</label>
                     <input
                       value={salario}
-                      onChange={(e) => setSalario(e.target.value)}
-                      placeholder="R$1500,00"
+                      onChange={(e) => setSalario(formatSalario(e.target.value))}
+                      placeholder="R$ 0,00"
                       className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Descrição da vaga</label>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Descrição da vaga *</label>
                   <textarea
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
@@ -236,131 +302,90 @@ export default function PublicarVagaPage() {
             {/* ETAPA 1 - LOCALIZAÇÃO */}
             {etapaAtual === 1 && (
               <div className="space-y-4">
-                {/* Seletor: endereço da empresa ou novo endereço */}
-                <div className="relative">
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                    Endereço da vaga *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setMostrarOpcoesEndereco((prev) => !prev)}
-                    className="w-full flex items-center justify-between rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                  >
-                    <span>
-                      {tipoEndereco === "empresa"
-                        ? `${enderecoEmpresa.nomeRua}, ${enderecoEmpresa.numero}`
-                        : "Adicionar novo endereço"}
-                    </span>
-                    <span className="text-slate-400">▾</span>
-                  </button>
-
-                  {mostrarOpcoesEndereco && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTipoEndereco("empresa");
-                          setMostrarOpcoesEndereco(false);
-                        }}
-                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 ${
-                          tipoEndereco === "empresa" ? "text-[#0F2C4A] font-medium bg-slate-50" : "text-slate-600"
-                        }`}
-                      >
-                        {enderecoEmpresa.nomeRua}, {enderecoEmpresa.numero}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTipoEndereco("novo");
-                          setMostrarOpcoesEndereco(false);
-                        }}
-                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 border-t border-slate-100 ${
-                          tipoEndereco === "novo" ? "text-[#0F2C4A] font-medium bg-slate-50" : "text-slate-600"
-                        }`}
-                      >
-                        Adicionar novo endereço
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Endereço já cadastrado da empresa (somente visualização) */}
-                {tipoEndereco === "empresa" && (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4 space-y-1">
-                    <p className="text-sm font-medium text-[#0F2C4A]">
-                      {enderecoEmpresa.nomeRua}, {enderecoEmpresa.numero}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {enderecoEmpresa.bairro} · {enderecoEmpresa.estadoCidade}
-                    </p>
-                    <p className="text-xs text-slate-500">CEP: {enderecoEmpresa.cep}</p>
-                    <p className="text-xs text-slate-500">{enderecoEmpresa.complemento}</p>
-                  </div>
-                )}
-
-                {/* Formulário de novo endereço */}
-                {tipoEndereco === "novo" && (
+                {!usarNovoLocal ? (
                   <>
                     <div>
-                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">CEP *</label>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                        Endereço da vaga *
+                      </label>
+                      <div className="rounded-md border border-slate-200 bg-slate-50 p-4 space-y-1">
+                        {empresa?.endereco ? (
+                          <>
+                            <p className="text-sm font-medium text-[#0F2C4A]">{empresa.endereco}</p>
+                            {empresa.bairro && (
+                              <p className="text-xs text-slate-500">{empresa.bairro}</p>
+                            )}
+                            {empresa.latitude !== null && empresa.longitude !== null && (
+                              <p className="text-xs text-slate-500">
+                                {empresa.latitude?.toFixed(5)}, {empresa.longitude?.toFixed(5)}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-slate-500">
+                            Sua empresa ainda não tem um endereço cadastrado.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setUsarNovoLocal(true)}
+                      className="text-sm font-medium text-[#1D6FA5] hover:underline"
+                    >
+                      + Adicionar nova localização
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm text-[#0F2C4A] font-medium">Nova localização *</label>
+                      {empresa?.endereco && (
+                        <button
+                          type="button"
+                          onClick={() => setUsarNovoLocal(false)}
+                          className="text-xs font-medium text-slate-500 hover:underline"
+                        >
+                          Usar endereço da empresa
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Endereço *</label>
                       <input
-                        value={cep}
-                        onChange={(e) => setCep(e.target.value)}
-                        placeholder="58704-072"
+                        value={endereco}
+                        onChange={(e) => setEndereco(e.target.value)}
+                        placeholder="Rua Presidente Petrônio Portela, 12 - Centro"
                         className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Estado - Cidade *</label>
+                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Bairro *</label>
                       <input
-                        value={estadoCidade}
-                        onChange={(e) => setEstadoCidade(e.target.value)}
+                        value={bairro}
+                        onChange={(e) => setBairro(e.target.value)}
+                        placeholder="Centro"
                         className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Nome da rua *</label>
-                      <input
-                        value={nomeRua}
-                        onChange={(e) => setNomeRua(e.target.value)}
-                        placeholder="Rua Presidente Petrônio Portela"
-                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Bairro *</label>
-                        <input
-                          value={bairro}
-                          onChange={(e) => setBairro(e.target.value)}
-                          placeholder="Centro"
-                          className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Número *</label>
-                        <input
-                          value={numero}
-                          onChange={(e) => setNumero(e.target.value)}
-                          placeholder="12"
-                          className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                        />
-                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                        Complemento/Referências próximas/Descrição do endereço *
+                        Localização no mapa *
                       </label>
-                      <textarea
-                        value={complemento}
-                        onChange={(e) => setComplemento(e.target.value)}
-                        rows={4}
-                        placeholder="O prédio fica em frente ao açaí."
-                        className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                      <p className="text-xs text-slate-500 mb-2">
+                        Clique no mapa no ponto exato onde a vaga fica.
+                      </p>
+                      <MapaSelecionarLocal
+                        latitude={latitude}
+                        longitude={longitude}
+                        onSelecionar={(lat, lng) => {
+                          setLatitude(lat);
+                          setLongitude(lng);
+                        }}
                       />
                     </div>
                   </>
@@ -386,37 +411,8 @@ export default function PublicarVagaPage() {
                   <CampoRevisao label="Vagas disponíveis" valor={vagasDisponiveis} />
                 </div>
 
-                {tipoEndereco === "empresa" ? (
-                  <>
-                    <CampoRevisao label="CEP" valor={enderecoEmpresa.cep} />
-                    <CampoRevisao label="Estado - Cidade" valor={enderecoEmpresa.estadoCidade} />
-                    <CampoRevisao label="Nome da rua" valor={enderecoEmpresa.nomeRua} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <CampoRevisao label="Bairro" valor={enderecoEmpresa.bairro} />
-                      <CampoRevisao label="Número" valor={enderecoEmpresa.numero} />
-                    </div>
-                    <CampoRevisao
-                      label="Complemento/Referências próximas/Descrição do endereço"
-                      valor={enderecoEmpresa.complemento}
-                      textarea
-                    />
-                  </>
-                ) : (
-                  <>
-                    <CampoRevisao label="CEP" valor={cep} />
-                    <CampoRevisao label="Estado - Cidade" valor={estadoCidade} />
-                    <CampoRevisao label="Nome da rua" valor={nomeRua} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <CampoRevisao label="Bairro" valor={bairro} />
-                      <CampoRevisao label="Número" valor={numero} />
-                    </div>
-                    <CampoRevisao
-                      label="Complemento/Referências próximas/Descrição do endereço"
-                      valor={complemento}
-                      textarea
-                    />
-                  </>
-                )}
+                <CampoRevisao label="Endereço" valor={enderecoExibicao || ""} />
+                <CampoRevisao label="Bairro" valor={bairroExibicao || ""} />
               </div>
             )}
 
@@ -460,8 +456,7 @@ export default function PublicarVagaPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#0F2C4A]">{cargo || "Cargo"}</p>
-                  {/* Nome da empresa deve vir da empresa já cadastrada/logada, não é mais preenchido aqui */}
-                  <p className="text-xs text-slate-500">Sua empresa</p>
+                  <p className="text-xs text-slate-500">{empresa?.nomeEmpresa || "Sua empresa"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-3 text-xs text-slate-600">
@@ -472,7 +467,7 @@ export default function PublicarVagaPage() {
                 <p className="text-sm font-semibold text-[#0F2C4A] mt-2">Salário: {salario}</p>
               )}
               <p className="text-xs text-slate-500 mt-1">
-                {bairro || nomeRua ? `${bairro}${bairro && nomeRua ? " · " : ""}${nomeRua}` : "Local: ?"}
+                {bairroExibicao || enderecoExibicao || "Local: ?"}
               </p>
             </div>
 

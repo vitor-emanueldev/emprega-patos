@@ -76,6 +76,7 @@ export async function cadastrarEmpresa(
     descricao?: string;
     telefone?: string;
     endereco?: string;
+    bairro?: string;
     latitude?: number;
     longitude?: number;
   }
@@ -146,4 +147,37 @@ export async function detalhesVaga(id: string): Promise<Vaga> {
   }
 
   return dados;
+}
+
+// ─── Publicar vaga ────────────────────────────────────────────────────────────
+export type DadosVaga = {
+  cargo: string;
+  descricao: string;
+  tipoContrato: string;
+  area: string;
+  salario?: number | null;
+  endereco: string;
+  bairro: string;
+  latitude: number;
+  longitude: number;
+  requisitos?: string[];
+};
+
+export async function publicarVaga(token: string, dados: DadosVaga) {
+  const resposta = await fetch(`${API_URL}/vagas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao publicar vaga");
+  }
+
+  return resultado;
 }
