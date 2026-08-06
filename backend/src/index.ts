@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
 import authRoutes from "./routes/auth.routes";
 import empresaRoutes from "./routes/empresa.routes";
 import vagasRoutes from "./routes/vaga.routes";
-
+import candidatoRoutes from "./routes/candidato.routes";
 
 
 const app = express();
@@ -31,6 +31,7 @@ app.get("/teste-banco", async (req, res) => {
 app.use(authRoutes);
 app.use(empresaRoutes);
 app.use(vagasRoutes);
+app.use(candidatoRoutes);
 
 
 app.listen(PORTA, () => {
