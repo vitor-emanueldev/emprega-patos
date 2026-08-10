@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 import authRoutes from "./routes/auth.routes";
 import empresaRoutes from "./routes/empresa.routes";
 import vagasRoutes from "./routes/vaga.routes";
+import estatisticasRoutes from "./routes/estatisticas.routes";
 
 
 
@@ -31,7 +32,7 @@ app.get("/teste-banco", async (req, res) => {
 app.use(authRoutes);
 app.use(empresaRoutes);
 app.use(vagasRoutes);
-
+app.use(estatisticasRoutes);
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);

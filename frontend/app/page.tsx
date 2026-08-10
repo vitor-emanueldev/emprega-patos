@@ -1,9 +1,56 @@
 "use client";
 
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import Link from "next/link";
 import Header from "@/components/Header";
+import { listarVagas, buscarEstatisticas, type Vaga, type Estatisticas } from "@/lib/api";
+
+const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-xl bg-slate-100 flex items-center justify-center text-sm text-slate-400" style={{ height: 400 }}>
+      Carregando mapa...
+    </div>
+  ),
+});
 
 export default function HomePage() {
+  const router = useRouter();
+
+  const [busca, setBusca] = useState("");
+  const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const [todasVagas, stats] = await Promise.all([
+          listarVagas(),
+          buscarEstatisticas(),
+        ]);
+        setVagas(todasVagas);
+        setEstatisticas(stats);
+      } catch (erro) {
+        console.error("Erro ao carregar dados da home:", erro);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregar();
+  }, []);
+
+  function handleBuscar() {
+    const params = new URLSearchParams();
+    if (busca.trim()) params.set("busca", busca.trim());
+    router.push(`/vagas?${params.toString()}`);
+  }
+
+  const vagasRecentes = vagas.slice(0, 3);
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -26,10 +73,16 @@ export default function HomePage() {
           <div className="flex items-center bg-white rounded-full shadow-md w-full max-w-md overflow-hidden pl-4">
             <span className="text-slate-400 text-sm mr-2">🔍</span>
             <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
               placeholder="Cargo, área ou empresa..."
               className="flex-1 py-2.5 text-sm focus:outline-none text-[#0F2C4A]"
             />
-            <button className="bg-[#F0A93C] text-white text-sm font-semibold px-6 py-2.5 hover:bg-[#dd9a30] rounded-full m-1">
+            <button
+              onClick={handleBuscar}
+              className="bg-[#F0A93C] text-white text-sm font-semibold px-6 py-2.5 hover:bg-[#dd9a30] rounded-full m-1"
+            >
               Buscar Vagas
             </button>
           </div>
@@ -37,15 +90,21 @@ export default function HomePage() {
 
         <div className="flex justify-center gap-12 text-white">
           <div>
-            <p className="text-2xl font-bold">40</p>
+            <p className="text-2xl font-bold">
+              {carregando ? "..." : estatisticas?.vagasAtivas ?? 0}
+            </p>
             <p className="text-xs text-slate-300">Vagas Ativas</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">15</p>
+            <p className="text-2xl font-bold">
+              {carregando ? "..." : estatisticas?.empresas ?? 0}
+            </p>
             <p className="text-xs text-slate-300">Empresas</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">100</p>
+            <p className="text-2xl font-bold">
+              {carregando ? "..." : estatisticas?.candidatos ?? 0}
+            </p>
             <p className="text-xs text-slate-300">Candidatos</p>
           </div>
         </div>
@@ -58,13 +117,11 @@ export default function HomePage() {
           Veja onde estão as oportunidades na cidade de Patos
         </p>
 
-        <div className="rounded-xl overflow-hidden border-4 border-[#F0A93C]">
-          <Image
-            src="/mapa-patos.png"
-            alt="Mapa de vagas em Patos"
-            width={1200}
-            height={650}
-            className="w-full h-auto"
+        <div className="rounded-xl overflow-hidden border-4 border-[#F0A93C]" style={{ height: 400 }}>
+          <MapaVagas
+            vagas={vagas}
+            vagaSelecionada={null}
+            onSelecionarVaga={() => {}}
           />
         </div>
       </section>
@@ -74,31 +131,59 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-bold text-[#0F2C4A]">Vagas Recentes</h2>
           <p className="text-sm text-slate-500 mb-6">
-            Publicadas nas últimas 24 horas
+            As últimas oportunidades publicadas
           </p>
 
+          {carregando && (
+            <p className="text-sm text-slate-400">Carregando vagas...</p>
+          )}
+
+          {!carregando && vagasRecentes.length === 0 && (
+            <p className="text-sm text-slate-400">Nenhuma vaga publicada ainda.</p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { cargo: "Vendedor", local: "Loja no shopping", regiao: "Centro", salario: "R$ 1000,00", icone: "🧑‍💼", cor: "bg-teal-100" },
-              { cargo: "Entregador", local: "Kj lanches", regiao: "Salgadinho", salario: "R$ 1000,00", icone: "🛵", cor: "bg-amber-100" },
-              { cargo: "Atendente", local: "Pet shop", regiao: "Centro", salario: "R$ 1000,00", icone: "🐾", cor: "bg-emerald-100" },
-            ].map((vaga) => (
-              <div key={vaga.cargo} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-5 flex flex-col gap-2">
-                <div className={`w-10 h-10 rounded-full ${vaga.cor} flex items-center justify-center text-lg mb-1`}>
-                  {vaga.icone}
+            {vagasRecentes.map((vaga) => (
+              <div
+                key={vaga.id}
+                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-5 flex flex-col gap-2"
+              >
+                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-lg mb-1">
+                  💼
                 </div>
                 <p className="font-semibold text-[#0F2C4A] text-sm">{vaga.cargo}</p>
-                <p className="text-xs text-slate-500 -mt-1">{vaga.local}</p>
+                <p className="text-xs text-slate-500 -mt-1">{vaga.empresa.nomeEmpresa}</p>
                 <p className="text-xs text-slate-500 flex items-center gap-1">
-                  📍 {vaga.regiao} <span className="mx-1">·</span> {vaga.salario}
+                  📍 {vaga.bairro}
+                  {vaga.salario && (
+                    <>
+                      <span className="mx-1">·</span>
+                      R$ {vaga.salario.toLocaleString("pt-BR")}
+                    </>
+                  )}
                 </p>
-                <button className="mt-2 bg-[#F0A93C] text-white text-xs font-semibold rounded-md py-2 hover:bg-[#dd9a30]">
+                <Link
+                  href={`/vagas/${vaga.id}`}
+                  className="mt-2 bg-[#F0A93C] text-white text-xs font-semibold rounded-md py-2 text-center hover:bg-[#dd9a30]"
+                >
                   Ver vaga
-                </button>
+                </Link>
               </div>
             ))}
           </div>
         </div>
+      </section>
+
+      {/* SOBRE */}
+      <section id="sobre" className="max-w-4xl mx-auto py-16 px-4">
+        <h2 className="text-xl font-bold text-[#0F2C4A] mb-4">Sobre o Emprega Patos</h2>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          O Emprega Patos é uma plataforma criada para conectar comércios,
+          empresas e candidatos da cidade de Patos - PB de forma simples e
+          gratuita. Empregadores publicam vagas em minutos, com localização
+          real no mapa da cidade, e candidatos encontram oportunidades perto
+          de onde moram.
+        </p>
       </section>
 
       {/* CTA */}
@@ -111,12 +196,18 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-3 ml-auto">
-            <button className="bg-white text-[#0F2C4A] text-sm font-semibold rounded-md px-5 py-2">
+            <a
+              href="#sobre"
+              className="bg-white text-[#0F2C4A] text-sm font-semibold rounded-md px-5 py-2"
+            >
               Saiba mais
-            </button>
-            <button className="bg-[#0F2C4A] text-white text-sm font-semibold rounded-md px-5 py-2">
+            </a>
+            <Link
+              href="/publicar-vaga"
+              className="bg-[#0F2C4A] text-white text-sm font-semibold rounded-md px-5 py-2"
+            >
               Publicar vaga grátis
-            </button>
+            </Link>
           </div>
         </div>
       </section>
