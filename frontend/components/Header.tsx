@@ -4,56 +4,55 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
-  const { usuario } = useAuth();
+  const { usuario, sair } = useAuth();
 
   return (
     <header className="bg-white border-b-4 border-[#0F2C4A] px-8 py-3 flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-2 group">
+      <div className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-full bg-[#1D6FA5] flex items-center justify-center text-white text-xs font-bold">
           EP
         </div>
-        <span className="font-extrabold text-[#0F2C4A] tracking-wide text-sm transition-colors group-hover:text-[#1D6FA5]">
+        <span className="font-extrabold text-[#0F2C4A] tracking-wide text-sm">
           EMPREGA PATOS
         </span>
-      </Link>
+      </div>
 
-      <div className="hidden md:flex items-center gap-5">
-        {!usuario && (
+      <div className="hidden md:flex items-center gap-6">
+        <nav className="flex items-center gap-6 text-sm text-[#0F2C4A] font-medium">
+          <Link href="/" className="hover:text-[#1D6FA5]">Início</Link>
+          <Link href="/vagas" className="hover:text-[#1D6FA5]">Vagas</Link>
+          <Link href="/mapa" className="hover:text-[#1D6FA5]">Mapa</Link>
+          <Link href="/empresas" className="hover:text-[#1D6FA5]">Empresas</Link>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          {usuario ? (
+            <>
+              <span className="text-sm font-medium text-[#0F2C4A]">
+                Olá, {usuario.nome}
+              </span>
+              <button
+                onClick={sair}
+                className="text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-slate-50"
+              >
+                Sair
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-slate-50"
+            >
+              Entrar
+            </Link>
+          )}
           <Link
-            href="/login"
-            className="text-sm font-medium text-[#0F2C4A] hover:text-[#1D6FA5]"
+            href="/publicar-vaga"
+            className="text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-[#123a63]"
           >
-            Entrar
+            Publicar Vaga
           </Link>
-        )}
-
-        <Link
-          href="/vagas"
-          className="text-sm font-medium text-[#0F2C4A] hover:text-[#1D6FA5]"
-        >
-          Vagas
-        </Link>
-
-        <Link
-          href="/cadastrar-empresa"
-          className="text-sm font-medium text-[#0F2C4A] hover:text-[#1D6FA5]"
-        >
-          Cadastrar Empresa
-        </Link>
-
-        <Link
-          href="/publicar-vaga"
-          className="text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-[#123a63]"
-        >
-          Publicar Vaga
-        </Link>
-
-        <Link
-          href={usuario ? "/perfil" : "/login"}
-          className="text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-1.5 hover:bg-slate-50"
-        >
-          {usuario ? `Olá, ${usuario.nome}` : "Perfil"}
-        </Link>
+        </div>
       </div>
     </header>
   );

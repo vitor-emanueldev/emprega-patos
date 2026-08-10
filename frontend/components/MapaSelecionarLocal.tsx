@@ -55,16 +55,10 @@ function CliqueNoMapa({
 type Props = {
   latitude: number | null;
   longitude: number | null;
-  onSelecionar?: (lat: number, lng: number) => void;
-  somenteLeitura?: boolean;
+  onSelecionar: (lat: number, lng: number) => void;
 };
 
-export default function MapaSelecionarLocal({
-  latitude,
-  longitude,
-  onSelecionar,
-  somenteLeitura = false,
-}: Props) {
+export default function MapaSelecionarLocal({ latitude, longitude, onSelecionar }: Props) {
   const centro: [number, number] = [latitude ?? -7.0241, longitude ?? -37.2803];
 
   function handleForaDosLimites() {
@@ -86,10 +80,7 @@ export default function MapaSelecionarLocal({
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; OpenStreetMap contributors &copy; CARTO'
         />
-
-        {!somenteLeitura && onSelecionar && (
-          <CliqueNoMapa onSelecionar={onSelecionar} onForaDosLimites={handleForaDosLimites} />
-        )}
+        <CliqueNoMapa onSelecionar={onSelecionar} onForaDosLimites={handleForaDosLimites} />
 
         {PONTOS_REFERENCIA.map((ponto) => (
           <Marker

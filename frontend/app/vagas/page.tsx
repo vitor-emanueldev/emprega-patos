@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
 
@@ -44,8 +43,6 @@ function alternarItem(lista: string[], item: string) {
 }
 
 export default function VagasPage() {
-  const router = useRouter();
-
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -318,10 +315,7 @@ export default function VagasPage() {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <button
-                      onClick={() => router.push(`/vagas/${vaga.id}`)}
-                      className="bg-[#F0A93C] text-white text-xs font-semibold rounded-md px-4 py-2 hover:bg-[#dd9a30]"
-                    >
+                    <button className="bg-[#F0A93C] text-white text-xs font-semibold rounded-md px-4 py-2 hover:bg-[#dd9a30]">
                       Ver detalhes
                     </button>
                     <p className="text-[11px] text-slate-400 mt-1.5">
