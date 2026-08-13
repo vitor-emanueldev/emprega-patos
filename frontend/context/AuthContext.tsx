@@ -27,8 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const usuarioSalvo = localStorage.getItem("usuario");
 
     if (tokenSalvo && usuarioSalvo) {
-      setToken(tokenSalvo);
-      setUsuario(JSON.parse(usuarioSalvo));
+      try {
+        setToken(tokenSalvo);
+        setUsuario(JSON.parse(usuarioSalvo));
+      } catch (erro) {
+        console.warn("Dados de sessão corrompidos, limpando localStorage:", erro);
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+      }
     }
   }, []);
 

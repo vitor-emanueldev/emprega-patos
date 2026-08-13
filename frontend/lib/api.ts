@@ -181,3 +181,16 @@ export async function publicarVaga(token: string, dados: DadosVaga) {
 
   return resultado;
 }
+
+export type Estatisticas = {
+  vagasAtivas: number;
+  empresas: number;
+  candidatos: number;
+};
+
+export async function buscarEstatisticas(): Promise<Estatisticas> {
+  const resposta = await fetch(`${API_URL}/estatisticas`);
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar estatísticas");
+  return dados;
+}
