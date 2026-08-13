@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 import empresaRoutes from "./routes/empresa.routes";
 import vagasRoutes from "./routes/vaga.routes";
 import estatisticasRoutes from "./routes/estatisticas.routes";
+import candidaturaRoutes from "./routes/candidatura.routes";
 
 
 
@@ -33,6 +34,7 @@ app.use(authRoutes);
 app.use(empresaRoutes);
 app.use(vagasRoutes);
 app.use(estatisticasRoutes);
+app.use(candidaturaRoutes);
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);
