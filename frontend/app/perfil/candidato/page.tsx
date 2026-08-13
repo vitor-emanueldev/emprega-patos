@@ -1,12 +1,106 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { buscarMinhaFicha, Candidato } from "@/lib/api";
 
 export default function PerfilCandidatoPage() {
   const router = useRouter();
-  const { usuario } = useAuth();
+  const { usuario, token } = useAuth();
+
+  const [candidato, setCandidato] = useState<Candidato | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    async function carregarPerfil() {
+      if (!token) {
+        setCarregando(false);
+        setErro("Você precisa estar logado para acessar seu perfil.");
+        return;
+      }
+
+      try {
+        const dados = await buscarMinhaFicha(token);
+        setCandidato(dados);
+      } catch (erro: any) {
+        setErro(
+          erro.message || "Não foi possível carregar o perfil do candidato."
+        );
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarPerfil();
+  }, [token]);
+
+  function formatarData(data: string | null) {
+    if (!data) {
+      return "Não informada";
+    }
+
+    const dataFormatada = new Date(data);
+
+    if (Number.isNaN(dataFormatada.getTime())) {
+      return "Não informada";
+    }
+
+    return dataFormatada.toLocaleDateString("pt-BR", {
+      timeZone: "UTC",
+    });
+  }
+
+  if (carregando) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <main className="max-w-6xl mx-auto px-6 py-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+            <p className="text-slate-500">
+              Carregando perfil...
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <main className="max-w-6xl mx-auto px-6 py-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-3xl mx-auto">
+              ⚠️
+            </div>
+
+            <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
+              Perfil de candidato não encontrado
+            </h1>
+
+            <p className="text-slate-500 mt-2">
+              {erro}
+            </p>
+
+            <button
+              onClick={() => router.push("/perfil/completar")}
+              className="mt-6 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+            >
+              Completar Perfil
+            </button>
+
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -37,6 +131,7 @@ export default function PerfilCandidatoPage() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
+
           {/* Coluna Esquerda */}
           <div className="lg:col-span-1">
 
@@ -50,7 +145,7 @@ export default function PerfilCandidatoPage() {
                 </div>
 
                 <h2 className="mt-5 text-2xl font-bold text-[#0F2C4A] text-center">
-                  {usuario?.nome || "Usuário"}
+                  {candidato?.nome || usuario?.nome || "Usuário"}
                 </h2>
 
                 <p className="text-slate-500 text-sm mt-1 text-center">
@@ -80,7 +175,7 @@ export default function PerfilCandidatoPage() {
                   </p>
 
                   <p className="font-medium text-[#0F2C4A]">
-                    Não informado
+                    {candidato?.telefone || "Não informado"}
                   </p>
                 </div>
 
@@ -90,7 +185,7 @@ export default function PerfilCandidatoPage() {
                   </p>
 
                   <p className="font-medium text-[#0F2C4A]">
-                    Não informado
+                    {candidato?.cpf || "Não informado"}
                   </p>
                 </div>
 
@@ -100,7 +195,7 @@ export default function PerfilCandidatoPage() {
                   </p>
 
                   <p className="font-medium text-[#0F2C4A]">
-                    Não informada
+                    {formatarData(candidato?.dataNascimento || null)}
                   </p>
                 </div>
 
@@ -119,6 +214,7 @@ export default function PerfilCandidatoPage() {
             </div>
 
           </div>
+
           {/* Coluna Direita */}
           <div className="lg:col-span-2 space-y-6">
 
@@ -137,7 +233,7 @@ export default function PerfilCandidatoPage() {
                   </p>
 
                   <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {usuario?.nome || "Não informado"}
+                    {candidato?.nome || usuario?.nome || "Não informado"}
                   </p>
                 </div>
 
@@ -156,8 +252,8 @@ export default function PerfilCandidatoPage() {
                     Telefone
                   </p>
 
-                  <p className="mt-1 text-slate-500">
-                    Não informado
+                  <p className="mt-1 font-medium text-[#0F2C4A]">
+                    {candidato?.telefone || "Não informado"}
                   </p>
                 </div>
 
@@ -166,8 +262,8 @@ export default function PerfilCandidatoPage() {
                     CPF
                   </p>
 
-                  <p className="mt-1 text-slate-500">
-                    Não informado
+                  <p className="mt-1 font-medium text-[#0F2C4A]">
+                    {candidato?.cpf || "Não informado"}
                   </p>
                 </div>
 
@@ -176,8 +272,8 @@ export default function PerfilCandidatoPage() {
                     Data de Nascimento
                   </p>
 
-                  <p className="mt-1 text-slate-500">
-                    Não informada
+                  <p className="mt-1 font-medium text-[#0F2C4A]">
+                    {formatarData(candidato?.dataNascimento || null)}
                   </p>
                 </div>
 
@@ -204,21 +300,24 @@ export default function PerfilCandidatoPage() {
 
               <div className="flex flex-wrap gap-3">
 
-                { false ? (
-                    <>
+                {candidato?.habilidades &&
+                candidato.habilidades.length > 0 ? (
 
-                     <span className="px-4 py-2 rounded-full bg-blue-100 text-[#0F2C4A] text-sm">
-                       Java
-                     </span>
-
-                     <span className="px-4 py-2 rounded-full bg-blue-100 text-[#0F2C4A] text-sm">
-                        React
-                     </span>
-                    </>
-                ) : (
-                    <span className="px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-sm">
-                        Nenhuma habilidade cadastrada
+                  candidato.habilidades.map((habilidade) => (
+                    <span
+                      key={habilidade}
+                      className="px-4 py-2 rounded-full bg-blue-100 text-[#0F2C4A] text-sm font-medium"
+                    >
+                      {habilidade}
                     </span>
+                  ))
+
+                ) : (
+
+                  <span className="px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-sm">
+                    Nenhuma habilidade cadastrada
+                  </span>
+
                 )}
 
               </div>
@@ -268,6 +367,7 @@ export default function PerfilCandidatoPage() {
             </section>
 
           </div>
+
         </div>
 
       </main>
