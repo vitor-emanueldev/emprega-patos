@@ -55,7 +55,7 @@ export async function verificarEmpresa(token: string) {
   });
 
   if (resposta.status === 404) {
-    return null; // usuário não tem empresa cadastrada ainda
+    return null;
   }
 
   const dados = await resposta.json();
@@ -149,7 +149,6 @@ export async function detalhesVaga(id: string): Promise<Vaga> {
   return dados;
 }
 
-// ─── Publicar vaga ────────────────────────────────────────────────────────────
 export type DadosVaga = {
   cargo: string;
   descricao: string;
@@ -182,6 +181,68 @@ export async function publicarVaga(token: string, dados: DadosVaga) {
   return resultado;
 }
 
+export type Candidato = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  dataNascimento?: string;
+  endereco?: string;
+  bairro?: string;
+  habilidades?: string[];
+  [key: string]: unknown;
+};
+
+export async function buscarMinhaFicha(token: string): Promise<Candidato | null> {
+  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (resposta.status === 404) {
+    return null;
+  }
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao buscar ficha do candidato");
+  }
+
+  return dados;
+}
+
+export async function tornarCandidato(
+  token: string,
+  dados: {
+    telefone: string;
+    cpf: string;
+    dataNascimento: string;
+    habilidades: string[];
+  }
+) {
+  const resposta = await fetch(`${API_URL}/candidatos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao completar perfil de candidato");
+  }
+
+  return resultado;
+}
+
 export type Estatisticas = {
   vagasAtivas: number;
   empresas: number;
@@ -189,7 +250,9 @@ export type Estatisticas = {
 };
 
 export async function buscarEstatisticas(): Promise<Estatisticas> {
-  const resposta = await fetch(`${API_URL}/estatisticas`);
+  const resposta = await fetch(`${API_URL}/estatisticas`, {
+    cache: "no-store",
+  });
   const dados = await resposta.json();
   if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar estatísticas");
   return dados;
