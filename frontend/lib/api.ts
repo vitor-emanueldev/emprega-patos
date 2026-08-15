@@ -182,6 +182,95 @@ export async function publicarVaga(token: string, dados: DadosVaga) {
   return resultado;
 }
 
+export type Candidato = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  dataNascimento?: string;
+  endereco?: string;
+  bairro?: string;
+  habilidades?: string[];
+  [key: string]: unknown;
+};
+
+export async function buscarMinhaFicha(token: string): Promise<Candidato | null> {
+  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (resposta.status === 404) {
+    return null;
+  }
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao buscar ficha do candidato");
+  }
+
+  return dados;
+}
+
+export async function tornarCandidato(
+  token: string,
+  dados: {
+    telefone: string;
+    cpf: string;
+    dataNascimento: string;
+    habilidades: string[];
+  }
+) {
+  const resposta = await fetch(`${API_URL}/candidatos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao completar perfil de candidato");
+  }
+
+  return resultado;
+}
+
+export async function atualizarMinhaFicha(
+  token: string,
+  dados: {
+    telefone: string;
+    cpf: string;
+    dataNascimento: string;
+    habilidades: string[];
+  }
+): Promise<Candidato> {
+  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar perfil");
+  }
+
+  return resultado;
+}
+
 export type Estatisticas = {
   vagasAtivas: number;
   empresas: number;
@@ -193,4 +282,67 @@ export async function buscarEstatisticas(): Promise<Estatisticas> {
   const dados = await resposta.json();
   if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar estatísticas");
   return dados;
+}
+
+export type Candidatura = {
+  id: string;
+  vagaId: string;
+  candidatoId: string;
+  createdAt: string;
+};
+
+export async function candidatarVaga(
+  token: string,
+  vagaId: string
+): Promise<Candidatura> {
+  const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidatar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({}),
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao se candidatar");
+  }
+
+  return dados;
+}
+
+export type DadosAtualizarEmpresa = {
+  nomeEmpresa: string;
+  cnpj: string;
+  setor?: string;
+  descricao?: string;
+  telefone?: string;
+  endereco?: string;
+  bairro?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export async function atualizarEmpresa(
+  token: string,
+  dados: DadosAtualizarEmpresa
+) {
+  const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar empresa");
+  }
+
+  return resultado;
 }
