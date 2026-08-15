@@ -11,6 +11,7 @@ type Props = {
   vagas: Vaga[];
   vagaSelecionada: string | null;
   onSelecionarVaga: (id: string) => void;
+  mostrarLegenda?: boolean;
 };
 
 const iconesReferencia = {
@@ -27,7 +28,7 @@ const LIMITES_PATOS: [[number, number], [number, number]] = [
   [-6.96, -37.21],
 ];
 
-export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga }: Props) {
+export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga, mostrarLegenda = true }: Props) {
   const router = useRouter();
 
   return (
@@ -106,29 +107,31 @@ export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga }: 
       </MapContainer>
 
       {/* Legenda */}
-      <div className="absolute bottom-3 left-3 bg-white/95 rounded-lg shadow-md p-3 text-xs space-y-1.5 z-[1000] max-h-64 overflow-y-auto">
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#F0A93C]" /> Vaga
+      {mostrarLegenda && (
+        <div className="absolute bottom-3 left-3 bg-white/95 rounded-lg shadow-md p-3 text-xs space-y-1.5 z-[1000] max-h-64 overflow-y-auto">
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#F0A93C]" /> Vaga
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#E24C4C]" /> Saúde
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#22A06B]" /> Farmácia
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#E8813A]" /> Emergência
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#0E9488]" /> Supermercado
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#8E5FC9]" /> Shopping
+          </div>
+          <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
+            <span className="w-3 h-3 rounded-full bg-[#1D6FA5]" /> Faculdade
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#E24C4C]" /> Saúde
-        </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#22A06B]" /> Farmácia
-        </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#E8813A]" /> Emergência
-        </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#0E9488]" /> Supermercado
-        </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#8E5FC9]" /> Shopping
-        </div>
-        <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-          <span className="w-3 h-3 rounded-full bg-[#1D6FA5]" /> Faculdade
-        </div>
-      </div>
+      )}
     </div>
   );
 }
