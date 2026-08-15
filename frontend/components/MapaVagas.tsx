@@ -107,6 +107,7 @@ export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga, mo
       </MapContainer>
 
       {/* Legenda */}
+      {/* Legenda — some quando mostrarLegenda={false} (ex: mapa pequeno da tela de detalhes) */}
       {mostrarLegenda && (
         <div className="absolute bottom-3 left-3 bg-white/95 rounded-lg shadow-md p-3 text-xs space-y-1.5 z-[1000] max-h-64 overflow-y-auto">
           <div className="flex items-center gap-2 text-[#0F2C4A] font-medium">

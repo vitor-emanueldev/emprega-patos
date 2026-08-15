@@ -55,7 +55,7 @@ export async function verificarEmpresa(token: string) {
   });
 
   if (resposta.status === 404) {
-    return null; // usuário não tem empresa cadastrada ainda
+    return null;
   }
 
   const dados = await resposta.json();
@@ -149,7 +149,6 @@ export async function detalhesVaga(id: string): Promise<Vaga> {
   return dados;
 }
 
-// ─── Publicar vaga ────────────────────────────────────────────────────────────
 export type DadosVaga = {
   cargo: string;
   descricao: string;
@@ -278,7 +277,9 @@ export type Estatisticas = {
 };
 
 export async function buscarEstatisticas(): Promise<Estatisticas> {
-  const resposta = await fetch(`${API_URL}/estatisticas`);
+  const resposta = await fetch(`${API_URL}/estatisticas`, {
+    cache: "no-store",
+  });
   const dados = await resposta.json();
   if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar estatísticas");
   return dados;
@@ -296,6 +297,30 @@ export async function candidatarVaga(
   vagaId: string
 ): Promise<Candidatura> {
   const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidatar`, {
+// ─── Perfil do Candidato ─────────────────────────────────────────────────────
+export type DadosCandidato = {
+  telefone: string;
+  cpf: string;
+  dataNascimento: string;
+  habilidades: string[];
+};
+
+export type Candidato = {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  cpf: string | null;
+  dataNascimento: string | null;
+  habilidades: string[];
+  createdAt: string;
+  usuarioId: string;
+};
+
+export async function tornarCandidato(
+  token: string,
+  dados: DadosCandidato
+): Promise<Candidato> {
+  const resposta = await fetch(`${API_URL}/candidatos`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -330,6 +355,45 @@ export async function atualizarEmpresa(
   dados: DadosAtualizarEmpresa
 ) {
   const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao criar perfil de candidato");
+  }
+
+  return resultado;
+}
+
+export async function buscarMinhaFicha(token: string): Promise<Candidato | null> {
+  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (resposta.status === 404) {
+    return null; // usuário ainda não completou o currículo
+  }
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao buscar perfil de candidato");
+  }
+
+  return resultado;
+}
+
+export async function atualizarMinhaFicha(
+  token: string,
+  dados: DadosCandidato
+): Promise<Candidato> {
+  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -345,4 +409,54 @@ export async function atualizarEmpresa(
   }
 
   return resultado;
+    throw new Error(resultado.erro || "Erro ao atualizar perfil de candidato");
+  }
+
+  return resultado;
+}
+
+// ─── Candidatura ──────────────────────────────────────────────────────────────
+export type Candidatura = {
+  id: string;
+  status: string;
+  createdAt: string;
+  vagaId: string;
+  candidatoId: string;
+  vaga: Vaga;
+};
+
+export async function candidatarVaga(token: string, vagaId: string): Promise<Candidatura> {
+  const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidatar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao candidatar-se à vaga");
+  }
+
+  return resultado;
+}
+
+export async function minhasCandidaturas(token: string): Promise<Candidatura[]> {
+  const resposta = await fetch(`${API_URL}/candidato/minhas-candidaturas`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao buscar candidaturas");
+  }
+
+  return dados;
 }

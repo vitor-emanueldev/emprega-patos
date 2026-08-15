@@ -7,6 +7,10 @@ import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { detalhesVaga, candidatarVaga, type Vaga } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import Header from "@/components/Header";
+import { detalhesVaga, type Vaga } from "@/lib/api";
 
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
   ssr: false,
@@ -171,6 +175,14 @@ export default function DetalhesVagaPage() {
                   </ul>
                 </div>
               )}
+
+              {/*
+                Responsabilidades e Benefícios apareceriam aqui como seções
+                próprias — hoje esses dados não existem no tipo Vaga do
+                lib/api.ts. Se forem adicionados ao schema do Prisma (ex:
+                responsabilidades: string[], beneficios: string[]), é só
+                replicar o mesmo bloco da lista de Requisitos acima.
+              */}
             </div>
 
             {/* SIDEBAR */}
@@ -210,6 +222,9 @@ export default function DetalhesVagaPage() {
                   </p>
                 )}
 
+                <button className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors">
+                  Candidatar-se agora
+                </button>
                 <button className="mt-2 w-full text-center text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-slate-50 transition-colors">
                   Salvar vaga
                 </button>
@@ -238,6 +253,7 @@ export default function DetalhesVagaPage() {
               </div>
 
               {/* Mapa */}
+              {/* Mapa — reaproveitando o mesmo componente usado na Home */}
               {vaga.latitude && vaga.longitude && (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                   <div style={{ height: 192 }}>
@@ -256,4 +272,5 @@ export default function DetalhesVagaPage() {
       </main>
     </div>
   );
+}
 }
