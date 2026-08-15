@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import Header from "@/components/Header";
+import { detalhesVaga, candidatarVaga, type Vaga } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
@@ -37,10 +42,16 @@ function formatarSalario(valor: number | null) {
 
 export default function DetalhesVagaPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const { token } = useAuth();
 
   const [vaga, setVaga] = useState<Vaga | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+
+  const [candidatando, setCandidatando] = useState(false);
+  const [jaCandidatou, setJaCandidatou] = useState(false);
+  const [erroCandidatura, setErroCandidatura] = useState("");
 
   useEffect(() => {
     async function carregar() {
@@ -55,6 +66,33 @@ export default function DetalhesVagaPage() {
     }
     if (id) carregar();
   }, [id]);
+
+  async function handleCandidatar() {
+    setErroCandidatura("");
+
+    if (!token) {
+      router.push(`/login?redirect=/vagas/${id}`);
+      return;
+    }
+
+    setCandidatando(true);
+
+    try {
+      await candidatarVaga(token, id as string);
+      setJaCandidatou(true);
+    } catch (e: any) {
+      const mensagem = e.message || "";
+
+      if (mensagem.toLowerCase().includes("currículo")) {
+        router.push(`/perfil/candidato?redirect=/vagas/${id}`);
+        return;
+      }
+
+      setErroCandidatura(mensagem);
+    } finally {
+      setCandidatando(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -166,6 +204,24 @@ export default function DetalhesVagaPage() {
                   </p>
                 </div>
 
+                <button
+                  onClick={handleCandidatar}
+                  disabled={candidatando || jaCandidatou}
+                  className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {jaCandidatou
+                    ? "Candidatura enviada ✓"
+                    : candidatando
+                    ? "Enviando..."
+                    : "Candidatar-se agora"}
+                </button>
+
+                {erroCandidatura && (
+                  <p className="text-xs text-red-600 mt-2 text-center">
+                    {erroCandidatura}
+                  </p>
+                )}
+
                 <button className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors">
                   Candidatar-se agora
                 </button>
@@ -196,6 +252,7 @@ export default function DetalhesVagaPage() {
                 </span>
               </div>
 
+              {/* Mapa */}
               {/* Mapa — reaproveitando o mesmo componente usado na Home */}
               {vaga.latitude && vaga.longitude && (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -215,4 +272,5 @@ export default function DetalhesVagaPage() {
       </main>
     </div>
   );
+}
 }

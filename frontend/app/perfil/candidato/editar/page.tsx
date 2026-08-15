@@ -41,6 +41,32 @@ export default function EditarPerfilCandidatoPage() {
       try {
         const dados = await buscarMinhaFicha(token);
 
+        if (!dados) {
+          router.push("/perfil/completar");
+          return;
+        }
+
+        setCandidato(dados);
+
+        setTelefone(dados.telefone || "");
+        setCpf(dados.cpf || "");
+
+        if (dados.dataNascimento) {
+          const data = new Date(dados.dataNascimento);
+
+          if (!Number.isNaN(data.getTime())) {
+            setDataNascimento(
+              data.toISOString().split("T")[0]
+            );
+          }
+        }
+
+        setHabilidades(dados.habilidades || []);
+      } catch (erro: any) {
+        setErro(
+          erro.message ||
+            "Não foi possível carregar o perfil do candidato."
+        );
         if (dados) {
           setCandidato(dados);
           setTelefone(dados.telefone || "");
@@ -65,6 +91,7 @@ export default function EditarPerfilCandidatoPage() {
     }
 
     carregarPerfil();
+  }, [token, router]);
   }, [token]);
 
   function formatCPF(valor: string) {
@@ -141,6 +168,18 @@ export default function EditarPerfilCandidatoPage() {
     setSalvando(true);
 
     try {
+      const dadosAtualizados = await atualizarMinhaFicha(
+        token,
+        {
+          telefone,
+          cpf,
+          dataNascimento,
+          habilidades,
+        }
+      );
+
+      setCandidato(dadosAtualizados);
+
       const dadosAtualizados = candidato
         ? await atualizarMinhaFicha(token, { telefone, cpf, dataNascimento, habilidades })
         : await tornarCandidato(token, { telefone, cpf, dataNascimento, habilidades });
@@ -152,6 +191,10 @@ export default function EditarPerfilCandidatoPage() {
         router.push("/perfil/candidato");
       }, 800);
     } catch (erro: any) {
+      setErro(
+        erro.message ||
+          "Não foi possível atualizar seu perfil."
+      );
       setErro(erro.message || "Não foi possível atualizar seu perfil.");
     } finally {
       setSalvando(false);
