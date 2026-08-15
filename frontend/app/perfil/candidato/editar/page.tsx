@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   buscarMinhaFicha,
   atualizarMinhaFicha,
+  tornarCandidato,
   Candidato,
 } from "@/lib/api";
 import { formatTelefone } from "@/lib/masks";
@@ -40,27 +41,24 @@ export default function EditarPerfilCandidatoPage() {
       try {
         const dados = await buscarMinhaFicha(token);
 
-        setCandidato(dados);
+        if (dados) {
+          setCandidato(dados);
+          setTelefone(dados.telefone || "");
+          setCpf(dados.cpf || "");
 
-        setTelefone(dados.telefone || "");
-        setCpf(dados.cpf || "");
-
-        if (dados.dataNascimento) {
-          const data = new Date(dados.dataNascimento);
-
-          if (!Number.isNaN(data.getTime())) {
-            setDataNascimento(
-              data.toISOString().split("T")[0]
-            );
+          if (dados.dataNascimento) {
+            const data = new Date(dados.dataNascimento);
+            if (!Number.isNaN(data.getTime())) {
+              setDataNascimento(data.toISOString().split("T")[0]);
+            }
           }
-        }
 
-        setHabilidades(dados.habilidades || []);
+          setHabilidades(dados.habilidades || []);
+        }
+        // se dados for null, é a primeira vez do usuário — formulário fica vazio, sem erro
+
       } catch (erro: any) {
-        setErro(
-          erro.message ||
-            "Não foi possível carregar o perfil do candidato."
-        );
+        setErro(erro.message || "Não foi possível carregar o perfil do candidato.");
       } finally {
         setCarregando(false);
       }
@@ -143,28 +141,18 @@ export default function EditarPerfilCandidatoPage() {
     setSalvando(true);
 
     try {
-      const dadosAtualizados = await atualizarMinhaFicha(
-        token,
-        {
-          telefone,
-          cpf,
-          dataNascimento,
-          habilidades,
-        }
-      );
+      const dadosAtualizados = candidato
+        ? await atualizarMinhaFicha(token, { telefone, cpf, dataNascimento, habilidades })
+        : await tornarCandidato(token, { telefone, cpf, dataNascimento, habilidades });
 
       setCandidato(dadosAtualizados);
-
       setSucesso("Perfil atualizado com sucesso!");
 
       setTimeout(() => {
         router.push("/perfil/candidato");
       }, 800);
     } catch (erro: any) {
-      setErro(
-        erro.message ||
-          "Não foi possível atualizar seu perfil."
-      );
+      setErro(erro.message || "Não foi possível atualizar seu perfil.");
     } finally {
       setSalvando(false);
     }
