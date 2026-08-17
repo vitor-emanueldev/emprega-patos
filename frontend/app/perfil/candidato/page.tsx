@@ -102,6 +102,40 @@ export default function PerfilCandidatoPage() {
     );
   }
 
+  if (!candidato) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <main className="max-w-6xl mx-auto px-6 py-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+
+            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-3xl mx-auto">
+              📄
+            </div>
+
+            <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
+              Você ainda não tem um currículo cadastrado
+            </h1>
+
+            <p className="text-slate-500 mt-2">
+              Complete seu perfil de candidato para se candidatar às vagas e
+              aparecer para os empregadores.
+            </p>
+
+            <button
+              onClick={() => router.push("/perfil/completar")}
+              className="mt-6 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+            >
+              Cadastrar currículo
+            </button>
+
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -331,17 +365,46 @@ export default function PerfilCandidatoPage() {
                 Formação Acadêmica
               </h2>
 
-              <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+              {candidato.formacoes && candidato.formacoes.length > 0 ? (
+                <div className="space-y-4">
+                  {candidato.formacoes.map((formacao) => (
+                    <div key={formacao.id} className="border border-slate-200 rounded-lg p-4">
+                      <p className="font-semibold text-[#0F2C4A]">{formacao.nivelEscolaridade}</p>
+                      <p className="text-sm text-slate-500">{formacao.instituicao}</p>
+                      {(formacao.anoInicio || formacao.anoConclusao) && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          {formacao.anoInicio || "?"} — {formacao.anoConclusao || "atual"}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+                  <p className="text-slate-500">
+                    Nenhuma formação cadastrada.
+                  </p>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Você poderá adicionar cursos e graduações futuramente.
+                  </p>
+                </div>
+              )}
 
-                <p className="text-slate-500">
-                  Nenhuma formação cadastrada.
-                </p>
-
-                <p className="text-sm text-slate-400 mt-2">
-                  Você poderá adicionar cursos e graduações futuramente.
-                </p>
-
-              </div>
+              {candidato.cursos && candidato.cursos.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                    Cursos e qualificações
+                  </h3>
+                  {candidato.cursos.map((curso) => (
+                    <div key={curso.id} className="border border-slate-200 rounded-lg p-4">
+                      <p className="font-semibold text-[#0F2C4A]">{curso.nomeCurso}</p>
+                      <p className="text-sm text-slate-500">
+                        {[curso.instituicao, curso.cargaHoraria].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
             </section>
 
@@ -352,19 +415,65 @@ export default function PerfilCandidatoPage() {
                 Experiência Profissional
               </h2>
 
-              <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
-
-                <p className="text-slate-500">
-                  Nenhuma experiência cadastrada.
-                </p>
-
-                <p className="text-sm text-slate-400 mt-2">
-                  Adicione suas experiências para destacar seu perfil.
-                </p>
-
-              </div>
+              {candidato.experiencias && candidato.experiencias.length > 0 ? (
+                <div className="space-y-4">
+                  {candidato.experiencias.map((exp) => (
+                    <div key={exp.id} className="border border-slate-200 rounded-lg p-4">
+                      <p className="font-semibold text-[#0F2C4A]">{exp.cargo}</p>
+                      <p className="text-sm text-slate-500">{exp.empresa}</p>
+                      {exp.descricao && (
+                        <p className="text-sm text-slate-500 mt-2">{exp.descricao}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+                  <p className="text-slate-500">
+                    Nenhuma experiência cadastrada.
+                  </p>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Adicione suas experiências para destacar seu perfil.
+                  </p>
+                </div>
+              )}
 
             </section>
+
+            {/* Ações rápidas */}
+            <div className="grid sm:grid-cols-2 gap-6">
+
+              <button
+                onClick={() => router.push("/perfil/candidato/candidaturas")}
+                className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
+              >
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">
+                  📋
+                </div>
+                <h3 className="font-bold text-[#0F2C4A] mt-4">
+                  Vagas concorridas
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Veja as vagas às quais você já se candidatou e acompanhe o status.
+                </p>
+              </button>
+
+              <button
+                onClick={() => router.push("/perfil/candidato/editar")}
+                className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
+              >
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
+                  📄
+                </div>
+                <h3 className="font-bold text-[#0F2C4A] mt-4">
+                  Ver e editar currículo completo
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Gerencie seus dados, formação, experiências e habilidades.
+                </p>
+              </button>
+
+            </div>
 
           </div>
 

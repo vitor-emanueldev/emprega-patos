@@ -67,24 +67,6 @@ export default function EditarPerfilCandidatoPage() {
           erro.message ||
             "Não foi possível carregar o perfil do candidato."
         );
-        if (dados) {
-          setCandidato(dados);
-          setTelefone(dados.telefone || "");
-          setCpf(dados.cpf || "");
-
-          if (dados.dataNascimento) {
-            const data = new Date(dados.dataNascimento);
-            if (!Number.isNaN(data.getTime())) {
-              setDataNascimento(data.toISOString().split("T")[0]);
-            }
-          }
-
-          setHabilidades(dados.habilidades || []);
-        }
-        // se dados for null, é a primeira vez do usuário — formulário fica vazio, sem erro
-
-      } catch (erro: any) {
-        setErro(erro.message || "Não foi possível carregar o perfil do candidato.");
       } finally {
         setCarregando(false);
       }
@@ -92,7 +74,6 @@ export default function EditarPerfilCandidatoPage() {
 
     carregarPerfil();
   }, [token, router]);
-  }, [token]);
 
   function formatCPF(valor: string) {
     return valor
@@ -168,18 +149,6 @@ export default function EditarPerfilCandidatoPage() {
     setSalvando(true);
 
     try {
-      const dadosAtualizados = await atualizarMinhaFicha(
-        token,
-        {
-          telefone,
-          cpf,
-          dataNascimento,
-          habilidades,
-        }
-      );
-
-      setCandidato(dadosAtualizados);
-
       const dadosAtualizados = candidato
         ? await atualizarMinhaFicha(token, { telefone, cpf, dataNascimento, habilidades })
         : await tornarCandidato(token, { telefone, cpf, dataNascimento, habilidades });
@@ -195,7 +164,6 @@ export default function EditarPerfilCandidatoPage() {
         erro.message ||
           "Não foi possível atualizar seu perfil."
       );
-      setErro(erro.message || "Não foi possível atualizar seu perfil.");
     } finally {
       setSalvando(false);
     }

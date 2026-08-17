@@ -10,7 +10,23 @@ export async function tornarCandidato(req: RequisicaoAutenticada, res: Response)
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { telefone, cpf, dataNascimento, habilidades } = req.body;
+  const {
+    telefone,
+    cpf,
+    dataNascimento,
+    habilidades,
+    fotoUrl,
+    possuiCnh,
+    categoriaCnh,
+    possuiVeiculo,
+    cargoDesejado,
+    areaInteresse,
+    pretensaoSalarial,
+    diferencial,
+    formacoes,
+    cursos,
+    experiencias,
+  } = req.body;
 
   try {
     const candidatoExistente = await prisma.candidato.findUnique({
@@ -36,8 +52,28 @@ export async function tornarCandidato(req: RequisicaoAutenticada, res: Response)
         cpf,
         dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
         habilidades,
+        fotoUrl,
+        possuiCnh,
+        categoriaCnh,
+        possuiVeiculo,
+        cargoDesejado,
+        areaInteresse,
+        pretensaoSalarial,
+        diferencial,
         usuarioId: req.usuario.id,
+        formacoes: formacoes ? { create: formacoes } : undefined,
+        cursos: cursos ? { create: cursos } : undefined,
+        experiencias: experiencias
+          ? {
+              create: experiencias.map((exp: any) => ({
+                ...exp,
+                dataInicio: exp.dataInicio ? new Date(exp.dataInicio) : undefined,
+                dataFim: exp.dataFim ? new Date(exp.dataFim) : undefined,
+              })),
+            }
+          : undefined,
       },
+      include: { formacoes: true, cursos: true, experiencias: true },
     });
 
     res.status(201).json(novoCandidato);
@@ -61,6 +97,7 @@ export async function buscarMinhaFicha(req: RequisicaoAutenticada, res: Response
   try {
     const candidato = await prisma.candidato.findUnique({
       where: { usuarioId: req.usuario.id },
+      include: { formacoes: true, cursos: true, experiencias: true },
     });
 
     if (!candidato) {
@@ -80,7 +117,23 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { telefone, cpf, dataNascimento, habilidades } = req.body;
+  const {
+    telefone,
+    cpf,
+    dataNascimento,
+    habilidades,
+    fotoUrl,
+    possuiCnh,
+    categoriaCnh,
+    possuiVeiculo,
+    cargoDesejado,
+    areaInteresse,
+    pretensaoSalarial,
+    diferencial,
+    formacoes,
+    cursos,
+    experiencias,
+  } = req.body;
 
   try {
     const candidatoAtualizado = await prisma.candidato.update({
@@ -90,7 +143,32 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
         cpf,
         dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
         habilidades,
+        fotoUrl,
+        possuiCnh,
+        categoriaCnh,
+        possuiVeiculo,
+        cargoDesejado,
+        areaInteresse,
+        pretensaoSalarial,
+        diferencial,
+        // A cada atualização, o front manda a lista completa mais recente,
+        // então substituímos tudo: apaga o que existia e cria de novo.
+        formacoes: formacoes
+          ? { deleteMany: {}, create: formacoes }
+          : undefined,
+        cursos: cursos ? { deleteMany: {}, create: cursos } : undefined,
+        experiencias: experiencias
+          ? {
+              deleteMany: {},
+              create: experiencias.map((exp: any) => ({
+                ...exp,
+                dataInicio: exp.dataInicio ? new Date(exp.dataInicio) : undefined,
+                dataFim: exp.dataFim ? new Date(exp.dataFim) : undefined,
+              })),
+            }
+          : undefined,
       },
+      include: { formacoes: true, cursos: true, experiencias: true },
     });
 
     res.status(200).json(candidatoAtualizado);

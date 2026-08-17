@@ -7,10 +7,6 @@ import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { detalhesVaga, candidatarVaga, type Vaga } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { useParams } from "next/navigation";
-import dynamic from "next/dynamic";
-import Header from "@/components/Header";
-import { detalhesVaga, type Vaga } from "@/lib/api";
 
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
   ssr: false,
@@ -272,5 +268,4 @@ export default function DetalhesVagaPage() {
       </main>
     </div>
   );
-}
 }
