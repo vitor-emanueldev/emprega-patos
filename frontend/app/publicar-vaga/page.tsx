@@ -47,6 +47,8 @@ export default function PublicarVagaPage() {
   const [area, setArea] = useState("");
   const [salario, setSalario] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [responsabilidades, setResponsabilidades] = useState("");
+  const [beneficios, setBeneficios] = useState("");
   const [cargaHoraria, setCargaHoraria] = useState("");
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
 
@@ -103,7 +105,7 @@ export default function PublicarVagaPage() {
     const latitudeFinal = usarNovoLocal ? latitude : empresa?.latitude ?? null;
     const longitudeFinal = usarNovoLocal ? longitude : empresa?.longitude ?? null;
 
-    if (!cargo || !tipoContrato || !area || !descricao) {
+    if (!cargo || !tipoContrato || !area || !descricao || !responsabilidades.trim()) {
       setErro("Preencha todos os campos obrigatórios da vaga.");
       return;
     }
@@ -132,6 +134,14 @@ export default function PublicarVagaPage() {
         latitude: latitudeFinal,
         longitude: longitudeFinal,
         requisitos: [],
+        responsabilidades: responsabilidades
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        beneficios: beneficios
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean),
       });
 
       router.push("/vagas");
@@ -275,6 +285,32 @@ export default function PublicarVagaPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                    Responsabilidades * <span className="text-xs text-slate-400 font-normal">(uma por linha)</span>
+                  </label>
+                  <textarea
+                    value={responsabilidades}
+                    onChange={(e) => setResponsabilidades(e.target.value)}
+                    rows={4}
+                    placeholder={"Repor mercadorias nas prateleiras\nConferir a validade dos produtos"}
+                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                    Benefícios <span className="text-xs text-slate-400 font-normal">(um por linha)</span>
+                  </label>
+                  <textarea
+                    value={beneficios}
+                    onChange={(e) => setBeneficios(e.target.value)}
+                    rows={3}
+                    placeholder={"Desconto em compras no mercado\nCarga horária 44h/sem"}
+                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Carga horária</label>
@@ -405,6 +441,8 @@ export default function PublicarVagaPage() {
                 </div>
 
                 <CampoRevisao label="Descrição da vaga" valor={descricao} textarea />
+                <CampoRevisao label="Responsabilidades" valor={responsabilidades} textarea />
+                <CampoRevisao label="Benefícios" valor={beneficios} textarea />
 
                 <div className="grid grid-cols-2 gap-4">
                   <CampoRevisao label="Carga horária" valor={cargaHoraria} />

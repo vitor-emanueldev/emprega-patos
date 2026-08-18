@@ -145,6 +145,8 @@ export type Vaga = {
   latitude: number;
   longitude: number;
   requisitos: string[];
+  responsabilidades: string[];
+  beneficios: string[];
   status: string;
   createdAt: string;
   empresa: {
@@ -194,6 +196,8 @@ export type DadosVaga = {
   latitude: number;
   longitude: number;
   requisitos?: string[];
+  responsabilidades: string[];
+  beneficios?: string[];
 };
 
 export async function publicarVaga(token: string, dados: DadosVaga) {

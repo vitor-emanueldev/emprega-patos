@@ -247,9 +247,6 @@ export default function VagasPage() {
             <p className="text-sm text-slate-500">
               Exibindo {vagasFiltradas.length} de {vagas.length} vagas
             </p>
-            <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-md px-3 py-1.5">
-              Mais recentes ▾
-            </span>
           </div>
 
           {carregando && (
