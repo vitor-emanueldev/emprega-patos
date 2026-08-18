@@ -170,6 +170,24 @@ export async function listarVagas(): Promise<Vaga[]> {
   return dados;
 }
 
+export async function minhasVagas(token: string): Promise<Vaga[]> {
+  const resposta = await fetch(`${API_URL}/vagas/minhas`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao carregar suas vagas");
+  }
+
+  return dados;
+}
+
 export async function detalhesVaga(id: string): Promise<Vaga> {
   const resposta = await fetch(`${API_URL}/vagas/${id}`, {
     method: "GET",

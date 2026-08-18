@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { verificarEmpresa } from "@/lib/api";
+import { verificarEmpresa, minhasVagas, type Vaga } from "@/lib/api";
 
 type Empresa = {
   id: string;
@@ -24,12 +24,15 @@ export default function PerfilEmpregadorPage() {
   const { usuario, token } = useAuth();
 
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [vagas, setVagas] = useState<Vaga[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [carregandoVagas, setCarregandoVagas] = useState(true);
 
   useEffect(() => {
     async function carregar() {
       if (!token) {
         setCarregando(false);
+        setCarregandoVagas(false);
         return;
       }
 
@@ -40,6 +43,15 @@ export default function PerfilEmpregadorPage() {
         console.error("Erro ao buscar empresa:", e);
       } finally {
         setCarregando(false);
+      }
+
+      try {
+        const dadosVagas = await minhasVagas(token);
+        setVagas(dadosVagas);
+      } catch (e) {
+        console.error("Erro ao buscar vagas da empresa:", e);
+      } finally {
+        setCarregandoVagas(false);
       }
     }
 
@@ -307,24 +319,71 @@ export default function PerfilEmpregadorPage() {
             {/* Vagas Publicadas */}
             <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
 
-              <h2 className="text-xl font-bold text-[#0F2C4A] mb-5">
-                Vagas Publicadas
-              </h2>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-bold text-[#0F2C4A]">
+                  Vagas Publicadas
+                </h2>
 
-              <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
-
-                <p className="text-slate-500">
-                  Nenhuma vaga publicada.
-                </p>
-
-                <button
-                  onClick={() => router.push("/publicar-vaga")}
-                  className="mt-5 bg-[#F0A93C] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
-                >
-                  Publicar nova vaga
-                </button>
-
+                {vagas.length > 0 && (
+                  <button
+                    onClick={() => router.push("/publicar-vaga")}
+                    className="text-sm font-semibold text-[#1D6FA5] hover:underline"
+                  >
+                    + Publicar nova vaga
+                  </button>
+                )}
               </div>
+
+              {carregandoVagas ? (
+                <p className="text-sm text-slate-400 text-center py-6">
+                  Carregando vagas...
+                </p>
+              ) : vagas.length === 0 ? (
+                <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+
+                  <p className="text-slate-500">
+                    Nenhuma vaga publicada.
+                  </p>
+
+                  <button
+                    onClick={() => router.push("/publicar-vaga")}
+                    className="mt-5 bg-[#F0A93C] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+                  >
+                    Publicar nova vaga
+                  </button>
+
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {vagas.map((vaga) => (
+                    <button
+                      key={vaga.id}
+                      onClick={() => router.push(`/vagas/${vaga.id}`)}
+                      className="w-full text-left border border-slate-200 rounded-lg p-4 hover:border-[#1D6FA5] hover:shadow-md transition-all flex items-center justify-between gap-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#0F2C4A]">{vaga.cargo}</p>
+                        <p className="text-sm text-slate-500">
+                          {vaga.bairro} · {vaga.tipoContrato}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Publicada em {new Date(vaga.createdAt).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${
+                          vaga.status === "aberta"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {vaga.status === "aberta" ? "Aberta" : vaga.status}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
             </section>
 
