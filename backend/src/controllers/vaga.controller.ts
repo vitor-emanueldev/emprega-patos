@@ -68,6 +68,32 @@ export async function detalhesVaga(req: Request, res: Response) {
   }
 }
 
+export async function minhasVagas(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  try {
+    const empresa = await prisma.empresa.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!empresa) {
+      return res.status(404).json({ erro: "Nenhuma empresa cadastrada para este usuário." });
+    }
+
+    const vagas = await prisma.vaga.findMany({
+      where: { empresaId: empresa.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json(vagas);
+  } catch (error) {
+    console.error("Erro ao buscar vagas da empresa:", error);
+    return res.status(500).json({ erro: "Erro ao buscar suas vagas." });
+  }
+}
+
 export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
