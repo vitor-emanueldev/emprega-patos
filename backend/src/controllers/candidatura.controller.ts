@@ -115,3 +115,43 @@ export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Respon
     return res.status(500).json({ erro: "Erro ao buscar candidaturas" });
   }
 }
+
+// DELETE /candidaturas/:id — o candidato desiste de uma vaga que já se candidatou
+export async function cancelarCandidatura(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const candidaturaId = req.params.id;
+
+  try {
+    const candidato = await prisma.candidato.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!candidato) {
+      return res.status(404).json({ erro: "Perfil de candidato não encontrado" });
+    }
+
+    const candidatura = await prisma.candidatura.findUnique({
+      where: { id: candidaturaId },
+    });
+
+    if (!candidatura) {
+      return res.status(404).json({ erro: "Candidatura não encontrada" });
+    }
+
+    // Garante que o candidato só pode cancelar a própria candidatura
+    if (candidatura.candidatoId !== candidato.id) {
+      return res.status(403).json({ erro: "Você não pode cancelar essa candidatura" });
+    }
+
+    await prisma.candidatura.delete({ where: { id: candidaturaId } });
+
+    return res.status(200).json({ mensagem: "Candidatura cancelada com sucesso" });
+
+  } catch (error) {
+    console.error("Erro ao cancelar candidatura:", error);
+    return res.status(500).json({ erro: "Erro ao cancelar candidatura" });
+  }
+}

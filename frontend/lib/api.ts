@@ -418,6 +418,24 @@ export async function minhasCandidaturas(token: string): Promise<Candidatura[]> 
   return dados;
 }
 
+export async function cancelarCandidatura(token: string, candidaturaId: string) {
+  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao cancelar candidatura");
+  }
+
+  return resultado;
+}
+
 export type Estatisticas = {
   vagasAtivas: number;
   empresas: number;

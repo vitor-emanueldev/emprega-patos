@@ -156,7 +156,7 @@ export default function PerfilCandidatoPage() {
           </div>
 
           <button
-            onClick={() => router.push("/perfil/candidato/editar")}
+            onClick={() => router.push("/perfil/completar")}
             className="mt-5 md:mt-0 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
           >
             Editar Perfil
@@ -459,7 +459,7 @@ export default function PerfilCandidatoPage() {
               </button>
 
               <button
-                onClick={() => router.push("/perfil/candidato/editar")}
+                onClick={() => router.push("/perfil/completar")}
                 className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
               >
                 <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
