@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 export default function Header() {
   const { usuario, sair } = useAuth();
@@ -24,10 +25,22 @@ export default function Header() {
     <header className="bg-white border-b-4 border-[#0F2C4A] px-8 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-full bg-[#1D6FA5] flex items-center justify-center text-white text-xs font-bold">
-          EP
+          MV
         </div>
-        <span className="font-extrabold text-[#0F2C4A] tracking-wide text-sm">
-          EMPREGA PATOS
+
+        <span className="font-extrabold text-[#0F2C4A] tracking-wide text-sm flex items-center">
+          MAP
+
+          <span className="relative inline-block w-3.5 h-3.5 -mx-0.2">
+            <Image
+              src="/Logo sem fundo.png"
+              alt="V"
+              fill
+              className="object-contain"
+            />
+          </span>
+
+          AGAS
         </span>
       </div>
 

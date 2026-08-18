@@ -164,3 +164,61 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
     return res.status(500).json({ erro: "Erro ao publicar vaga." });
   }
 }
+
+export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const { id } = req.params;
+  const {
+    cargo, descricao, tipoContrato, area, salario,
+    endereco, bairro, latitude, longitude,
+    requisitos, responsabilidades, beneficios, status,
+  } = req.body;
+
+  try {
+    const empresa = await prisma.empresa.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!empresa) {
+      return res.status(404).json({ erro: "Nenhuma empresa cadastrada para este usuário." });
+    }
+
+    const vagaExistente = await prisma.vaga.findUnique({ where: { id } });
+
+    if (!vagaExistente) {
+      return res.status(404).json({ erro: "Vaga não encontrada." });
+    }
+
+    if (vagaExistente.empresaId !== empresa.id) {
+      return res.status(403).json({ erro: "Você não tem permissão para editar esta vaga." });
+    }
+
+    const vagaAtualizada = await prisma.vaga.update({
+      where: { id },
+      data: {
+        cargo,
+        descricao,
+        tipoContrato,
+        area,
+        salario: salario != null ? Number(salario) : undefined,
+        endereco,
+        bairro,
+        latitude: latitude != null ? Number(latitude) : undefined,
+        longitude: longitude != null ? Number(longitude) : undefined,
+        requisitos: Array.isArray(requisitos) ? requisitos : undefined,
+        responsabilidades: Array.isArray(responsabilidades) ? responsabilidades : undefined,
+        beneficios: Array.isArray(beneficios) ? beneficios : undefined,
+        status: status || undefined,
+      },
+    });
+
+    return res.json(vagaAtualizada);
+
+  } catch (error) {
+    console.error("Erro ao atualizar vaga:", error);
+    return res.status(500).json({ erro: "Erro ao atualizar vaga." });
+  }
+}

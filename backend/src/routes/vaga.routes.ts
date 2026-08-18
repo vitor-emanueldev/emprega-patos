@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { listarVagas, detalhesVaga, publicarVaga, minhasVagas } from "../controllers/vaga.controller";
+import { listarVagas, detalhesVaga, publicarVaga, minhasVagas, atualizarVaga} from "../controllers/vaga.controller";
 import { verificarToken } from "../middlewares/verificarToken";
+
 
 const router = Router();
 
@@ -9,5 +10,6 @@ router.get("/vagas", listarVagas);
 router.get("/vagas/minhas", verificarToken, minhasVagas);
 router.get("/vagas/:id", detalhesVaga);
 router.post("/vagas", verificarToken, publicarVaga);
+router.put("/vagas/:id", verificarToken, atualizarVaga);
 
 export default router;

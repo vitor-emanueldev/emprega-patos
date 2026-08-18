@@ -207,10 +207,10 @@ export default function HomePage() {
             }`}
           >
             <div className="bg-white/95 rounded-lg p-5">
-              <h3 className="text-[#0F2C4A] font-bold mb-2">Sobre o Emprega Patos</h3>
+              <h3 className="text-[#0F2C4A] font-bold mb-2">Sobre o MapVagas</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                O Emprega Patos é uma plataforma criada para conectar comércios,
-                empresas e candidatos da cidade de Patos - PB de forma simples e
+                O MapVagas é uma plataforma criada para conectar comércios,
+                empresas e candidatos da cidade de forma simples e
                 gratuita. Empregadores publicam vagas em minutos, com localização
                 real no mapa da cidade, e candidatos encontram oportunidades perto
                 de onde moram.

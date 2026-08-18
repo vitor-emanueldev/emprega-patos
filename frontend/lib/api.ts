@@ -432,3 +432,26 @@ export async function buscarEstatisticas(): Promise<Estatisticas> {
   if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar estatísticas");
   return dados;
 }
+
+export type DadosAtualizarVaga = Partial<DadosVaga> & {
+  status?: string;
+};
+
+export async function atualizarVaga(token: string, id: string, dados: DadosAtualizarVaga) {
+  const resposta = await fetch(`${API_URL}/vagas/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar vaga");
+  }
+
+  return resultado;
+}

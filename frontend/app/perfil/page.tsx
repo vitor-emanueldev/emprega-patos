@@ -93,39 +93,6 @@ export default function PerfilPage() {
 
         </div>
 
-        {/* Informações do usuário */}
-        <div className="mt-10 bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-
-          <h3 className="text-lg font-bold text-[#0F2C4A] mb-5">
-            Informações da Conta
-          </h3>
-
-          <div className="grid md:grid-cols-2 gap-6">
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600">
-                Nome
-              </label>
-
-              <div className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-4 py-3">
-                {usuario?.nome || "-"}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600">
-                E-mail
-              </label>
-
-              <div className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-4 py-3">
-                {usuario?.email || "-"}
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
       </main>
     </div>
   );
