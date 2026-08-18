@@ -23,6 +23,7 @@ export default function HomePage() {
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [mostrarSobre, setMostrarSobre] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -174,40 +175,47 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SOBRE */}
-      <section id="sobre" className="max-w-4xl mx-auto py-16 px-4">
-        <h2 className="text-xl font-bold text-[#0F2C4A] mb-4">Sobre o Emprega Patos</h2>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          O Emprega Patos é uma plataforma criada para conectar comércios,
-          empresas e candidatos da cidade de Patos - PB de forma simples e
-          gratuita. Empregadores publicam vagas em minutos, com localização
-          real no mapa da cidade, e candidatos encontram oportunidades perto
-          de onde moram.
-        </p>
-      </section>
-
-      {/* CTA */}
+      {/* CTA + SOBRE (expansível) */}
       <section className="bg-[#F0A93C] py-10 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="text-white text-xl font-bold">Tem vagas para preencher?</h2>
-            <p className="text-white/90 text-sm">
-              Publique gratuitamente e alcance candidatos da cidade toda.
-            </p>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-white text-xl font-bold">Tem vagas para preencher?</h2>
+              <p className="text-white/90 text-sm">
+                Publique gratuitamente e alcance candidatos da cidade toda.
+              </p>
+            </div>
+            <div className="flex gap-3 ml-auto">
+              <button
+                onClick={() => setMostrarSobre((prev) => !prev)}
+                className="bg-white text-[#0F2C4A] text-sm font-semibold rounded-md px-5 py-2"
+              >
+                {mostrarSobre ? "Fechar" : "Saiba mais"}
+              </button>
+              <Link
+                href="/publicar-vaga"
+                className="bg-[#0F2C4A] text-white text-sm font-semibold rounded-md px-5 py-2"
+              >
+                Publicar vaga grátis
+              </Link>
+            </div>
           </div>
-          <div className="flex gap-3 ml-auto">
-            <a
-              href="#sobre"
-              className="bg-white text-[#0F2C4A] text-sm font-semibold rounded-md px-5 py-2"
-            >
-              Saiba mais
-            </a>
-            <Link
-              href="/publicar-vaga"
-              className="bg-[#0F2C4A] text-white text-sm font-semibold rounded-md px-5 py-2"
-            >
-              Publicar vaga grátis
-            </Link>
+
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              mostrarSobre ? "max-h-60 mt-6" : "max-h-0"
+            }`}
+          >
+            <div className="bg-white/95 rounded-lg p-5">
+              <h3 className="text-[#0F2C4A] font-bold mb-2">Sobre o Emprega Patos</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                O Emprega Patos é uma plataforma criada para conectar comércios,
+                empresas e candidatos da cidade de Patos - PB de forma simples e
+                gratuita. Empregadores publicam vagas em minutos, com localização
+                real no mapa da cidade, e candidatos encontram oportunidades perto
+                de onde moram.
+              </p>
+            </div>
           </div>
         </div>
       </section>

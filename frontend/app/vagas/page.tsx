@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
 import Link from "next/link";
@@ -41,12 +42,14 @@ function alternarItem(lista: string[], item: string) {
     : [...lista, item];
 }
 
-export default function VagasPage() {
+function VagasConteudo() {
+  const searchParams = useSearchParams();
+
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(searchParams.get("busca") ?? "");
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>([]);
   const [areasSelecionadas, setAreasSelecionadas] = useState<string[]>([]);
   const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
@@ -184,8 +187,6 @@ export default function VagasPage() {
               R$ {salarioMin.toLocaleString("pt-BR")} a R${" "}
               {salarioMax.toLocaleString("pt-BR")}
             </p>
-            {/* Dois sliders separados (mín. e máx.) — mais simples e confiável
-                do que tentar simular um slider de faixa dupla sem biblioteca */}
             <div className="space-y-2">
               <label className="text-[11px] text-slate-400 block">Mínimo</label>
               <input
@@ -328,5 +329,20 @@ export default function VagasPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function VagasPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50">
+          <Header />
+          <p className="text-center text-slate-400 py-16">Carregando...</p>
+        </div>
+      }
+    >
+      <VagasConteudo />
+    </Suspense>
   );
 }
