@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { minhasCandidaturas, type Candidatura } from "@/lib/api";
+import { minhasCandidaturas, cancelarCandidatura, type Candidatura } from "@/lib/api";
 
 function corDoStatus(status: string) {
   const normalizado = status.toLowerCase();
@@ -20,6 +20,7 @@ export default function MinhasCandidaturasPage() {
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -41,6 +42,26 @@ export default function MinhasCandidaturasPage() {
 
     carregar();
   }, [token]);
+
+  async function handleCancelar(candidaturaId: string) {
+    if (!token) return;
+
+    const confirmar = window.confirm(
+      "Tem certeza que deseja cancelar sua candidatura para essa vaga?"
+    );
+    if (!confirmar) return;
+
+    setCancelandoId(candidaturaId);
+
+    try {
+      await cancelarCandidatura(token, candidaturaId);
+      setCandidaturas((prev) => prev.filter((c) => c.id !== candidaturaId));
+    } catch (erroCapturado: any) {
+      alert(erroCapturado.message || "Não foi possível cancelar a candidatura.");
+    } finally {
+      setCancelandoId(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -99,11 +120,21 @@ export default function MinhasCandidaturasPage() {
                 </p>
               </div>
 
-              <span
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${corDoStatus(candidatura.status)}`}
-              >
-                {candidatura.status}
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${corDoStatus(candidatura.status)}`}
+                >
+                  {candidatura.status}
+                </span>
+
+                <button
+                  onClick={() => handleCancelar(candidatura.id)}
+                  disabled={cancelandoId === candidatura.id}
+                  className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50 disabled:no-underline"
+                >
+                  {cancelandoId === candidatura.id ? "Cancelando..." : "Cancelar inscrição"}
+                </button>
+              </div>
             </div>
           ))}
         </div>

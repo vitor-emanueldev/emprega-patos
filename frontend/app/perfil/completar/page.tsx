@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { tornarCandidato, type DadosExperiencia } from "@/lib/api";
+import {
+  tornarCandidato,
+  atualizarMinhaFicha,
+  buscarMinhaFicha,
+  type DadosExperiencia,
+} from "@/lib/api";
 import { formatTelefone, formatSalario, parseSalario } from "@/lib/masks";
 import { buscarSugestoesHabilidade } from "@/lib/habilidadesCatalogo";
 
@@ -28,6 +33,11 @@ function formatCPF(valor: string) {
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 }
 
+function formatSalarioDeNumero(numero: number | null | undefined) {
+  if (numero === null || numero === undefined) return "";
+  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export default function CompletarPerfilPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +47,8 @@ export default function CompletarPerfilPage() {
   const [etapa, setEtapa] = useState<1 | 2 | 3>(1);
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [carregandoInicial, setCarregandoInicial] = useState(true);
+  const [modoEdicao, setModoEdicao] = useState(false);
 
   // ── Etapa 1: Dados Pessoais ──────────────────────────────────────────────
   const [dataNascimento, setDataNascimento] = useState("");
@@ -73,6 +85,78 @@ export default function CompletarPerfilPage() {
     habilidadeDigitada,
     habilidades
   );
+
+  useEffect(() => {
+    async function carregarSeExistir() {
+      if (!token) {
+        setCarregandoInicial(false);
+        return;
+      }
+
+      try {
+        const dados = await buscarMinhaFicha(token);
+
+        if (dados) {
+          setModoEdicao(true);
+
+          setTelefone(dados.telefone ? formatTelefone(dados.telefone) : "");
+          setCpf(dados.cpf ? formatCPF(dados.cpf) : "");
+
+          if (dados.dataNascimento) {
+            const data = new Date(dados.dataNascimento);
+            if (!Number.isNaN(data.getTime())) {
+              setDataNascimento(data.toISOString().split("T")[0]);
+            }
+          }
+
+          setFotoUrl(dados.fotoUrl || "");
+          setPossuiCnh(dados.possuiCnh ?? null);
+          setCategoriaCnh(dados.categoriaCnh || "");
+          setPossuiVeiculo(dados.possuiVeiculo ?? null);
+          setCargoDesejado(dados.cargoDesejado || "");
+          setAreaInteresse(dados.areaInteresse || "");
+          setPretensaoSalarial(formatSalarioDeNumero(dados.pretensaoSalarial));
+          setDiferencial(dados.diferencial || "");
+          setHabilidades(dados.habilidades || []);
+
+          const formacao = dados.formacoes?.[0];
+          if (formacao) {
+            setNivelEscolaridade(formacao.nivelEscolaridade || "");
+            setInstituicaoFormacao(formacao.instituicao || "");
+            setAnoInicioFormacao(formacao.anoInicio ? String(formacao.anoInicio) : "");
+            setAnoConclusaoFormacao(formacao.anoConclusao ? String(formacao.anoConclusao) : "");
+          }
+
+          const curso = dados.cursos?.[0];
+          if (curso) {
+            setNomeCurso(curso.nomeCurso || "");
+            setCargaHorariaCurso(curso.cargaHoraria || "");
+            setInstituicaoCurso(curso.instituicao || "");
+            setAnoConclusaoCurso(curso.anoConclusao ? String(curso.anoConclusao) : "");
+          }
+
+          if (dados.experiencias && dados.experiencias.length > 0) {
+            setExperiencias(
+              dados.experiencias.map((exp) => ({
+                cargo: exp.cargo,
+                empresa: exp.empresa,
+                dataInicio: exp.dataInicio ? exp.dataInicio.split("T")[0] : "",
+                dataFim: exp.dataFim ? exp.dataFim.split("T")[0] : "",
+                atual: exp.atual || false,
+                descricao: exp.descricao || "",
+              }))
+            );
+          }
+        }
+      } catch {
+        // se der erro ao buscar, segue como cadastro novo — sem travar o usuário
+      } finally {
+        setCarregandoInicial(false);
+      }
+    }
+
+    carregarSeExistir();
+  }, [token]);
 
   function adicionarHabilidade(valor: string) {
     const nova = valor.trim();
@@ -175,7 +259,7 @@ export default function CompletarPerfilPage() {
     setSalvando(true);
 
     try {
-      await tornarCandidato(token, {
+      const dadosParaEnviar = {
         telefone,
         cpf,
         dataNascimento,
@@ -211,11 +295,17 @@ export default function CompletarPerfilPage() {
               ]
             : undefined,
         experiencias: experiencias.length > 0 ? experiencias : undefined,
-      });
+      };
+
+      if (modoEdicao) {
+        await atualizarMinhaFicha(token, dadosParaEnviar);
+      } else {
+        await tornarCandidato(token, dadosParaEnviar);
+      }
 
       router.push(redirect || "/perfil/candidato");
     } catch (erroCapturado: any) {
-      setErro(erroCapturado.message || "Não foi possível completar seu perfil.");
+      setErro(erroCapturado.message || "Não foi possível salvar seu perfil.");
     } finally {
       setSalvando(false);
     }
@@ -227,6 +317,19 @@ export default function CompletarPerfilPage() {
     { numero: 3, titulo: "Objetivo" },
   ] as const;
 
+  if (carregandoInicial) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <main className="max-w-3xl mx-auto px-4 py-10">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+            Carregando...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -234,7 +337,7 @@ export default function CompletarPerfilPage() {
       <main className="max-w-3xl mx-auto px-4 py-10">
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-[#0F2C4A]">
-            Cadastrar novo currículo
+            {modoEdicao ? "Editar currículo" : "Cadastrar novo currículo"}
           </h1>
 
           {/* Indicador de etapas */}
@@ -793,7 +896,7 @@ export default function CompletarPerfilPage() {
                 disabled={salvando}
                 className="px-6 py-2.5 rounded-lg bg-[#0F2C4A] text-white font-semibold text-sm hover:bg-[#17436f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {salvando ? "Salvando..." : "Finalizar →"}
+                {salvando ? "Salvando..." : modoEdicao ? "Salvar alterações" : "Finalizar →"}
               </button>
             )}
           </div>
