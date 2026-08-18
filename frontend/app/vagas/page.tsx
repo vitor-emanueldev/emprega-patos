@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
+import Link from "next/link";
 
 const TIPOS_CONTRATO = ["Temporário", "Estágio", "CLT", "PJ"];
 const AREAS = ["Comércio", "Educação", "Saúde", "Serviços", "Indústria"];
@@ -15,8 +16,6 @@ const ICONE_AREA: Record<string, { icone: string; cor: string }> = {
   industria: { icone: "🏭", cor: "bg-slate-200" },
 };
 
-// Remove acentos e deixa minúsculo, pra comparar valores sem depender
-// de como cada um digitou (ex: "Comércio" vs "Comercio")
 function normalizar(texto: string) {
   return texto
     .normalize("NFD")
@@ -68,14 +67,11 @@ export default function VagasPage() {
     carregar();
   }, []);
 
-  // Lista de bairros é montada a partir dos dados reais, então nunca
-  // fica desatualizada em relação ao que existe no banco
   const bairrosDisponiveis = useMemo(() => {
     const unicos = new Set(vagas.map((v) => v.bairro).filter(Boolean));
     return Array.from(unicos).sort();
   }, [vagas]);
 
-  // Enquanto os bairros carregam, marca todos como selecionados por padrão
   useEffect(() => {
     if (bairrosDisponiveis.length > 0 && bairrosSelecionados.length === 0) {
       setBairrosSelecionados(bairrosDisponiveis);
@@ -312,9 +308,12 @@ export default function VagasPage() {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <button className="bg-[#F0A93C] text-white text-xs font-semibold rounded-md px-4 py-2 hover:bg-[#dd9a30]">
+                    <Link
+                      href={`/vagas/${vaga.id}`}
+                      className="bg-[#F0A93C] text-white text-xs font-semibold rounded-md px-4 py-2 hover:bg-[#dd9a30] inline-block text-center"
+                    >
                       Ver detalhes
-                    </button>
+                    </Link>
                     <p className="text-[11px] text-slate-400 mt-1.5">
                       {tempoPublicacao(vaga.createdAt)}
                     </p>

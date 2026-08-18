@@ -4,6 +4,9 @@ import { prisma } from "./prisma";
 import authRoutes from "./routes/auth.routes";
 import empresaRoutes from "./routes/empresa.routes";
 import vagasRoutes from "./routes/vaga.routes";
+import candidatoRoutes from "./routes/candidato.routes";
+import estatisticasRoutes from "./routes/estatisticas.routes";
+import candidaturaRoutes from "./routes/candidatura.routes";
 
 
 
@@ -31,7 +34,10 @@ app.get("/teste-banco", async (req, res) => {
 app.use(authRoutes);
 app.use(empresaRoutes);
 app.use(vagasRoutes);
+app.use(candidatoRoutes);
 
+app.use(estatisticasRoutes);
+app.use(candidaturaRoutes);
 
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);

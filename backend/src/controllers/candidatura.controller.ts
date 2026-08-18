@@ -1,0 +1,117 @@
+import { Response } from "express";
+import { prisma } from "../prisma";
+import { RequisicaoAutenticada } from "../middlewares/verificarToken";
+
+// POST /vagas/:id/candidatar
+export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const vagaId = req.params.id;
+
+  try {
+    const candidato = await prisma.candidato.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!candidato) {
+      return res.status(400).json({ erro: "Complete seu currículo antes de se candidatar" });
+    }
+
+    const vaga = await prisma.vaga.findUnique({ where: { id: vagaId } });
+
+    if (!vaga) {
+      return res.status(404).json({ erro: "Vaga não encontrada" });
+    }
+
+    const candidatura = await prisma.candidatura.create({
+      data: {
+        vagaId,
+        candidatoId: candidato.id,
+      },
+    });
+
+    return res.status(201).json(candidatura);
+
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      return res.status(400).json({ erro: "Você já se candidatou para esta vaga" });
+    }
+
+    console.error("Erro ao candidatar:", error);
+    return res.status(500).json({ erro: "Erro ao registrar candidatura" });
+  }
+}
+
+// GET /candidato/minhas-candidaturas
+export async function minhasCandidaturas(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  try {
+    const candidato = await prisma.candidato.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!candidato) {
+      return res.json([]); // sem perfil de candidato ainda → nenhuma candidatura possível
+    }
+
+    const candidaturas = await prisma.candidatura.findMany({
+      where: { candidatoId: candidato.id },
+      include: {
+        vaga: {
+          include: {
+            empresa: { select: { nomeEmpresa: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json(candidaturas);
+
+  } catch (error) {
+    console.error("Erro ao buscar candidaturas:", error);
+    return res.status(500).json({ erro: "Erro ao buscar candidaturas" });
+  }
+}
+
+// GET /vagas/:id/candidaturas (visão da empresa — pode ficar pra depois)
+export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const vagaId = req.params.id;
+
+  try {
+    const empresa = await prisma.empresa.findUnique({
+      where: { usuarioId: req.usuario.id },
+    });
+
+    if (!empresa) {
+      return res.status(403).json({ erro: "Apenas empresas podem ver candidaturas" });
+    }
+
+    const vaga = await prisma.vaga.findUnique({ where: { id: vagaId } });
+
+    if (!vaga || vaga.empresaId !== empresa.id) {
+      return res.status(404).json({ erro: "Vaga não encontrada" });
+    }
+
+    const candidaturas = await prisma.candidatura.findMany({
+      where: { vagaId },
+      include: { candidato: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json(candidaturas);
+
+  } catch (error) {
+    console.error("Erro ao buscar candidaturas da vaga:", error);
+    return res.status(500).json({ erro: "Erro ao buscar candidaturas" });
+  }
+}

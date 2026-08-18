@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Usuario {
@@ -33,17 +34,67 @@ model Candidato {
   habilidades    String[]
   createdAt      DateTime  @default(now())
 
+  fotoUrl        String?
+
+  possuiCnh      Boolean?
+  categoriaCnh   String?
+  possuiVeiculo  Boolean?
+
+  cargoDesejado      String?
+  areaInteresse      String?
+  pretensaoSalarial  Float?
+  diferencial        String?
+
   usuario     Usuario       @relation(fields: [usuarioId], references: [id])
   usuarioId   String        @unique
 
   candidaturas Candidatura[]
+  formacoes    CandidatoFormacao[]
+  cursos       CandidatoCurso[]
+  experiencias CandidatoExperiencia[]
+}
+
+model CandidatoFormacao {
+  id                String   @id @default(cuid())
+  nivelEscolaridade String
+  instituicao       String
+  anoInicio         Int?
+  anoConclusao      Int?
+
+  candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  candidatoId String
+}
+
+model CandidatoCurso {
+  id            String  @id @default(cuid())
+  nomeCurso     String
+  cargaHoraria  String?
+  instituicao   String?
+  anoConclusao  Int?
+
+  candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  candidatoId String
+}
+
+model CandidatoExperiencia {
+  id          String    @id @default(cuid())
+  cargo       String
+  empresa     String
+  dataInicio  DateTime?
+  dataFim     DateTime?
+  atual       Boolean   @default(false)
+  descricao   String?
+
+  candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  candidatoId String
 }
 
 model Empresa {
   id          String   @id @default(cuid())
   nomeEmpresa String
-  cnpj        String   @unique
+  cnpj        String?   @unique
   endereco    String?
+  bairro      String?
   setor       String?
   descricao   String?
   telefone    String?

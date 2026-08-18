@@ -10,7 +10,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { nomeEmpresa, cnpj, endereco, setor, descricao, telefone, latitude, longitude } = req.body;
+  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude } = req.body;
 
   try {
     const empresaExistente = await prisma.empresa.findUnique({
@@ -26,6 +26,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
         nomeEmpresa,
         cnpj,
         endereco,
+        bairro,
         setor,
         descricao,
         telefone,
@@ -63,5 +64,45 @@ export async function buscarMinhaEmpresa(req: RequisicaoAutenticada, res: Respon
 
   } catch (erro) {
     res.status(500).json({ erro: "Erro ao buscar empresa" });
+  }
+}
+
+// PUT /usuario/minha-empresa
+export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Response) {
+  if (!req.usuario) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude } = req.body;
+
+  try {
+    const empresaAtualizada = await prisma.empresa.update({
+      where: { usuarioId: req.usuario.id },
+      data: {
+        nomeEmpresa,
+        cnpj,
+        endereco,
+        bairro,
+        setor,
+        descricao,
+        telefone,
+        latitude: latitude ? Number(latitude) : undefined,
+        longitude: longitude ? Number(longitude) : undefined,
+      },
+    });
+
+    res.status(200).json(empresaAtualizada);
+
+  } catch (erro: any) {
+    if (erro.code === "P2002") {
+      return res.status(400).json({ erro: "Este CNPJ já está cadastrado" });
+    }
+
+    if (erro.code === "P2025") {
+      return res.status(404).json({ erro: "Este usuário não possui empresa vinculada" });
+    }
+
+    console.log("Erro ao atualizar empresa:", erro);
+    res.status(400).json({ erro: "Dados inválidos" });
   }
 }

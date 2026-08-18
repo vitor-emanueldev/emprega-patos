@@ -1,4 +1,4 @@
-﻿const API_URL = "http://localhost:3001";
+const API_URL = "http://localhost:3001";
 
 type LoginResponse = {
   token: string;
@@ -55,7 +55,7 @@ export async function verificarEmpresa(token: string) {
   });
 
   if (resposta.status === 404) {
-    return null; // usuário não tem empresa cadastrada ainda
+    return null;
   }
 
   const dados = await resposta.json();
@@ -76,6 +76,7 @@ export async function cadastrarEmpresa(
     descricao?: string;
     telefone?: string;
     endereco?: string;
+    bairro?: string;
     latitude?: number;
     longitude?: number;
   }
@@ -93,6 +94,40 @@ export async function cadastrarEmpresa(
 
   if (!resposta.ok) {
     throw new Error(resultado.erro || "Erro ao cadastrar empresa");
+  }
+
+  return resultado;
+}
+
+export type DadosAtualizarEmpresa = {
+  nomeEmpresa: string;
+  cnpj: string;
+  setor?: string;
+  descricao?: string;
+  telefone?: string;
+  endereco?: string;
+  bairro?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export async function atualizarEmpresa(
+  token: string,
+  dados: DadosAtualizarEmpresa
+) {
+  const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar empresa");
   }
 
   return resultado;
