@@ -152,6 +152,26 @@ export default function DetalhesVagaPage() {
                 </p>
               </div>
 
+              {/* Responsabilidades */}
+              {vaga.responsabilidades && vaga.responsabilidades.length > 0 && (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h2 className="text-sm font-bold text-[#0F2C4A] mb-3">
+                    Responsabilidades
+                  </h2>
+                  <ul className="space-y-1.5">
+                    {vaga.responsabilidades.map((r, i) => (
+                      <li
+                        key={i}
+                        className="text-sm text-slate-600 flex items-start gap-2"
+                      >
+                        <span className="text-slate-400 mt-0.5">•</span>
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Requisitos */}
               {vaga.requisitos && vaga.requisitos.length > 0 && (
                 <div className="bg-white rounded-xl shadow-md p-6">
@@ -172,13 +192,24 @@ export default function DetalhesVagaPage() {
                 </div>
               )}
 
-              {/*
-                Responsabilidades e Benefícios apareceriam aqui como seções
-                próprias — hoje esses dados não existem no tipo Vaga do
-                lib/api.ts. Se forem adicionados ao schema do Prisma (ex:
-                responsabilidades: string[], beneficios: string[]), é só
-                replicar o mesmo bloco da lista de Requisitos acima.
-              */}
+              {/* Benefícios */}
+              {vaga.beneficios && vaga.beneficios.length > 0 && (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h2 className="text-sm font-bold text-[#0F2C4A] mb-3">
+                    Benefícios
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {vaga.beneficios.map((b, i) => (
+                      <span
+                        key={i}
+                        className="text-xs text-slate-600 bg-slate-100 rounded-full px-3 py-1.5"
+                      >
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* SIDEBAR */}
@@ -218,9 +249,6 @@ export default function DetalhesVagaPage() {
                   </p>
                 )}
 
-                <button className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors">
-                  Candidatar-se agora
-                </button>
                 <button className="mt-2 w-full text-center text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-slate-50 transition-colors">
                   Salvar vaga
                 </button>
@@ -249,7 +277,6 @@ export default function DetalhesVagaPage() {
               </div>
 
               {/* Mapa */}
-              {/* Mapa — reaproveitando o mesmo componente usado na Home */}
               {vaga.latitude && vaga.longitude && (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                   <div style={{ height: 192 }}>

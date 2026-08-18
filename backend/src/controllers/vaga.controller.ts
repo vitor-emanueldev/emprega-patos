@@ -84,9 +84,22 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
     latitude,
     longitude,
     requisitos,
+    responsabilidades,
+    beneficios,
   } = req.body;
 
-  if (!cargo || !descricao || !tipoContrato || !area || !endereco || !bairro || latitude == null || longitude == null) {
+  if (
+    !cargo ||
+    !descricao ||
+    !tipoContrato ||
+    !area ||
+    !endereco ||
+    !bairro ||
+    latitude == null ||
+    longitude == null ||
+    !Array.isArray(responsabilidades) ||
+    responsabilidades.length === 0
+  ) {
     return res.status(400).json({ erro: "Preencha todos os campos obrigatórios da vaga." });
   }
 
@@ -111,6 +124,8 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
         latitude: Number(latitude),
         longitude: Number(longitude),
         requisitos: Array.isArray(requisitos) ? requisitos : [],
+        responsabilidades: Array.isArray(responsabilidades) ? responsabilidades : [],
+        beneficios: Array.isArray(beneficios) ? beneficios : [],
         status: "aberta",
         empresaId: empresa.id,
       },
