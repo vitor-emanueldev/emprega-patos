@@ -276,6 +276,12 @@ export default function PerfilEmpregadorPage() {
                           {vaga.status === "aberta" ? "Aberta" : vaga.status}
                         </span>
                         <button
+                          onClick={() => router.push(`/vagas/${vaga.id}/candidatos`)}
+                          className="text-xs font-semibold text-white bg-[#0F2C4A] rounded-md px-3 py-1.5 hover:bg-[#0F2C4A]/90"
+                        >
+                          Candidatos
+                        </button>
+                        <button
                           onClick={() => router.push(`/vagas/${vaga.id}/editar`)}
                           className="text-xs font-semibold text-[#1D6FA5] border border-[#1D6FA5] rounded-md px-3 py-1.5 hover:bg-[#1D6FA5]/5"
                         >

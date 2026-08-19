@@ -13,6 +13,13 @@ function corDoStatus(status: string) {
   return "bg-amber-100 text-amber-700";
 }
 
+function formatarDataHora(data: string | null | undefined) {
+  if (!data) return "";
+  const dataFormatada = new Date(data);
+  if (Number.isNaN(dataFormatada.getTime())) return "";
+  return dataFormatada.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
 export default function MinhasCandidaturasPage() {
   const router = useRouter();
   const { token } = useAuth();
@@ -106,37 +113,66 @@ export default function MinhasCandidaturasPage() {
         )}
 
         <div className="space-y-4">
-          {candidaturas.map((candidatura) => (
-            <div
-              key={candidatura.id}
-              className="bg-white rounded-xl shadow-md border border-slate-200 p-5 flex items-center justify-between gap-4"
-            >
-              <div className="min-w-0">
-                <p className="font-semibold text-[#0F2C4A]">{candidatura.vaga?.cargo}</p>
-                <p className="text-sm text-[#1D6FA5]">{candidatura.vaga?.empresa?.nomeEmpresa}</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Candidatou-se em{" "}
-                  {new Date(candidatura.createdAt).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
+          {candidaturas.map((candidatura) => {
+            const statusNormalizado = candidatura.status.toLowerCase();
+            const aprovada = statusNormalizado.includes("aprov");
+            const recusada = statusNormalizado.includes("recus") || statusNormalizado.includes("rejeit");
 
-              <div className="flex flex-col items-end gap-2">
-                <span
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${corDoStatus(candidatura.status)}`}
-                >
-                  {candidatura.status}
-                </span>
+            return (
+              <div
+                key={candidatura.id}
+                className="bg-white rounded-xl shadow-md border border-slate-200 p-5"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[#0F2C4A]">{candidatura.vaga?.cargo}</p>
+                    <p className="text-sm text-[#1D6FA5]">{candidatura.vaga?.empresa?.nomeEmpresa}</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Candidatou-se em{" "}
+                      {new Date(candidatura.createdAt).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
 
-                <button
-                  onClick={() => handleCancelar(candidatura.id)}
-                  disabled={cancelandoId === candidatura.id}
-                  className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50 disabled:no-underline"
-                >
-                  {cancelandoId === candidatura.id ? "Cancelando..." : "Cancelar inscrição"}
-                </button>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${corDoStatus(candidatura.status)}`}
+                    >
+                      {candidatura.status}
+                    </span>
+
+                    {statusNormalizado === "pendente" && (
+                      <button
+                        onClick={() => handleCancelar(candidatura.id)}
+                        disabled={cancelandoId === candidatura.id}
+                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50 disabled:no-underline"
+                      >
+                        {cancelandoId === candidatura.id ? "Cancelando..." : "Cancelar inscrição"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {(aprovada || recusada) && (
+                  <div
+                    className={`mt-4 rounded-lg p-4 border ${
+                      aprovada ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                    }`}
+                  >
+                    {aprovada && candidatura.dataEntrevista && (
+                      <p className="text-sm font-semibold text-green-800">
+                        🗓️ Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
+                      </p>
+                    )}
+                    {candidatura.mensagemResposta && (
+                      <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">
+                        “{candidatura.mensagemResposta}”
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
       </main>
