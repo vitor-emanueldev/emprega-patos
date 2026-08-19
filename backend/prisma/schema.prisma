@@ -136,6 +136,11 @@ model Candidatura {
   status    String   @default("pendente")
   createdAt DateTime @default(now())
 
+  // Preenchidos quando o empregador aceita ou rejeita a candidatura
+  mensagemResposta String?
+  dataEntrevista   DateTime?
+  respondidoEm     DateTime?
+
   vaga        Vaga      @relation(fields: [vagaId], references: [id])
   vagaId      String
 

@@ -376,7 +376,23 @@ export type Candidatura = {
   createdAt: string;
   vagaId: string;
   candidatoId: string;
+  mensagemResposta?: string | null;
+  dataEntrevista?: string | null;
+  respondidoEm?: string | null;
   vaga: Vaga;
+};
+
+// Candidatura vista pelo empregador: traz o currículo completo do candidato
+export type CandidaturaComCandidato = {
+  id: string;
+  status: string;
+  createdAt: string;
+  vagaId: string;
+  candidatoId: string;
+  mensagemResposta?: string | null;
+  dataEntrevista?: string | null;
+  respondidoEm?: string | null;
+  candidato: Candidato;
 };
 
 export async function candidatarVaga(
@@ -431,6 +447,77 @@ export async function cancelarCandidatura(token: string, candidaturaId: string) 
 
   if (!resposta.ok) {
     throw new Error(resultado.erro || "Erro ao cancelar candidatura");
+  }
+
+  return resultado;
+}
+
+// Lista as candidaturas recebidas em uma vaga (visão do empregador)
+export async function candidaturasDaVaga(
+  token: string,
+  vagaId: string
+): Promise<CandidaturaComCandidato[]> {
+  const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidaturas`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao buscar candidatos da vaga");
+  }
+
+  return dados;
+}
+
+// Empregador aceita o candidato e marca data/horário da entrevista presencial
+export async function aceitarCandidatura(
+  token: string,
+  candidaturaId: string,
+  dataEntrevista: string,
+  mensagem?: string
+) {
+  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}/aceitar`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ dataEntrevista, mensagem }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao aceitar candidatura");
+  }
+
+  return resultado;
+}
+
+// Empregador rejeita o candidato, com mensagem obrigatória explicando o motivo
+export async function rejeitarCandidatura(
+  token: string,
+  candidaturaId: string,
+  mensagem: string
+) {
+  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}/rejeitar`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ mensagem }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao rejeitar candidatura");
   }
 
   return resultado;
