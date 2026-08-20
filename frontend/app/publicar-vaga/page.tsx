@@ -509,18 +509,6 @@ export default function PublicarVagaPage() {
               </p>
             </div>
 
-            {etapaAtual === 0 && salario && (
-              <div className="bg-yellow-300/90 rounded-lg mt-4 p-3">
-                <p className="text-[#0F2C4A] text-xs font-medium">
-                  Essa vaga com salário intermediário recebe 3x mais candidatos em média
-                </p>
-              </div>
-            )}
-
-            <div className="bg-white/10 rounded-lg mt-4 p-3 text-center">
-              <p className="text-white text-sm font-semibold">~15</p>
-              <p className="text-white/70 text-xs">candidatos ao redor · Patos</p>
-            </div>
           </div>
         </div>
       </main>

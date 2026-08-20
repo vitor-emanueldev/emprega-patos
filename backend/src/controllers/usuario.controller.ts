@@ -24,7 +24,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     const novaEmpresa = await prisma.empresa.create({
       data: {
         nomeEmpresa,
-        cnpj,
+        cnpj: cnpj && cnpj.trim() !== "" ? cnpj : undefined,
         endereco,
         bairro,
         setor,
