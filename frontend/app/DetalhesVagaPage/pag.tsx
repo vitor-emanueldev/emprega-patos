@@ -7,7 +7,7 @@ import {
   detalhesVaga,
   candidatarVaga,
   minhasCandidaturas,
-  verificarCandidato,
+  buscarMinhaFicha,
   type Vaga,
 } from "@/lib/api";
 import MapaSelecionarLocal from "@/components/MapaSelecionarLocal"; // ajuste o caminho se for diferente
@@ -62,7 +62,7 @@ export default function DetalhesVagaPage() {
       }
 
       try {
-        const candidato = await verificarCandidato(token);
+        const candidato = await buscarMinhaFicha(token);
 
         if (!candidato) {
           setEstadoBotao("sem-curriculo");
