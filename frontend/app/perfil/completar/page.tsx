@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
@@ -38,7 +38,7 @@ function formatSalarioDeNumero(numero: number | null | undefined) {
   return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export default function CompletarPerfilPage() {
+function CompletarPerfilContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, usuario } = useAuth();
@@ -903,5 +903,13 @@ export default function CompletarPerfilPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function CompletarPerfilPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <CompletarPerfilContent />
+    </Suspense>
   );
 }
