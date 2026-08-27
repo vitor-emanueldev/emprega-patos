@@ -15,11 +15,11 @@ datasource db {
 }
 
 model Usuario {
-  id        String    @id @default(cuid())
-  email     String    @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
   senha     String
   nome      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   candidato Candidato?
   empresa   Empresa?
@@ -34,19 +34,19 @@ model Candidato {
   habilidades    String[]
   createdAt      DateTime  @default(now())
 
-  fotoUrl        String?
+  fotoUrl String?
 
-  possuiCnh      Boolean?
-  categoriaCnh   String?
-  possuiVeiculo  Boolean?
+  possuiCnh     Boolean?
+  categoriaCnh  String?
+  possuiVeiculo Boolean?
 
-  cargoDesejado      String?
-  areaInteresse      String?
-  pretensaoSalarial  Float?
-  diferencial        String?
+  cargoDesejado     String?
+  areaInteresse     String?
+  pretensaoSalarial Float?
+  diferencial       String?
 
-  usuario     Usuario       @relation(fields: [usuarioId], references: [id])
-  usuarioId   String        @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String  @unique
 
   candidaturas Candidatura[]
   formacoes    CandidatoFormacao[]
@@ -55,7 +55,7 @@ model Candidato {
 }
 
 model CandidatoFormacao {
-  id                String   @id @default(cuid())
+  id                String @id @default(cuid())
   nivelEscolaridade String
   instituicao       String
   anoInicio         Int?
@@ -66,24 +66,24 @@ model CandidatoFormacao {
 }
 
 model CandidatoCurso {
-  id            String  @id @default(cuid())
-  nomeCurso     String
-  cargaHoraria  String?
-  instituicao   String?
-  anoConclusao  Int?
+  id           String  @id @default(cuid())
+  nomeCurso    String
+  cargaHoraria String?
+  instituicao  String?
+  anoConclusao Int?
 
   candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
   candidatoId String
 }
 
 model CandidatoExperiencia {
-  id          String    @id @default(cuid())
-  cargo       String
-  empresa     String
-  dataInicio  DateTime?
-  dataFim     DateTime?
-  atual       Boolean   @default(false)
-  descricao   String?
+  id         String    @id @default(cuid())
+  cargo      String
+  empresa    String
+  dataInicio DateTime?
+  dataFim    DateTime?
+  atual      Boolean   @default(false)
+  descricao  String?
 
   candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
   candidatoId String
@@ -92,7 +92,7 @@ model CandidatoExperiencia {
 model Empresa {
   id          String   @id @default(cuid())
   nomeEmpresa String
-  cnpj        String?   @unique
+  cnpj        String?  @unique
   endereco    String?
   bairro      String?
   setor       String?
@@ -102,31 +102,31 @@ model Empresa {
   longitude   Float?
   createdAt   DateTime @default(now())
 
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId String   @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String  @unique
 
-  vagas     Vaga[]
+  vagas Vaga[]
 }
 
 model Vaga {
-  id           String   @id @default(cuid())
-  cargo        String
-  descricao    String
-  salario      Float?
-  endereco     String
-  latitude     Float
-  longitude    Float
-  requisitos   String[]
+  id                String   @id @default(cuid())
+  cargo             String
+  descricao         String
+  salario           Float?
+  endereco          String
+  latitude          Float
+  longitude         Float
+  requisitos        String[]
   responsabilidades String[]
   beneficios        String[]
-  status       String   @default("aberta")
-  tipoContrato String
-  area         String
-  bairro       String
-  createdAt    DateTime @default(now())
+  status            String   @default("aberta")
+  tipoContrato      String
+  area              String
+  bairro            String
+  createdAt         DateTime @default(now())
 
-  empresa     Empresa  @relation(fields: [empresaId], references: [id])
-  empresaId   String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresaId String
 
   candidaturas Candidatura[]
 }
@@ -141,8 +141,8 @@ model Candidatura {
   dataEntrevista   DateTime?
   respondidoEm     DateTime?
 
-  vaga        Vaga      @relation(fields: [vagaId], references: [id])
-  vagaId      String
+  vaga   Vaga   @relation(fields: [vagaId], references: [id])
+  vagaId String
 
   candidato   Candidato @relation(fields: [candidatoId], references: [id])
   candidatoId String
