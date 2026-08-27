@@ -1,10 +1,7 @@
-// backend/src/controllers/usuario.controller.ts
-
 import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 
-// POST /usuario/tornar-empresa
 export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -39,12 +36,11 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     res.status(201).json(novaEmpresa);
 
   } catch (erro) {
-    console.log("Erro ao tornar empresa:", erro);
+    console.error("Erro ao tornar empresa:", erro);
     res.status(400).json({ erro: "CNPJ já cadastrado ou dados inválidos" });
   }
 }
 
-// GET /usuario/minha-empresa
 export async function buscarMinhaEmpresa(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -67,7 +63,6 @@ export async function buscarMinhaEmpresa(req: RequisicaoAutenticada, res: Respon
   }
 }
 
-// PUT /usuario/minha-empresa
 export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -80,7 +75,7 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
       where: { usuarioId: req.usuario.id },
       data: {
         nomeEmpresa,
-        cnpj,
+        cnpj: cnpj && cnpj.trim() !== "" ? cnpj : undefined,
         endereco,
         bairro,
         setor,
@@ -102,7 +97,7 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
       return res.status(404).json({ erro: "Este usuário não possui empresa vinculada" });
     }
 
-    console.log("Erro ao atualizar empresa:", erro);
+    console.error("Erro ao atualizar empresa:", erro);
     res.status(400).json({ erro: "Dados inválidos" });
   }
 }

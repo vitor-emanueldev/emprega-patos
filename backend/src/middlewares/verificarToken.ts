@@ -1,5 +1,3 @@
-// backend/src/middlewares/verificarToken.ts
-
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 

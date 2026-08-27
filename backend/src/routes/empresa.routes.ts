@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { tornarEmpresa, buscarMinhaEmpresa, atualizarMinhaEmpresa } from "../controllers/usuario.controller";
+import { tornarEmpresa, buscarMinhaEmpresa, atualizarMinhaEmpresa } from "../controllers/empresa.controller";
 import { verificarToken } from "../middlewares/verificarToken";
 
 const router = Router();

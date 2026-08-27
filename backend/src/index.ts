@@ -9,14 +9,12 @@ import estatisticasRoutes from "./routes/estatisticas.routes";
 import candidaturaRoutes from "./routes/candidatura.routes";
 
 
-
 const app = express();
 const PORTA = 3001;
 
 
 app.use(cors());      
 app.use(express.json());
-
 
 app.get("/", (req, res) => {
   res.send("Backend do Emprega Patos rodando!");
@@ -35,7 +33,6 @@ app.use(authRoutes);
 app.use(empresaRoutes);
 app.use(vagasRoutes);
 app.use(candidatoRoutes);
-
 app.use(estatisticasRoutes);
 app.use(candidaturaRoutes);
 

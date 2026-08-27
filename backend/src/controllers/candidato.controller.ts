@@ -1,10 +1,7 @@
-// backend/src/controllers/candidato.controller.ts
-
 import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 
-// POST /candidatos
 export async function tornarCandidato(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -83,12 +80,11 @@ export async function tornarCandidato(req: RequisicaoAutenticada, res: Response)
       return res.status(400).json({ erro: "Este CPF já está cadastrado" });
     }
 
-    console.log("Erro ao tornar candidato:", erro);
+    console.error("Erro ao tornar candidato:", erro);
     res.status(400).json({ erro: "Dados inválidos" });
   }
 }
 
-// GET /candidatos/minha-ficha
 export async function buscarMinhaFicha(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -111,7 +107,6 @@ export async function buscarMinhaFicha(req: RequisicaoAutenticada, res: Response
   }
 }
 
-// PUT /candidatos/minha-ficha
 export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -151,8 +146,6 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
         areaInteresse,
         pretensaoSalarial,
         diferencial,
-        // A cada atualização, o front manda a lista completa mais recente,
-        // então substituímos tudo: apaga o que existia e cria de novo.
         formacoes: formacoes
           ? { deleteMany: {}, create: formacoes }
           : undefined,
@@ -182,7 +175,7 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
       return res.status(404).json({ erro: "Este usuário não possui perfil de candidato" });
     }
 
-    console.log("Erro ao atualizar candidato:", erro);
+    console.error("Erro ao atualizar candidato:", erro);
     res.status(400).json({ erro: "Dados inválidos" });
   }
 }

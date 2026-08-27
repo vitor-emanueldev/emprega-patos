@@ -39,7 +39,7 @@ export async function listarVagas(req: Request, res: Response) {
 
     return res.json(vagas);
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao buscar vagas:", error);
     return res.status(500).json({ erro: "Erro ao buscar vagas." });
   }
 }
@@ -63,7 +63,7 @@ export async function detalhesVaga(req: Request, res: Response) {
 
     return res.json(vaga);
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao buscar vaga:", error);
     return res.status(500).json({ erro: "Erro ao buscar vaga." });
   }
 }

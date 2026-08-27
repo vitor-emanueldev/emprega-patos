@@ -3,7 +3,6 @@ import { prisma } from "../prisma";
 import { criptografarSenha, compararSenha } from "../utils/hash";
 import jwt from "jsonwebtoken";
 
-// parte do cadastro
 export async function cadastrar(req: Request, res: Response) {
   const { nome, email, senha } = req.body;
 
@@ -21,12 +20,11 @@ export async function cadastrar(req: Request, res: Response) {
     });
 
   } catch (erro) {
-    console.log("Erro no cadastro:", erro);
+    console.error("Erro no cadastro:", erro);
     res.status(400).json({ erro: "Email já cadastrado" });
   }
 }
 
-// parte do login
 export async function login(req: Request, res: Response) {
   const { email, senha } = req.body;
 

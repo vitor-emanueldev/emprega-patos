@@ -2,7 +2,6 @@ import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 
-// POST /vagas/:id/candidatar
 export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -44,7 +43,6 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
   }
 }
 
-// GET /candidato/minhas-candidaturas
 export async function minhasCandidaturas(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
@@ -124,8 +122,6 @@ export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Respon
   }
 }
 
-// Busca a candidatura garantindo que ela pertence a uma vaga da empresa logada.
-// Reaproveitado pelos handlers de aceitar/rejeitar abaixo.
 async function buscarCandidaturaDaEmpresa(
   req: RequisicaoAutenticada,
   candidaturaId: string
@@ -158,7 +154,6 @@ async function buscarCandidaturaDaEmpresa(
   return { ok: true as const, candidatura };
 }
 
-// PATCH /candidaturas/:id/rejeitar
 export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Response) {
   const candidaturaId = req.params.id;
   const { mensagem } = req.body;
@@ -190,7 +185,6 @@ export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Respo
   }
 }
 
-// PATCH /candidaturas/:id/aceitar
 export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Response) {
   const candidaturaId = req.params.id;
   const { mensagem, dataEntrevista } = req.body;
@@ -227,7 +221,6 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
   }
 }
 
-// DELETE /candidaturas/:id — o candidato desiste de uma vaga que já se candidatou
 export async function cancelarCandidatura(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
     return res.status(401).json({ erro: "Não autenticado" });
