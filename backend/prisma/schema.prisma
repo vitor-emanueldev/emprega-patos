@@ -15,11 +15,15 @@ datasource db {
 }
 
 model Usuario {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   senha     String
   nome      String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+
+  emailVerificado         Boolean   @default(false)
+  tokenVerificacao        String?   @unique
+  tokenVerificacaoExpira  DateTime?
 
   candidato Candidato?
   empresa   Empresa?
@@ -117,8 +121,8 @@ model Vaga {
   latitude          Float
   longitude         Float
   requisitos        String[]
-  responsabilidades String[]
-  beneficios        String[]
+  responsabilidades String[] @default([])
+  beneficios        String[] @default([])
   status            String   @default("aberta")
   tipoContrato      String
   area              String
