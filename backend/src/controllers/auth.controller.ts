@@ -1,46 +1,49 @@
 import { Request, Response } from "express";
 import { prisma } from "../prisma";
-import { criptografarSenha, compararSenha } from "../utils/hash";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
-export async function cadastrar(req: Request, res: Response) {
-  const { nome, email, senha } = req.body;
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-  try {
-    const senhaCriptografada = await criptografarSenha(senha);
+// POST /auth/google
+export async function loginGoogle(req: Request, res: Response) {
+  const { credential } = req.body; // token que o Google Identity Services manda
 
-    const novoUsuario = await prisma.usuario.create({
-      data: { nome, email, senha: senhaCriptografada },
-    });
-
-    res.status(201).json({
-      id: novoUsuario.id,
-      nome: novoUsuario.nome,
-      email: novoUsuario.email,
-    });
-
-  } catch (erro) {
-    console.error("Erro no cadastro:", erro);
-    res.status(400).json({ erro: "Email já cadastrado" });
+  if (!credential) {
+    return res.status(400).json({ erro: "Token do Google não fornecido." });
   }
-}
-
-export async function login(req: Request, res: Response) {
-  const { email, senha } = req.body;
 
   try {
-    const usuario = await prisma.usuario.findUnique({
-      where: { email },
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    if (!usuario) {
-      return res.status(401).json({ erro: "Email ou senha inválidos" });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ erro: "Não foi possível validar sua conta Google." });
     }
 
-    const senhaCorreta = await compararSenha(senha, usuario.senha);
+    const { sub: googleId, email, name, picture } = payload;
 
-    if (!senhaCorreta) {
-      return res.status(401).json({ erro: "Email ou senha inválidos" });
+    let usuario = await prisma.usuario.findUnique({ where: { email } });
+
+    if (!usuario) {
+      usuario = await prisma.usuario.create({
+        data: {
+          email,
+          nome: name || email.split("@")[0],
+          googleId,
+          fotoUrl: picture,
+        },
+      });
+    } else if (!usuario.googleId) {
+      // Usuário já existia (ex: dado de teste antigo) — vincula a conta Google
+      usuario = await prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { googleId, fotoUrl: picture },
+      });
     }
 
     const token = jwt.sign(
@@ -55,10 +58,12 @@ export async function login(req: Request, res: Response) {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        fotoUrl: usuario.fotoUrl,
       },
     });
 
   } catch (erro) {
-    res.status(500).json({ erro: "Erro ao fazer login" });
+    console.error("Erro no login com Google:", erro);
+    res.status(401).json({ erro: "Falha ao autenticar com Google." });
   }
 }

@@ -15,15 +15,13 @@ datasource db {
 }
 
 model Usuario {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  senha     String
+  id        String     @id @default(cuid())
+  email     String     @unique
+  senha     String?
   nome      String
-  createdAt DateTime  @default(now())
-
-  emailVerificado         Boolean   @default(false)
-  tokenVerificacao        String?   @unique
-  tokenVerificacaoExpira  DateTime?
+  googleId  String?    @unique
+  fotoUrl   String?
+  createdAt DateTime   @default(now())
 
   candidato Candidato?
   empresa   Empresa?

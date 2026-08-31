@@ -10,36 +10,17 @@ type LoginResponse = {
   };
 };
 
-export async function login(
-  email: string,
-  senha: string
-): Promise<LoginResponse> {
-  const resposta = await fetch(`${API_URL}/auth/login`, {
+export async function loginComGoogle(credential: string): Promise<LoginResponse> {
+  const resposta = await fetch(`${API_URL}/auth/google`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, senha }),
+    body: JSON.stringify({ credential }),
   });
 
   const dados = await resposta.json();
 
   if (!resposta.ok) {
-    throw new Error(dados.erro || "Erro ao fazer login");
-  }
-
-  return dados;
-}
-
-export async function cadastrar(nome: string, email: string, senha: string) {
-  const resposta = await fetch(`${API_URL}/auth/cadastro`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome, email, senha }),
-  });
-
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(dados.erro || "Erro ao cadastrar");
+    throw new Error(dados.erro || "Erro ao entrar com Google");
   }
 
   return dados;

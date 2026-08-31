@@ -1,113 +1,126 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { login } from "@/lib/api";
+import Script from "next/script";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
+import { loginComGoogle } from "@/lib/api";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+const BENEFICIOS = [
+  {
+    texto: "Publique vagas gratuitamente",
+    icone: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+    ),
+  },
+  {
+    texto: "Vagas com localização real no mapa",
+    icone: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+    ),
+  },
+  {
+    texto: "Currículo simples, pronto em minutos",
+    icone: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6" />
+        <path d="M9 13h6M9 17h6" />
+      </svg>
+    ),
+  },
+];
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [lembrar, setLembrar] = useState(false);
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
   const router = useRouter();
   const { salvarLogin } = useAuth();
+  const botaoRef = useRef<HTMLDivElement>(null);
 
-  async function handleLogin() {
-    setErro("");
-
-    if (!email || !senha) {
-      setErro("Preencha email e senha.");
-      return;
-    }
-
-    setCarregando(true);
+  async function handleCredentialResponse(response: any) {
     try {
-      const dados = await login(email, senha);
+      const dados = await loginComGoogle(response.credential);
       salvarLogin(dados.token, dados.usuario);
       router.push("/");
     } catch (erro) {
-      setErro("Email ou senha inválidos");
-    } finally {
-      setCarregando(false);
+      console.error("Erro ao entrar com Google:", erro);
+      alert("Não foi possível entrar. Tenta de novo.");
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") handleLogin();
+  function inicializarGoogle() {
+    if (window.google && botaoRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
+      window.google.accounts.id.renderButton(botaoRef.current, {
+        theme: "filled_black",
+        size: "large",
+        text: "continue_with",
+        width: 320,
+        shape: "pill",
+      });
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#0F2C4A]">
       <Header />
-      <main className="flex flex-col items-center pt-16 pb-24 px-4">
-        <h1 className="text-white text-2xl font-bold mb-8">Faça seu Login!</h1>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        onReady={inicializarGoogle}
+      />
 
-        <div className="w-20 h-20 rounded-full bg-[#1D6FA5] flex items-center justify-center -mb-10 relative z-10 shadow-lg">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </div>
-
-        <div className="w-full max-w-sm bg-white rounded-xl shadow-xl pt-14 pb-8 px-8">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-[#0F2C4A] font-medium mb-1">E-mail:</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-              />
+      <main className="flex flex-col items-center justify-center px-4 py-20">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl px-8 pt-10 pb-8 text-center">
+            {/* Ícone de perfil (padrão) */}
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#1D6FA5] flex items-center justify-center mb-5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
             </div>
 
-            <div>
-              <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Senha:</label>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={lembrar}
-                  onChange={(e) => setLembrar(e.target.checked)}
-                  className="rounded border-slate-300"
-                />
-                Lembre-me
-              </label>
-              <Link href="/esqueci-senha" className="text-[#1D6FA5] hover:underline">Esqueceu a senha?</Link>
-            </div>
-
-            {erro && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                {erro}
-              </p>
-            )}
-
-            <button
-              onClick={handleLogin}
-              disabled={carregando}
-              className="w-full rounded-md bg-[#F0A93C] text-white font-semibold py-2.5 hover:bg-[#dd9a30] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {carregando ? "Entrando..." : "Entrar"}
-            </button>
-
-            <p className="text-center text-sm text-slate-600">
-              Ainda não tem uma conta?{" "}
-              <Link href="/cadastro" className="text-[#1D6FA5] hover:underline">Cadastre-se</Link>
+            <h1 className="text-xl font-bold text-[#0F2C4A] mb-1">Bem-vindo ao MapVagas</h1>
+            <p className="text-sm text-slate-500 mb-7">
+              Entre com sua conta Google. Se for a primeira vez, sua conta é criada automaticamente.
             </p>
+
+            <div className="flex justify-center mb-1">
+              <div ref={botaoRef} />
+            </div>
+
+            <p className="text-[11px] text-slate-400 mt-4 leading-relaxed">
+              Ao continuar, você concorda com o uso dos seus dados básicos do Google
+              (nome, email e foto) apenas para criar sua conta no MapVagas.
+            </p>
+          </div>
+
+          {/* Benefícios */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {BENEFICIOS.map((b) => (
+              <div
+                key={b.texto}
+                className="bg-white/10 rounded-lg px-3 py-4 text-center flex flex-col items-center gap-2"
+              >
+                {b.icone}
+                <p className="text-white/80 text-xs leading-snug">{b.texto}</p>
+              </div>
+            ))}
           </div>
         </div>
       </main>
