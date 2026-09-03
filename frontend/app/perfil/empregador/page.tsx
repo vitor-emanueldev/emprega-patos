@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { verificarEmpresa, minhasVagas, type Vaga } from "@/lib/api";
+import { Building2 } from "lucide-react";
 
 type Empresa = {
   id: string;
@@ -76,7 +77,7 @@ export default function PerfilEmpregadorPage() {
         <main className="max-w-2xl mx-auto px-6 py-16">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-10 text-center">
             <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center text-4xl mx-auto">
-              🏢
+              <Building2 className="w-13 h-13"/>
             </div>
 
             <h1 className="text-2xl font-bold text-[#0F2C4A] mt-6">
@@ -128,7 +129,7 @@ export default function PerfilEmpregadorPage() {
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
               <div className="flex flex-col items-center">
                 <div className="w-36 h-36 rounded-full bg-[#F0A93C] flex items-center justify-center text-white text-6xl shadow-md">
-                  🏢
+                  <Building2 className="w-16 h-16"/>
                 </div>
                 <h2 className="mt-5 text-2xl font-bold text-[#0F2C4A] text-center">
                   {empresa.nomeEmpresa}

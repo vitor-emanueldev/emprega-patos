@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, atualizarEmpresa } from "@/lib/api";
+import { Building2 } from "lucide-react";
 
 export default function EditarPerfilEmpregadorPage() {
   const router = useRouter();
@@ -133,7 +134,7 @@ export default function EditarPerfilEmpregadorPage() {
 
           <div className="text-center mb-8">
             <div className="w-20 h-20 rounded-full bg-[#F0A93C] text-white flex items-center justify-center text-4xl mx-auto shadow-md">
-              🏢
+              < Building2 className=  "w-13 h-13"/>
             </div>
 
             <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">

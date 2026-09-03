@@ -4,18 +4,11 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
+import { getIconePorCargo } from "@/lib/icones";
 import Link from "next/link";
 
 const TIPOS_CONTRATO = ["Temporário", "Estágio", "CLT", "PJ"];
 const AREAS = ["Comércio", "Educação", "Saúde", "Serviços", "Indústria"];
-
-const ICONE_AREA: Record<string, { icone: string; cor: string }> = {
-  comercio: { icone: "🛍️", cor: "bg-amber-100" },
-  educacao: { icone: "📚", cor: "bg-sky-100" },
-  saude: { icone: "🏥", cor: "bg-rose-100" },
-  servicos: { icone: "🔧", cor: "bg-teal-100" },
-  industria: { icone: "🏭", cor: "bg-slate-200" },
-};
 
 function normalizar(texto: string) {
   return texto
@@ -273,21 +266,15 @@ function VagasConteudo() {
 
           <div className="space-y-3">
             {vagasFiltradas.map((vaga) => {
-              const chave = normalizar(vaga.area);
-              const { icone, cor } = ICONE_AREA[chave] ?? {
-                icone: "💼",
-                cor: "bg-slate-100",
-              };
+              const Icone = getIconePorCargo(vaga.cargo);
 
               return (
                 <div
                   key={vaga.id}
                   className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex items-center gap-4"
                 >
-                  <div
-                    className={`w-12 h-12 shrink-0 rounded-full ${cor} flex items-center justify-center text-xl`}
-                  >
-                    {icone}
+                  <div className="w-12 h-12 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
+                    <Icone className="w-6 h-6 text-[#0F2C4A]" />
                   </div>
 
                   <div className="flex-1 min-w-0">

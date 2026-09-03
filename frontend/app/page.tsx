@@ -6,6 +6,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { listarVagas, buscarEstatisticas, type Vaga, type Estatisticas } from "@/lib/api";
+import { getIconePorCargo } from "@/lib/icones";
+import { Search, MapPin } from "lucide-react";
+
 
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
   ssr: false,
@@ -72,7 +75,7 @@ export default function HomePage() {
 
         <div className="flex justify-center mb-10">
           <div className="flex items-center bg-white rounded-full shadow-md w-full max-w-md overflow-hidden pl-4">
-            <span className="text-slate-400 text-sm mr-2">🔍</span>
+            <Search className="w-4 h-4 text-slate-400 mr-2" />
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
@@ -144,33 +147,37 @@ export default function HomePage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {vagasRecentes.map((vaga) => (
-              <div
-                key={vaga.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-5 flex flex-col gap-2"
-              >
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-lg mb-1">
-                  💼
-                </div>
-                <p className="font-semibold text-[#0F2C4A] text-sm">{vaga.cargo}</p>
-                <p className="text-xs text-slate-500 -mt-1">{vaga.empresa.nomeEmpresa}</p>
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  📍 {vaga.bairro}
-                  {vaga.salario && (
-                    <>
-                      <span className="mx-1">·</span>
-                      R$ {vaga.salario.toLocaleString("pt-BR")}
-                    </>
-                  )}
-                </p>
-                <Link
-                  href={`/vagas/${vaga.id}`}
-                  className="mt-2 bg-[#F0A93C] text-white text-xs font-semibold rounded-md py-2 text-center hover:bg-[#dd9a30]"
+            {vagasRecentes.map((vaga) => {
+              const Icone = getIconePorCargo(vaga.cargo);
+
+              return (
+                <div
+                  key={vaga.id}
+                  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-5 flex flex-col gap-2"
                 >
-                  Ver vaga
-                </Link>
-              </div>
-            ))}
+                  <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center mb-1">
+                    <Icone className="w-5 h-5 text-[#0F2C4A]" />
+                  </div>
+                  <p className="font-semibold text-[#0F2C4A] text-sm">{vaga.cargo}</p>
+                  <p className="text-xs text-slate-500 -mt-1">{vaga.empresa.nomeEmpresa}</p>
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-[#DC2626] mr-2" /> {vaga.bairro}
+                    {vaga.salario && (
+                      <>
+                        <span className="mx-1">·</span>
+                        R$ {vaga.salario.toLocaleString("pt-BR")}
+                      </>
+                    )}
+                  </p>
+                  <Link
+                    href={`/vagas/${vaga.id}`}
+                    className="mt-2 bg-[#F0A93C] text-white text-xs font-semibold rounded-md py-2 text-center hover:bg-[#dd9a30]"
+                  >
+                    Ver vaga
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
