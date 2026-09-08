@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
+import { getIconePorCargo } from "@/lib/icones";
 
 
 // Import dinâmico sem SSR — Leaflet (quando entrar) depende do window
@@ -205,32 +206,47 @@ export default function MapaPage() {
             )}
 
             <ul className="divide-y divide-slate-100">
-              {vagasFiltradas.map((vaga) => (
-                <li key={vaga.id}>
-                  <button
-                    onClick={() => setVagaSelecionada(vaga.id)}
-                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors ${
-                      vagaSelecionada === vaga.id ? "bg-slate-50" : ""
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-[#0F2C4A]">{vaga.cargo}</p>
-                    <p className="text-xs text-slate-500">{vaga.empresa.nomeEmpresa}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">
-                        {vaga.tipoContrato}
-                      </span>
-                      <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">
-                        {vaga.area}
-                      </span>
-                    </div>
-                    {vaga.salario && (
-                      <p className="text-xs font-medium text-[#1D6FA5] mt-1.5">
-                        R$ {vaga.salario.toLocaleString("pt-BR")}
-                      </p>
-                    )}
-                  </button>
-                </li>
-              ))}
+              {vagasFiltradas.map((vaga) => {
+                const Icone = getIconePorCargo(vaga.cargo);
+
+                return (
+                  <li key={vaga.id}>
+                    <button
+                      onClick={() => setVagaSelecionada(vaga.id)}
+                      className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors ${
+                        vagaSelecionada === vaga.id ? "bg-slate-50" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
+                          <Icone className="w-4 h-4 text-[#0F2C4A]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#0F2C4A] truncate">
+                            {vaga.cargo}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {vaga.empresa.nomeEmpresa}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                          {vaga.tipoContrato}
+                        </span>
+                        <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                          {vaga.area}
+                        </span>
+                      </div>
+                      {vaga.salario && (
+                        <p className="text-xs font-medium text-[#1D6FA5] mt-1.5">
+                          R$ {vaga.salario.toLocaleString("pt-BR")}
+                        </p>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

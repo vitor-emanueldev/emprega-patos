@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
+import { Building2, UserRound } from "lucide-react";
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function PerfilPage() {
         {/* Título */}
         <div className="text-center mb-10">
           <div className="w-24 h-24 rounded-full bg-[#0F2C4A] text-white flex items-center justify-center text-4xl mx-auto shadow-lg">
-            👤
+            <UserRound className="w-16 h-16" />
           </div>
 
           <h1 className="mt-6 text-3xl font-bold text-[#0F2C4A]">
@@ -45,7 +46,7 @@ export default function PerfilPage() {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 flex flex-col">
 
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-3xl">
-              👤
+              <UserRound className="w-10 h-10" />
             </div>
 
             <h2 className="text-xl font-bold text-[#0F2C4A] mt-5">
@@ -70,7 +71,7 @@ export default function PerfilPage() {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 flex flex-col">
 
             <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-3xl">
-              🏢
+              <Building2 className="w-10 h-10" />
             </div>
 
             <h2 className="text-xl font-bold text-[#0F2C4A] mt-5">

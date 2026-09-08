@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { buscarMinhaFicha, Candidato } from "@/lib/api";
+import { buscarMinhaFicha, Candidato } from "@/lib/api";  
+import { ClipboardList, FileUser, TriangleAlert, UserRound} from "lucide-react";
 
 export default function PerfilCandidatoPage() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function PerfilCandidatoPage() {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
 
             <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-3xl mx-auto">
-              ⚠️
+              <TriangleAlert className="w-13 h-13 text-yellow-400" />
             </div>
 
             <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
@@ -175,7 +176,7 @@ export default function PerfilCandidatoPage() {
               <div className="flex flex-col items-center">
 
                 <div className="w-36 h-36 rounded-full bg-[#0F2C4A] flex items-center justify-center text-white text-6xl shadow-md">
-                  👤
+                  <UserRound className="w-16 h-16" />
                 </div>
 
                 <h2 className="mt-5 text-2xl font-bold text-[#0F2C4A] text-center">
@@ -448,7 +449,7 @@ export default function PerfilCandidatoPage() {
                 className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
               >
                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">
-                  📋
+                  <ClipboardList className="w-9 h-9"/>
                 </div>
                 <h3 className="font-bold text-[#0F2C4A] mt-4">
                   Vagas concorridas
@@ -463,7 +464,7 @@ export default function PerfilCandidatoPage() {
                 className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
               >
                 <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
-                  📄
+                  < FileUser className="w-9 h-9"/>
                 </div>
                 <h3 className="font-bold text-[#0F2C4A] mt-4">
                   Ver e editar currículo completo
