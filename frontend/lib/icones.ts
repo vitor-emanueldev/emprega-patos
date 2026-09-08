@@ -1,4 +1,4 @@
-// lib/iconesCargos.tsx
+
 import {
   Bike, Package, ShoppingCart, User, Shield, Fuel,
   Wrench, Sparkles, TreePine, Utensils, ChefHat, Cake,

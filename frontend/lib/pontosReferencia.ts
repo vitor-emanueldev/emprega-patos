@@ -7,6 +7,7 @@ export type PontoReferencia = {
 };
 
 export const PONTOS_REFERENCIA: PontoReferencia[] = [
+  
   // Faculdades
   { id: "1", nome: "Centro Universitário de Patos (UNIFIP)", tipo: "faculdade", latitude: -7.020407, longitude: -37.279342 },
   { id: "2", nome: "UFCG - Campus de Patos", tipo: "faculdade", latitude: -7.058523, longitude: -37.276878 },

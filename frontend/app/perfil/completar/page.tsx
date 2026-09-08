@@ -50,7 +50,7 @@ function CompletarPerfilContent() {
   const [carregandoInicial, setCarregandoInicial] = useState(true);
   const [modoEdicao, setModoEdicao] = useState(false);
 
-  // ── Etapa 1: Dados Pessoais ──────────────────────────────────────────────
+  // ── Etapa 1: Dados Pessoais 
   const [dataNascimento, setDataNascimento] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -59,7 +59,7 @@ function CompletarPerfilContent() {
   const [categoriaCnh, setCategoriaCnh] = useState("");
   const [possuiVeiculo, setPossuiVeiculo] = useState<boolean | null>(null);
 
-  // ── Etapa 2: Formações e cursos ──────────────────────────────────────────
+  // ── Etapa 2: Formações e cursos 
   const [nivelEscolaridade, setNivelEscolaridade] = useState("");
   const [instituicaoFormacao, setInstituicaoFormacao] = useState("");
   const [anoInicioFormacao, setAnoInicioFormacao] = useState("");
@@ -70,7 +70,7 @@ function CompletarPerfilContent() {
   const [instituicaoCurso, setInstituicaoCurso] = useState("");
   const [anoConclusaoCurso, setAnoConclusaoCurso] = useState("");
 
-  // ── Etapa 3: Objetivo, habilidades e experiência ─────────────────────────
+  // ── Etapa 3: Objetivo, habilidades e experiência 
   const [cargoDesejado, setCargoDesejado] = useState("");
   const [areaInteresse, setAreaInteresse] = useState("");
   const [pretensaoSalarial, setPretensaoSalarial] = useState("");
@@ -149,7 +149,7 @@ function CompletarPerfilContent() {
           }
         }
       } catch {
-        // se der erro ao buscar, segue como cadastro novo — sem travar o usuário
+
       } finally {
         setCarregandoInicial(false);
       }

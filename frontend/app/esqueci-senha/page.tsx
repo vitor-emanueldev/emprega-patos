@@ -23,8 +23,6 @@ export default function EsqueciSenhaPage() {
       return;
     }
 
-    // TODO: ainda não existe rota no backend para recuperação de senha.
-    // Por enquanto, só simulamos o envio no front.
     setEnviado(true);
   }
 

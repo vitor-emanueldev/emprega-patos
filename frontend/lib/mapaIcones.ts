@@ -1,6 +1,5 @@
 import L from "leaflet";
 
-// Pino em formato de gota (local selecionado / vaga)
 export function criarPino(corPreenchimento: string, corBorda: string) {
   return L.divIcon({
     className: "",
@@ -26,7 +25,6 @@ export function criarPino(corPreenchimento: string, corBorda: string) {
   });
 }
 
-// Círculo sólido de referência, estilo Google Maps (ex: "H" vermelho de hospital)
 function criarCirculoSolido(cor: string, conteudo: string) {
   return L.divIcon({
     className: "",
@@ -58,16 +56,15 @@ function criarCirculoSolido(cor: string, conteudo: string) {
 export const iconeVaga = criarPino("#F0A93C", "#0F2C4A");
 export const iconeEmpresa = criarPino("#F0A93C", "#0F2C4A");
 
-// "H" vermelho, igual ao Google
+
 export const iconeHospital = criarCirculoSolido("#E24C4C", "H");
 
-// Capelo de formatura em SVG, dentro do círculo azul
+
 export const iconeFaculdade = criarCirculoSolido(
   "#1D6FA5",
   `<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 3L1 9l11 6 9-4.9V17h2V9L12 3zm0 13.5L4.5 12.7V16c0 2 3.5 4 7.5 4s7.5-2 7.5-4v-3.3L12 16.5z"/></svg>`
 );
 
-// Sacola de compras, dentro do círculo roxo (shopping)
 export const iconeShopping = criarCirculoSolido(
   "#8E5FC9",
   `<svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M6 2l-1.5 4H4a1 1 0 000 2h.5L6 20h12l1.5-12H20a1 1 0 000-2h-.5L18 2H6zm2.5 4l.8-2h5.4l.8 2H8.5zM12 10a2 2 0 01-2-2h4a2 2 0 01-2 2z"/></svg>`

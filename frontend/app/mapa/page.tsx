@@ -8,7 +8,6 @@ import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
 import { getIconePorCargo } from "@/lib/icones";
 
 
-// Import dinâmico sem SSR — Leaflet (quando entrar) depende do window
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
   ssr: false,
   loading: () => (

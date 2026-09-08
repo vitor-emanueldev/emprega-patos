@@ -1,5 +1,4 @@
-// frontend/lib/habilidadesCatalogo.ts
-//
+
 // Lista curada de habilidades pra alimentar o autocomplete do currículo.
 // Cobre ferramentas de escritório, tecnologia, idiomas, vendas/atendimento,
 // operacional/logística e comportamentais — o tipo de coisa que empresas

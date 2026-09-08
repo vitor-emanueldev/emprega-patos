@@ -218,8 +218,6 @@ export async function publicarVaga(token: string, dados: DadosVaga) {
   return resultado;
 }
 
-// ─── Perfil do Candidato ─────────────────────────────────────────────────────
-
 export type DadosFormacao = {
   nivelEscolaridade: string;
   instituicao: string;
@@ -315,7 +313,7 @@ export async function buscarMinhaFicha(token: string): Promise<Candidato | null>
   });
 
   if (resposta.status === 404) {
-    return null; // usuário ainda não completou o currículo
+    return null; 
   }
 
   const resultado = await resposta.json();
@@ -349,8 +347,6 @@ export async function atualizarMinhaFicha(
   return resultado;
 }
 
-// ─── Candidatura ──────────────────────────────────────────────────────────────
-
 export type Candidatura = {
   id: string;
   status: string;
@@ -363,7 +359,6 @@ export type Candidatura = {
   vaga: Vaga;
 };
 
-// Candidatura vista pelo empregador: traz o currículo completo do candidato
 export type CandidaturaComCandidato = {
   id: string;
   status: string;
@@ -433,7 +428,6 @@ export async function cancelarCandidatura(token: string, candidaturaId: string) 
   return resultado;
 }
 
-// Lista as candidaturas recebidas em uma vaga (visão do empregador)
 export async function candidaturasDaVaga(
   token: string,
   vagaId: string
@@ -455,7 +449,6 @@ export async function candidaturasDaVaga(
   return dados;
 }
 
-// Empregador aceita o candidato e marca data/horário da entrevista presencial
 export async function aceitarCandidatura(
   token: string,
   candidaturaId: string,
@@ -480,7 +473,6 @@ export async function aceitarCandidatura(
   return resultado;
 }
 
-// Empregador rejeita o candidato, com mensagem obrigatória explicando o motivo
 export async function rejeitarCandidatura(
   token: string,
   candidaturaId: string,

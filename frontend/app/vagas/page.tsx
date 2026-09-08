@@ -72,7 +72,7 @@ function VagasConteudo() {
     if (bairrosDisponiveis.length > 0 && bairrosSelecionados.length === 0) {
       setBairrosSelecionados(bairrosDisponiveis);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [bairrosDisponiveis]);
 
   const vagasFiltradas = useMemo(() => {

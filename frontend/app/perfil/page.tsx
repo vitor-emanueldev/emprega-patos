@@ -46,7 +46,7 @@ export default function PerfilPage() {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 flex flex-col">
 
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-3xl">
-              <UserRound className="w-10 h-10" />
+              <UserRound className="w-10 h-10 text-black" />
             </div>
 
             <h2 className="text-xl font-bold text-[#0F2C4A] mt-5">
@@ -71,7 +71,7 @@ export default function PerfilPage() {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 flex flex-col">
 
             <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-3xl">
-              <Building2 className="w-10 h-10" />
+              <Building2 className="w-10 h-10 text-black" />
             </div>
 
             <h2 className="text-xl font-bold text-[#0F2C4A] mt-5">

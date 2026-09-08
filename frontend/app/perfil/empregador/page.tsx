@@ -6,6 +6,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { verificarEmpresa, minhasVagas, type Vaga } from "@/lib/api";
 import { Building2 } from "lucide-react";
+import RotaProtegida from "@/components/RotaProtegida";
+
+export default function PerfilEmpregadorPage() {
+  return (
+    <RotaProtegida>
+      <ConteudoPerfilEmpregador />
+    </RotaProtegida>
+  );
+}
 
 type Empresa = {
   id: string;
@@ -20,7 +29,7 @@ type Empresa = {
   longitude?: number;
 };
 
-export default function PerfilEmpregadorPage() {
+function ConteudoPerfilEmpregador() {
   const router = useRouter();
   const { usuario, token } = useAuth();
 
@@ -69,7 +78,6 @@ export default function PerfilEmpregadorPage() {
     );
   }
 
-  // Sem empresa cadastrada: mostra só a mensagem, sem dashboard nenhum
   if (!empresa) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -77,7 +85,7 @@ export default function PerfilEmpregadorPage() {
         <main className="max-w-2xl mx-auto px-6 py-16">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-10 text-center">
             <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center text-4xl mx-auto">
-              <Building2 className="w-13 h-13"/>
+              <Building2 className="w-13 h-13 text-black"/>
             </div>
 
             <h1 className="text-2xl font-bold text-[#0F2C4A] mt-6">
