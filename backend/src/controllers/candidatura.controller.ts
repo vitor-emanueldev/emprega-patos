@@ -18,10 +18,21 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
       return res.status(400).json({ erro: "Complete seu currículo antes de se candidatar" });
     }
 
-    const vaga = await prisma.vaga.findUnique({ where: { id: vagaId } });
+    const vaga = await prisma.vaga.findUnique({
+      where: { id: vagaId },
+      include: { empresa: { select: { usuarioId: true } } },
+    });
 
     if (!vaga) {
       return res.status(404).json({ erro: "Vaga não encontrada" });
+    }
+
+    if (vaga.status !== "aberta") {
+      return res.status(400).json({ erro: "Esta vaga não está mais recebendo candidaturas" });
+    }
+
+    if (vaga.empresa.usuarioId === req.usuario.id) {
+      return res.status(400).json({ erro: "Você não pode se candidatar a uma vaga da sua própria empresa" });
     }
 
     const candidatura = await prisma.candidatura.create({
@@ -77,6 +88,17 @@ export async function minhasCandidaturas(req: RequisicaoAutenticada, res: Respon
   }
 }
 
+function calcularIdade(dataNascimento: Date | null): number | null {
+  if (!dataNascimento) return null;
+  const hoje = new Date();
+  let idade = hoje.getUTCFullYear() - dataNascimento.getUTCFullYear();
+  const aindaNaoFezAniversario =
+    hoje.getUTCMonth() < dataNascimento.getUTCMonth() ||
+    (hoje.getUTCMonth() === dataNascimento.getUTCMonth() && hoje.getUTCDate() < dataNascimento.getUTCDate());
+  if (aindaNaoFezAniversario) idade--;
+  return idade;
+}
+
 // GET /vagas/:id/candidaturas (visão da empresa: lista de candidatos + currículo completo)
 export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
@@ -104,17 +126,46 @@ export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Respon
       where: { vagaId },
       include: {
         candidato: {
-          include: {
+          // LGPD: a empresa vê só o necessário para avaliar o candidato.
+          // CPF e data de nascimento NÃO saem daqui (mostramos só a idade).
+          select: {
+            id: true,
+            nome: true,
+            telefone: true,
+            dataNascimento: true, // usado só para calcular a idade, removido abaixo
+            habilidades: true,
+            fotoUrl: true,
+            possuiCnh: true,
+            categoriaCnh: true,
+            possuiVeiculo: true,
+            cargoDesejado: true,
+            areaInteresse: true,
+            pretensaoSalarial: true,
+            diferencial: true,
             formacoes: true,
             cursos: true,
             experiencias: true,
+            usuario: { select: { email: true } },
           },
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json(candidaturas);
+    const resposta = candidaturas.map((item: (typeof candidaturas)[number]) => {
+      const { candidato, ...candidatura } = item;
+      const { dataNascimento, usuario, ...dadosPublicos } = candidato;
+      return {
+        ...candidatura,
+        candidato: {
+          ...dadosPublicos,
+          email: usuario?.email ?? null,
+          idade: calcularIdade(dataNascimento),
+        },
+      };
+    });
+
+    return res.json(resposta);
 
   } catch (error) {
     console.error("Erro ao buscar candidaturas da vaga:", error);
@@ -156,11 +207,7 @@ async function buscarCandidaturaDaEmpresa(
 
 export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Response) {
   const candidaturaId = req.params.id;
-  const { mensagem } = req.body;
-
-  if (!mensagem || !String(mensagem).trim()) {
-    return res.status(400).json({ erro: "Escreva uma mensagem para o candidato." });
-  }
+  const { mensagem } = req.body; // já validado (rejeitarCandidaturaSchema)
 
   const resultado = await buscarCandidaturaDaEmpresa(req, candidaturaId);
   if (!resultado.ok) {
@@ -172,7 +219,7 @@ export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Respo
       where: { id: candidaturaId },
       data: {
         status: "recusada",
-        mensagemResposta: String(mensagem).trim(),
+        mensagemResposta: mensagem,
         dataEntrevista: null,
         respondidoEm: new Date(),
       },
@@ -187,16 +234,8 @@ export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Respo
 
 export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Response) {
   const candidaturaId = req.params.id;
-  const { mensagem, dataEntrevista } = req.body;
-
-  if (!dataEntrevista) {
-    return res.status(400).json({ erro: "Informe a data e o horário da entrevista." });
-  }
-
-  const dataConvertida = new Date(dataEntrevista);
-  if (isNaN(dataConvertida.getTime())) {
-    return res.status(400).json({ erro: "Data da entrevista inválida." });
-  }
+  // já validados (aceitarCandidaturaSchema): dataEntrevista chega como Date
+  const { mensagem, dataEntrevista: dataConvertida } = req.body;
 
   const resultado = await buscarCandidaturaDaEmpresa(req, candidaturaId);
   if (!resultado.ok) {
@@ -208,7 +247,7 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
       where: { id: candidaturaId },
       data: {
         status: "aprovada",
-        mensagemResposta: mensagem ? String(mensagem).trim() : null,
+        mensagemResposta: mensagem || null,
         dataEntrevista: dataConvertida,
         respondidoEm: new Date(),
       },

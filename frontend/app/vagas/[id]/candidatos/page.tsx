@@ -27,13 +27,6 @@ function rotuloDoStatus(status: string) {
   return "Aguardando resposta";
 }
 
-function formatarData(data: string | null | undefined) {
-  if (!data) return "Não informada";
-  const dataFormatada = new Date(data);
-  if (Number.isNaN(dataFormatada.getTime())) return "Não informada";
-  return dataFormatada.toLocaleDateString("pt-BR", { timeZone: "UTC" });
-}
-
 function formatarDataHora(data: string | null | undefined) {
   if (!data) return "Não informada";
   const dataFormatada = new Date(data);
@@ -294,8 +287,12 @@ export default function CandidatosDaVagaPage() {
                         <p className="font-medium text-[#0F2C4A]">{candidato.telefone || "Não informado"}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Data de nascimento</p>
-                        <p className="font-medium text-[#0F2C4A]">{formatarData(candidato.dataNascimento)}</p>
+                        <p className="text-xs uppercase tracking-wide text-slate-400">E-mail</p>
+                        <p className="font-medium text-[#0F2C4A] break-all">{candidato.email || "Não informado"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-slate-400">Idade</p>
+                        <p className="font-medium text-[#0F2C4A]">{candidato.idade != null ? `${candidato.idade} anos` : "Não informada"}</p>
                       </div>
                       <div>
                         <p className="text-xs uppercase tracking-wide text-slate-400">Pretensão salarial</p>

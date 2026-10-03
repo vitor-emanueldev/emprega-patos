@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
+// Obs: req.body já chega validado e limpo pelo middleware validar(candidatoSchema)
 
 export async function tornarCandidato(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
@@ -47,7 +48,7 @@ export async function tornarCandidato(req: RequisicaoAutenticada, res: Response)
         nome: usuario.nome,
         telefone,
         cpf,
-        dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
+        dataNascimento,
         habilidades,
         fotoUrl,
         possuiCnh,
@@ -62,11 +63,7 @@ export async function tornarCandidato(req: RequisicaoAutenticada, res: Response)
         cursos: cursos ? { create: cursos } : undefined,
         experiencias: experiencias
           ? {
-              create: experiencias.map((exp: any) => ({
-                ...exp,
-                dataInicio: exp.dataInicio ? new Date(exp.dataInicio) : undefined,
-                dataFim: exp.dataFim ? new Date(exp.dataFim) : undefined,
-              })),
+              create: experiencias,
             }
           : undefined,
       },
@@ -136,7 +133,7 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
       data: {
         telefone,
         cpf,
-        dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
+        dataNascimento,
         habilidades,
         fotoUrl,
         possuiCnh,
@@ -153,11 +150,7 @@ export async function atualizarMinhaFicha(req: RequisicaoAutenticada, res: Respo
         experiencias: experiencias
           ? {
               deleteMany: {},
-              create: experiencias.map((exp: any) => ({
-                ...exp,
-                dataInicio: exp.dataInicio ? new Date(exp.dataInicio) : undefined,
-                dataFim: exp.dataFim ? new Date(exp.dataFim) : undefined,
-              })),
+              create: experiencias,
             }
           : undefined,
       },

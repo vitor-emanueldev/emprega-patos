@@ -21,14 +21,14 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     const novaEmpresa = await prisma.empresa.create({
       data: {
         nomeEmpresa,
-        cnpj: cnpj && cnpj.trim() !== "" ? cnpj : undefined,
+        cnpj: cnpj ?? undefined,
         endereco,
         bairro,
         setor,
         descricao,
         telefone,
-        latitude: latitude ? Number(latitude) : undefined,
-        longitude: longitude ? Number(longitude) : undefined,
+        latitude: latitude ?? undefined,
+        longitude: longitude ?? undefined,
         usuarioId: req.usuario.id,
       },
     });
@@ -75,14 +75,14 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
       where: { usuarioId: req.usuario.id },
       data: {
         nomeEmpresa,
-        cnpj: cnpj && cnpj.trim() !== "" ? cnpj : undefined,
+        cnpj: cnpj ?? undefined,
         endereco,
         bairro,
         setor,
         descricao,
         telefone,
-        latitude: latitude ? Number(latitude) : undefined,
-        longitude: longitude ? Number(longitude) : undefined,
+        latitude: latitude ?? undefined,
+        longitude: longitude ?? undefined,
       },
     });
 

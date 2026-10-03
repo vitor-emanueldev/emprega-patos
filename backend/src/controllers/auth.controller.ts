@@ -25,9 +25,23 @@ export async function loginGoogle(req: Request, res: Response) {
       return res.status(400).json({ erro: "Não foi possível validar sua conta Google." });
     }
 
-    const { sub: googleId, email, name, picture } = payload;
+    // Só aceita contas cujo e-mail o próprio Google confirmou
+    if (payload.email_verified !== true) {
+      return res.status(401).json({ erro: "Seu e-mail do Google ainda não foi verificado." });
+    }
 
-    let usuario = await prisma.usuario.findUnique({ where: { email } });
+    const { sub: googleId, name, picture } = payload;
+    const email = payload.email.toLowerCase();
+
+    // Primeiro procura pela conta Google (identificador fixo); depois pelo e-mail
+    let usuario =
+      (await prisma.usuario.findUnique({ where: { googleId } })) ??
+      (await prisma.usuario.findUnique({ where: { email } }));
+
+    // Se o e-mail já pertence a OUTRA conta Google, não deixa entrar nela
+    if (usuario && usuario.googleId && usuario.googleId !== googleId) {
+      return res.status(401).json({ erro: "Falha ao autenticar com Google." });
+    }
 
     if (!usuario) {
       usuario = await prisma.usuario.create({

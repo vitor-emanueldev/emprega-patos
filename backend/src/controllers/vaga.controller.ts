@@ -4,7 +4,8 @@ import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 
 export async function listarVagas(req: Request, res: Response) {
   try {
-    const { busca, tipoContrato, area, salarioMin, salarioMax, bairro } = req.query;
+    // filtros já validados (filtrosVagaSchema)
+    const { busca, tipoContrato, area, salarioMin, salarioMax, bairro } = res.locals.query ?? {};
 
     const where: any = {
       status: "aberta",
@@ -23,8 +24,8 @@ export async function listarVagas(req: Request, res: Response) {
 
     if (salarioMin || salarioMax) {
       where.salario = {};
-      if (salarioMin) where.salario.gte = Number(salarioMin);
-      if (salarioMax) where.salario.lte = Number(salarioMax);
+      if (salarioMin) where.salario.gte = salarioMin;
+      if (salarioMax) where.salario.lte = salarioMax;
     }
 
     const vagas = await prisma.vaga.findMany({
@@ -203,7 +204,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
         descricao,
         tipoContrato,
         area,
-        salario: salario != null ? Number(salario) : undefined,
+        salario, // null limpa o salário; undefined mantém o atual
         endereco,
         bairro,
         latitude: latitude != null ? Number(latitude) : undefined,

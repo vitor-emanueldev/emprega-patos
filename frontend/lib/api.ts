@@ -1,5 +1,28 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Evento disparado quando o backend recusa o token (vencido ou inválido).
+// O AuthContext escuta esse evento, encerra a sessão e leva para o login.
+export const EVENTO_SESSAO_EXPIRADA = "mapvagas:sessao-expirada";
+
+// Igual ao fetch, mas:
+// - se o servidor estiver fora do ar / sem internet, devolve uma mensagem amigável;
+// - se uma requisição autenticada voltar 401, avisa que a sessão expirou.
+async function fetchApi(url: string, init: RequestInit = {}): Promise<Response> {
+  let resposta: Response;
+  try {
+    resposta = await fetch(url, init);
+  } catch {
+    throw new Error("Não foi possível conectar ao servidor. Verifique sua internet e tente novamente em instantes.");
+  }
+
+  const autenticada = Boolean((init.headers as Record<string, string> | undefined)?.Authorization);
+  if (resposta.status === 401 && autenticada && typeof window !== "undefined") {
+    window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA));
+  }
+
+  return resposta;
+}
+
 type LoginResponse = {
   token: string;
   usuario: {
@@ -11,7 +34,7 @@ type LoginResponse = {
 };
 
 export async function loginComGoogle(credential: string): Promise<LoginResponse> {
-  const resposta = await fetch(`${API_URL}/auth/google`, {
+  const resposta = await fetchApi(`${API_URL}/auth/google`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credential }),
@@ -27,7 +50,7 @@ export async function loginComGoogle(credential: string): Promise<LoginResponse>
 }
 
 export async function verificarEmpresa(token: string) {
-  const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+  const resposta = await fetchApi(`${API_URL}/empresas/minha-empresa`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -62,7 +85,7 @@ export async function cadastrarEmpresa(
     longitude?: number;
   }
 ) {
-  const resposta = await fetch(`${API_URL}/empresas`, {
+  const resposta = await fetchApi(`${API_URL}/empresas`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -96,7 +119,7 @@ export async function atualizarEmpresa(
   token: string,
   dados: DadosAtualizarEmpresa
 ) {
-  const resposta = await fetch(`${API_URL}/empresas/minha-empresa`, {
+  const resposta = await fetchApi(`${API_URL}/empresas/minha-empresa`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -137,7 +160,7 @@ export type Vaga = {
 };
 
 export async function listarVagas(): Promise<Vaga[]> {
-  const resposta = await fetch(`${API_URL}/vagas`, {
+  const resposta = await fetchApi(`${API_URL}/vagas`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -152,7 +175,7 @@ export async function listarVagas(): Promise<Vaga[]> {
 }
 
 export async function minhasVagas(token: string): Promise<Vaga[]> {
-  const resposta = await fetch(`${API_URL}/vagas/minhas`, {
+  const resposta = await fetchApi(`${API_URL}/vagas/minhas`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -170,7 +193,7 @@ export async function minhasVagas(token: string): Promise<Vaga[]> {
 }
 
 export async function detalhesVaga(id: string): Promise<Vaga> {
-  const resposta = await fetch(`${API_URL}/vagas/${id}`, {
+  const resposta = await fetchApi(`${API_URL}/vagas/${id}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -200,7 +223,7 @@ export type DadosVaga = {
 };
 
 export async function publicarVaga(token: string, dados: DadosVaga) {
-  const resposta = await fetch(`${API_URL}/vagas`, {
+  const resposta = await fetchApi(`${API_URL}/vagas`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -287,7 +310,7 @@ export async function tornarCandidato(
   token: string,
   dados: DadosCandidato
 ): Promise<Candidato> {
-  const resposta = await fetch(`${API_URL}/candidatos`, {
+  const resposta = await fetchApi(`${API_URL}/candidatos`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -306,7 +329,7 @@ export async function tornarCandidato(
 }
 
 export async function buscarMinhaFicha(token: string): Promise<Candidato | null> {
-  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+  const resposta = await fetchApi(`${API_URL}/candidatos/minha-ficha`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -331,7 +354,7 @@ export async function atualizarMinhaFicha(
   token: string,
   dados: DadosCandidato
 ): Promise<Candidato> {
-  const resposta = await fetch(`${API_URL}/candidatos/minha-ficha`, {
+  const resposta = await fetchApi(`${API_URL}/candidatos/minha-ficha`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -373,14 +396,20 @@ export type CandidaturaComCandidato = {
   mensagemResposta?: string | null;
   dataEntrevista?: string | null;
   respondidoEm?: string | null;
-  candidato: Candidato;
+  candidato: CandidatoParaEmpresa;
+};
+
+// O que a empresa vê de um candidato (LGPD): sem CPF e sem data de nascimento
+export type CandidatoParaEmpresa = Omit<Candidato, "cpf" | "dataNascimento" | "usuarioId" | "createdAt"> & {
+  email: string | null;
+  idade: number | null;
 };
 
 export async function candidatarVaga(
   token: string,
   vagaId: string
 ): Promise<Candidatura> {
-  const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidatar`, {
+  const resposta = await fetchApi(`${API_URL}/vagas/${vagaId}/candidatar`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -398,7 +427,7 @@ export async function candidatarVaga(
 }
 
 export async function minhasCandidaturas(token: string): Promise<Candidatura[]> {
-  const resposta = await fetch(`${API_URL}/candidato/minhas-candidaturas`, {
+  const resposta = await fetchApi(`${API_URL}/candidato/minhas-candidaturas`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -416,7 +445,7 @@ export async function minhasCandidaturas(token: string): Promise<Candidatura[]> 
 }
 
 export async function cancelarCandidatura(token: string, candidaturaId: string) {
-  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}`, {
+  const resposta = await fetchApi(`${API_URL}/candidaturas/${candidaturaId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -438,7 +467,7 @@ export async function candidaturasDaVaga(
   token: string,
   vagaId: string
 ): Promise<CandidaturaComCandidato[]> {
-  const resposta = await fetch(`${API_URL}/vagas/${vagaId}/candidaturas`, {
+  const resposta = await fetchApi(`${API_URL}/vagas/${vagaId}/candidaturas`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -462,7 +491,7 @@ export async function aceitarCandidatura(
   dataEntrevista: string,
   mensagem?: string
 ) {
-  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}/aceitar`, {
+  const resposta = await fetchApi(`${API_URL}/candidaturas/${candidaturaId}/aceitar`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -486,7 +515,7 @@ export async function rejeitarCandidatura(
   candidaturaId: string,
   mensagem: string
 ) {
-  const resposta = await fetch(`${API_URL}/candidaturas/${candidaturaId}/rejeitar`, {
+  const resposta = await fetchApi(`${API_URL}/candidaturas/${candidaturaId}/rejeitar`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -511,7 +540,7 @@ export type Estatisticas = {
 };
 
 export async function buscarEstatisticas(): Promise<Estatisticas> {
-  const resposta = await fetch(`${API_URL}/estatisticas`, {
+  const resposta = await fetchApi(`${API_URL}/estatisticas`, {
     cache: "no-store",
   });
   const dados = await resposta.json();
@@ -524,7 +553,7 @@ export type DadosAtualizarVaga = Partial<DadosVaga> & {
 };
 
 export async function atualizarVaga(token: string, id: string, dados: DadosAtualizarVaga) {
-  const resposta = await fetch(`${API_URL}/vagas/${id}`, {
+  const resposta = await fetchApi(`${API_URL}/vagas/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

@@ -1,11 +1,16 @@
-node_modules
-# Keep environment variables out of version control
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (senhas e chaves) - NUNCA versionar
 .env
+.env.*
+!.env.example
+
+# Builds
 .next/
 dist/
+
+# Ferramentas locais
 .postman/
 postman/
 *.log
-node_modules/
-package-lock.json
-package.json
