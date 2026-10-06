@@ -42,8 +42,9 @@ export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga, mo
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          maxZoom={19}
         />
 
         {PONTOS_REFERENCIA.map((ponto) => (

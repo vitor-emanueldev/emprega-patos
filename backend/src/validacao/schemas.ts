@@ -112,12 +112,6 @@ export const empresaSchema = z.object({
 
 // ─── Candidato ───────────────────────────────────────────────────────
 
-const cpf = z
-  .union([z.string().trim(), z.null()])
-  .optional()
-  .transform((v) => (v === "" ? null : v))
-  .refine((v) => v == null || apenasDigitos(v).length === 11, "CPF inválido. Ele deve ter 11 dígitos.");
-
 const dataNascimento = dataOpcional("Data de nascimento").refine((data) => {
   if (!data) return true;
   const idade = (Date.now() - data.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
@@ -138,9 +132,27 @@ const cursoSchema = z.object({
   anoConclusao: ano,
 });
 
+export const DURACOES_EXPERIENCIA = ["ate-6m", "6m-1a", "1a-2a", "mais-2a"] as const;
+export const TURNOS = ["manha", "tarde", "noite"] as const;
+export const NIVEIS_ESCOLARIDADE = [
+  "Ensino Fundamental incompleto",
+  "Ensino Fundamental completo",
+  "Ensino Médio incompleto",
+  "Ensino Médio completo",
+  "Ensino Técnico",
+  "Ensino Superior incompleto",
+  "Ensino Superior completo",
+  "Pós-graduação",
+] as const;
+
+// Valor de uma lista fixa; vazio vira null
+const opcaoDaLista = <T extends readonly [string, ...string[]]>(opcoes: T, mensagem: string) =>
+  z.preprocess((v) => (v === "" ? null : v), z.enum(opcoes, { errorMap: () => ({ message: mensagem }) }).nullish());
+
 const experienciaSchema = z.object({
   cargo: texto("Cargo da experiência", 100),
-  empresa: texto("Empresa da experiência", 150),
+  empresa: texto("Local da experiência", 150),
+  duracao: opcaoDaLista(DURACOES_EXPERIENCIA, "Tempo de experiência inválido."),
   dataInicio: dataOpcional("Data de início da experiência"),
   dataFim: dataOpcional("Data de fim da experiência"),
   atual: z.boolean().optional().default(false),
@@ -163,7 +175,7 @@ const experiencias = z.preprocess(
 
 export const candidatoSchema = z.object({
   telefone: telefone("Telefone"),
-  cpf,
+  telefoneWhatsapp: z.boolean().optional(),
   dataNascimento,
   habilidades: lista("Habilidades", 50, 60).optional(),
   fotoUrl: urlImagem,
@@ -174,6 +186,17 @@ export const candidatoSchema = z.object({
   areaInteresse: textoOpcional("Área de interesse", 100),
   pretensaoSalarial: salario("Pretensão salarial"),
   diferencial: textoOpcional("Diferencial", 1000),
+  sobreMim: textoOpcional("Sobre mim", 1500),
+  bairro: textoOpcional("Bairro", 100),
+  turnos: z.array(z.enum(TURNOS, { errorMap: () => ({ message: "Turno inválido." }) })).max(3).optional(),
+  disponivelFimDeSemana: z.boolean().nullish(),
+  inicioImediato: z.boolean().nullish(),
+  primeiroEmprego: z.boolean().optional(),
+  escolaridade: opcaoDaLista(NIVEIS_ESCOLARIDADE, "Escolaridade inválida."),
+  estudandoAtualmente: z.boolean().nullish(),
+  referenciaNome: textoOpcional("Nome da referência", 100),
+  referenciaTelefone: telefone("Telefone da referência"),
+  referenciaRelacao: textoOpcional("Relação com a referência", 60),
   formacoes: z.array(formacaoSchema).max(10, "Máximo de 10 formações.").optional(),
   cursos: z.array(cursoSchema).max(20, "Máximo de 20 cursos.").optional(),
   experiencias: experiencias.optional(),
@@ -237,6 +260,10 @@ export const aceitarCandidaturaSchema = z.object({
     .refine((data) => data.getTime() > Date.now() - 24 * 60 * 60 * 1000, "A data da entrevista já passou.")
     .refine((data) => data.getTime() < Date.now() + 366 * 24 * 60 * 60 * 1000, "A data da entrevista está longe demais."),
   mensagem: textoOpcional("Mensagem", 1000),
+});
+
+export const candidatarSchema = z.object({
+  mensagem: textoOpcional("Mensagem para a empresa", 1000),
 });
 
 export const rejeitarCandidaturaSchema = z.object({

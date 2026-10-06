@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
+import { conteudoDoCurriculo, curriculoParaEmpresa, incluirCurriculo } from "../utils/curriculo";
 
 export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
@@ -12,11 +13,14 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
   try {
     const candidato = await prisma.candidato.findUnique({
       where: { usuarioId: req.usuario.id },
+      include: incluirCurriculo,
     });
 
     if (!candidato) {
       return res.status(400).json({ erro: "Complete seu currículo antes de se candidatar" });
     }
+
+    const { mensagem } = req.body ?? {}; // já validado (candidatarSchema)
 
     const vaga = await prisma.vaga.findUnique({
       where: { id: vagaId },
@@ -39,6 +43,9 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
       data: {
         vagaId,
         candidatoId: candidato.id,
+        mensagemCandidato: mensagem || null,
+        // Cópia do currículo como estava agora: edições futuras não mudam esta candidatura
+        curriculoEnviado: conteudoDoCurriculo(candidato) as any,
       },
     });
 
@@ -80,23 +87,13 @@ export async function minhasCandidaturas(req: RequisicaoAutenticada, res: Respon
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json(candidaturas);
+    // A cópia do currículo não precisa voltar para o próprio candidato
+    return res.json(candidaturas.map(({ curriculoEnviado, ...resto }) => resto));
 
   } catch (error) {
     console.error("Erro ao buscar candidaturas:", error);
     return res.status(500).json({ erro: "Erro ao buscar candidaturas" });
   }
-}
-
-function calcularIdade(dataNascimento: Date | null): number | null {
-  if (!dataNascimento) return null;
-  const hoje = new Date();
-  let idade = hoje.getUTCFullYear() - dataNascimento.getUTCFullYear();
-  const aindaNaoFezAniversario =
-    hoje.getUTCMonth() < dataNascimento.getUTCMonth() ||
-    (hoje.getUTCMonth() === dataNascimento.getUTCMonth() && hoje.getUTCDate() < dataNascimento.getUTCDate());
-  if (aindaNaoFezAniversario) idade--;
-  return idade;
 }
 
 // GET /vagas/:id/candidaturas (visão da empresa: lista de candidatos + currículo completo)
@@ -124,44 +121,18 @@ export async function candidaturasDaVaga(req: RequisicaoAutenticada, res: Respon
 
     const candidaturas = await prisma.candidatura.findMany({
       where: { vagaId },
-      include: {
-        candidato: {
-          // LGPD: a empresa vê só o necessário para avaliar o candidato.
-          // CPF e data de nascimento NÃO saem daqui (mostramos só a idade).
-          select: {
-            id: true,
-            nome: true,
-            telefone: true,
-            dataNascimento: true, // usado só para calcular a idade, removido abaixo
-            habilidades: true,
-            fotoUrl: true,
-            possuiCnh: true,
-            categoriaCnh: true,
-            possuiVeiculo: true,
-            cargoDesejado: true,
-            areaInteresse: true,
-            pretensaoSalarial: true,
-            diferencial: true,
-            formacoes: true,
-            cursos: true,
-            experiencias: true,
-            usuario: { select: { email: true } },
-          },
-        },
-      },
+      include: { candidato: { include: incluirCurriculo } },
       orderBy: { createdAt: "desc" },
     });
 
+    // LGPD: a empresa recebe só o currículo (sem CPF, sem data de nascimento).
+    // O conteúdo é a cópia enviada na candidatura; contato e foto são sempre os atuais.
     const resposta = candidaturas.map((item: (typeof candidaturas)[number]) => {
-      const { candidato, ...candidatura } = item;
-      const { dataNascimento, usuario, ...dadosPublicos } = candidato;
+      const { candidato, curriculoEnviado, ...candidatura } = item;
       return {
         ...candidatura,
-        candidato: {
-          ...dadosPublicos,
-          email: usuario?.email ?? null,
-          idade: calcularIdade(dataNascimento),
-        },
+        curriculo: curriculoParaEmpresa(candidato, curriculoEnviado),
+        copiaDoMomentoDaCandidatura: Boolean(curriculoEnviado),
       };
     });
 

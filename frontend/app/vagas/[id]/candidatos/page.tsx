@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Header from "@/components/Header";
+import CurriculoVisual from "@/components/CurriculoVisual";
+import { linkWhatsapp, rotuloTurno, type CurriculoVisao } from "@/lib/curriculo";
+import { MessageCircle, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   candidaturasDaVaga,
@@ -35,6 +38,28 @@ function formatarDataHora(data: string | null | undefined) {
     dateStyle: "short",
     timeStyle: "short",
   });
+}
+
+// Resumo rápido para a empresa decidir em segundos
+function resumoExperiencia(c: CurriculoVisao) {
+  const lista = c.experiencias || [];
+  if (lista.length > 0) {
+    const funcoes = Array.from(new Set(lista.map((e) => e.cargo))).slice(0, 2).join(", ");
+    return `${lista.length} experiência${lista.length > 1 ? "s" : ""}: ${funcoes}`;
+  }
+  return c.primeiroEmprego ? "Primeiro emprego" : "Sem experiência informada";
+}
+
+function Etiqueta({ children, destaque }: { children: React.ReactNode; destaque?: boolean }) {
+  return (
+    <span
+      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+        destaque ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export default function CandidatosDaVagaPage() {
@@ -152,8 +177,8 @@ export default function CandidatosDaVagaPage() {
     <div className="min-h-screen bg-slate-50">
       <Header />
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
           <div>
             <h1 className="text-3xl font-bold text-[#0F2C4A]">Candidatos</h1>
             <p className="text-slate-500 mt-2">
@@ -185,7 +210,7 @@ export default function CandidatosDaVagaPage() {
 
         <div className="space-y-4">
           {candidaturas.map((candidatura) => {
-            const { candidato } = candidatura;
+            const c = candidatura.curriculo;
             const curriculoAberto = curriculoAbertoId === candidatura.id;
             const formularioAberto = formularioAbertoId === candidatura.id;
             const processando = processandoId === candidatura.id;
@@ -197,15 +222,26 @@ export default function CandidatosDaVagaPage() {
                 className="bg-white rounded-xl shadow-md border border-slate-200 p-5"
               >
                 <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-[#0F2C4A]">{candidato.nome}</p>
-                    <p className="text-sm text-slate-500">
-                      {[candidato.cargoDesejado, candidato.areaInteresse].filter(Boolean).join(" · ") ||
-                        "Sem cargo/área de interesse informados"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Candidatou-se em {new Date(candidatura.createdAt).toLocaleDateString("pt-BR")}
-                    </p>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-14 h-14 shrink-0 rounded-full overflow-hidden bg-[#0F2C4A] flex items-center justify-center">
+                      {c.fotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.fotoUrl} alt={`Foto de ${c.nome}`} className="w-full h-full object-cover" />
+                      ) : (
+                        <UserRound className="w-7 h-7 text-white" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#0F2C4A]">{c.nome}</p>
+                      <p className="text-sm text-slate-500">
+                        {[c.idade != null ? `${c.idade} anos` : null, c.bairro ? `Bairro ${c.bairro}` : null, c.escolaridade]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Candidatou-se em {new Date(candidatura.createdAt).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
                   </div>
 
                   <span
@@ -217,16 +253,19 @@ export default function CandidatosDaVagaPage() {
                   </span>
                 </div>
 
-                {candidato.habilidades && candidato.habilidades.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {candidato.habilidades.map((habilidade) => (
-                      <span
-                        key={habilidade}
-                        className="px-3 py-1 rounded-full bg-blue-100 text-[#0F2C4A] text-xs font-medium"
-                      >
-                        {habilidade}
-                      </span>
-                    ))}
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  <Etiqueta>{resumoExperiencia(c)}</Etiqueta>
+                  {c.turnos && c.turnos.length > 0 && <Etiqueta>{c.turnos.map(rotuloTurno).join(", ")}</Etiqueta>}
+                  {c.disponivelFimDeSemana && <Etiqueta>Fins de semana</Etiqueta>}
+                  {c.inicioImediato && <Etiqueta destaque>Começa imediatamente</Etiqueta>}
+                  {c.possuiCnh && <Etiqueta>CNH{c.categoriaCnh ? ` ${c.categoriaCnh}` : ""}</Etiqueta>}
+                  {c.possuiVeiculo && <Etiqueta>Tem veículo</Etiqueta>}
+                </div>
+
+                {candidatura.mensagemCandidato && (
+                  <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
+                    <p className="text-xs font-semibold text-[#1D6FA5] mb-1">Mensagem do candidato</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-line">{candidatura.mensagemCandidato}</p>
                   </div>
                 )}
 
@@ -257,8 +296,20 @@ export default function CandidatosDaVagaPage() {
                     onClick={() => setCurriculoAbertoId(curriculoAberto ? null : candidatura.id)}
                     className="text-xs font-semibold text-[#1D6FA5] border border-[#1D6FA5] rounded-md px-3 py-1.5 hover:bg-[#1D6FA5]/5"
                   >
-                    {curriculoAberto ? "Ocultar currículo" : "Ver currículo"}
+                    {curriculoAberto ? "Ocultar currículo" : "Ver currículo completo"}
                   </button>
+
+                  {c.telefoneWhatsapp !== false && linkWhatsapp(c.telefone) && (
+                    <a
+                      href={linkWhatsapp(c.telefone, `Olá, ${c.nome.split(" ")[0]}! Vi sua candidatura para a vaga de ${vaga?.cargo ?? ""} no MapVagas.`)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-green-600 rounded-md px-3 py-1.5 hover:bg-green-700"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      WhatsApp
+                    </a>
+                  )}
 
                   {pendente && (
                     <>
@@ -280,100 +331,17 @@ export default function CandidatosDaVagaPage() {
 
                 {/* Currículo completo */}
                 {curriculoAberto && (
-                  <div className="mt-5 border-t border-slate-200 pt-5 space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Telefone</p>
-                        <p className="font-medium text-[#0F2C4A]">{candidato.telefone || "Não informado"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">E-mail</p>
-                        <p className="font-medium text-[#0F2C4A] break-all">{candidato.email || "Não informado"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Idade</p>
-                        <p className="font-medium text-[#0F2C4A]">{candidato.idade != null ? `${candidato.idade} anos` : "Não informada"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Pretensão salarial</p>
-                        <p className="font-medium text-[#0F2C4A]">
-                          {candidato.pretensaoSalarial != null
-                            ? candidato.pretensaoSalarial.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              })
-                            : "Não informada"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">CNH / Veículo</p>
-                        <p className="font-medium text-[#0F2C4A]">
-                          {candidato.possuiCnh
-                            ? `Possui CNH${candidato.categoriaCnh ? " (" + candidato.categoriaCnh + ")" : ""}`
-                            : "Não possui CNH"}
-                          {" · "}
-                          {candidato.possuiVeiculo ? "Possui veículo" : "Não possui veículo"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {candidato.diferencial && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Diferencial</p>
-                        <p className="text-slate-600 mt-1 whitespace-pre-line">{candidato.diferencial}</p>
-                      </div>
+                  <div className="mt-5 border-t border-slate-200 pt-5">
+                    <CurriculoVisual
+                      curriculo={c}
+                      modo="empresa"
+                      textoWhatsapp={`Olá, ${c.nome.split(" ")[0]}! Vi sua candidatura para a vaga de ${vaga?.cargo ?? ""} no MapVagas.`}
+                    />
+                    {candidatura.copiaDoMomentoDaCandidatura && (
+                      <p className="text-xs text-slate-400 mt-4">
+                        Currículo como estava no dia da candidatura. Contato e foto são sempre os mais recentes.
+                      </p>
                     )}
-
-                    <div>
-                      <h3 className="text-sm font-bold text-[#0F2C4A] mb-2">Formação acadêmica</h3>
-                      {candidato.formacoes && candidato.formacoes.length > 0 ? (
-                        <div className="space-y-2">
-                          {candidato.formacoes.map((formacao) => (
-                            <div key={formacao.id} className="border border-slate-200 rounded-lg p-3">
-                              <p className="font-medium text-[#0F2C4A] text-sm">{formacao.nivelEscolaridade}</p>
-                              <p className="text-xs text-slate-500">{formacao.instituicao}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-400">Nenhuma formação cadastrada.</p>
-                      )}
-                    </div>
-
-                    {candidato.cursos && candidato.cursos.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-bold text-[#0F2C4A] mb-2">Cursos</h3>
-                        <div className="space-y-2">
-                          {candidato.cursos.map((curso) => (
-                            <div key={curso.id} className="border border-slate-200 rounded-lg p-3">
-                              <p className="font-medium text-[#0F2C4A] text-sm">{curso.nomeCurso}</p>
-                              <p className="text-xs text-slate-500">
-                                {[curso.instituicao, curso.cargaHoraria].filter(Boolean).join(" · ")}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <h3 className="text-sm font-bold text-[#0F2C4A] mb-2">Experiência profissional</h3>
-                      {candidato.experiencias && candidato.experiencias.length > 0 ? (
-                        <div className="space-y-2">
-                          {candidato.experiencias.map((exp) => (
-                            <div key={exp.id} className="border border-slate-200 rounded-lg p-3">
-                              <p className="font-medium text-[#0F2C4A] text-sm">{exp.cargo}</p>
-                              <p className="text-xs text-slate-500">{exp.empresa}</p>
-                              {exp.descricao && (
-                                <p className="text-sm text-slate-500 mt-1">{exp.descricao}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-400">Nenhuma experiência cadastrada.</p>
-                      )}
-                    </div>
                   </div>
                 )}
 

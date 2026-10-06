@@ -1,3 +1,5 @@
+import type { CurriculoVisao } from "@/lib/curriculo";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Evento disparado quando o backend recusa o token (vencido ou inválido).
@@ -260,6 +262,7 @@ export type DadosCurso = {
 export type DadosExperiencia = {
   cargo: string;
   empresa: string;
+  duracao?: string | null;
   dataInicio?: string | null;
   dataFim?: string | null;
   atual?: boolean;
@@ -268,13 +271,24 @@ export type DadosExperiencia = {
 
 export type DadosCandidato = {
   telefone: string;
-  cpf: string;
+  telefoneWhatsapp?: boolean;
   dataNascimento: string;
   habilidades: string[];
-  fotoUrl?: string;
-  possuiCnh?: boolean;
+  fotoUrl?: string | null;
+  bairro?: string;
+  sobreMim?: string;
+  turnos?: string[];
+  disponivelFimDeSemana?: boolean | null;
+  inicioImediato?: boolean | null;
+  primeiroEmprego?: boolean;
+  escolaridade?: string | null;
+  estudandoAtualmente?: boolean | null;
+  referenciaNome?: string;
+  referenciaTelefone?: string;
+  referenciaRelacao?: string;
+  possuiCnh?: boolean | null;
   categoriaCnh?: string;
-  possuiVeiculo?: boolean;
+  possuiVeiculo?: boolean | null;
   cargoDesejado?: string;
   areaInteresse?: string;
   pretensaoSalarial?: number | null;
@@ -299,6 +313,18 @@ export type Candidato = {
   areaInteresse: string | null;
   pretensaoSalarial: number | null;
   diferencial: string | null;
+  sobreMim: string | null;
+  bairro: string | null;
+  telefoneWhatsapp: boolean;
+  turnos: string[];
+  disponivelFimDeSemana: boolean | null;
+  inicioImediato: boolean | null;
+  primeiroEmprego: boolean;
+  escolaridade: string | null;
+  estudandoAtualmente: boolean | null;
+  referenciaNome: string | null;
+  referenciaTelefone: string | null;
+  referenciaRelacao: string | null;
   createdAt: string;
   usuarioId: string;
   formacoes: (DadosFormacao & { id: string })[];
@@ -372,6 +398,26 @@ export async function atualizarMinhaFicha(
   return resultado;
 }
 
+// Envia a foto do candidato (já recortada no navegador). Devolve o link da foto salva.
+export async function enviarFotoCandidato(token: string, foto: Blob): Promise<string> {
+  const resposta = await fetchApi(`${API_URL}/candidatos/foto`, {
+    method: "POST",
+    headers: {
+      "Content-Type": foto.type || "image/jpeg",
+      Authorization: `Bearer ${token}`,
+    },
+    body: foto,
+  });
+
+  const resultado = await resposta.json().catch(() => ({}));
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Não foi possível enviar a foto");
+  }
+
+  return resultado.url;
+}
+
 // ─── Candidatura ──────────────────────────────────────────────────────────────
 
 export type Candidatura = {
@@ -383,10 +429,12 @@ export type Candidatura = {
   mensagemResposta?: string | null;
   dataEntrevista?: string | null;
   respondidoEm?: string | null;
+  mensagemCandidato?: string | null;
   vaga: Vaga;
 };
 
-// Candidatura vista pelo empregador: traz o currículo completo do candidato
+// Candidatura vista pelo empregador. LGPD: sem CPF e sem data de nascimento.
+// "curriculo" é a cópia enviada no momento da candidatura, com contato e foto sempre atualizados.
 export type CandidaturaComCandidato = {
   id: string;
   status: string;
@@ -396,18 +444,15 @@ export type CandidaturaComCandidato = {
   mensagemResposta?: string | null;
   dataEntrevista?: string | null;
   respondidoEm?: string | null;
-  candidato: CandidatoParaEmpresa;
-};
-
-// O que a empresa vê de um candidato (LGPD): sem CPF e sem data de nascimento
-export type CandidatoParaEmpresa = Omit<Candidato, "cpf" | "dataNascimento" | "usuarioId" | "createdAt"> & {
-  email: string | null;
-  idade: number | null;
+  mensagemCandidato?: string | null;
+  copiaDoMomentoDaCandidatura?: boolean;
+  curriculo: CurriculoVisao;
 };
 
 export async function candidatarVaga(
   token: string,
-  vagaId: string
+  vagaId: string,
+  mensagem?: string
 ): Promise<Candidatura> {
   const resposta = await fetchApi(`${API_URL}/vagas/${vagaId}/candidatar`, {
     method: "POST",
@@ -415,6 +460,7 @@ export async function candidatarVaga(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ mensagem: mensagem?.trim() || undefined }),
   });
 
   const resultado = await resposta.json();

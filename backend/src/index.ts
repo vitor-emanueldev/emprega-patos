@@ -17,6 +17,9 @@ if (faltando.length > 0) {
   console.error(`Variáveis de ambiente faltando: ${faltando.join(", ")}`);
   process.exit(1);
 }
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn("Aviso: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY não configuradas. O envio de fotos ficará desativado.");
+}
 
 const app = express();
 const PORTA = Number(process.env.PORT) || 3001;

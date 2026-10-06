@@ -3,9 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import CurriculoVisual from "@/components/CurriculoVisual";
 import { useAuth } from "@/context/AuthContext";
-import { buscarMinhaFicha, Candidato } from "@/lib/api";  
-import { ClipboardList, FileUser, TriangleAlert, UserRound} from "lucide-react";
+import { buscarMinhaFicha, type Candidato } from "@/lib/api";
+import { curriculoDaFicha, progressoCurriculo } from "@/lib/curriculo";
+import { ClipboardList, FileUser, TriangleAlert } from "lucide-react";
+
+function Casca({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <Header />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">{children}</main>
+    </div>
+  );
+}
 
 export default function PerfilCandidatoPage() {
   const router = useRouter();
@@ -22,465 +33,112 @@ export default function PerfilCandidatoPage() {
         setErro("Você precisa estar logado para acessar seu perfil.");
         return;
       }
-
       try {
-        const dados = await buscarMinhaFicha(token);
-        setCandidato(dados);
-      } catch (erro: any) {
-        setErro(
-          erro.message || "Não foi possível carregar o perfil do candidato."
-        );
+        setCandidato(await buscarMinhaFicha(token));
+      } catch (e: any) {
+        setErro(e.message || "Não foi possível carregar o perfil do candidato.");
       } finally {
         setCarregando(false);
       }
     }
-
     carregarPerfil();
   }, [token]);
 
-  function formatarData(data: string | null) {
-    if (!data) {
-      return "Não informada";
-    }
-
-    const dataFormatada = new Date(data);
-
-    if (Number.isNaN(dataFormatada.getTime())) {
-      return "Não informada";
-    }
-
-    return dataFormatada.toLocaleDateString("pt-BR", {
-      timeZone: "UTC",
-    });
-  }
-
   if (carregando) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-
-        <main className="max-w-6xl mx-auto px-6 py-10">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-            <p className="text-slate-500">
-              Carregando perfil...
-            </p>
-          </div>
-        </main>
-      </div>
+      <Casca>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center text-slate-500">Carregando perfil...</div>
+      </Casca>
     );
   }
 
-  if (erro) {
+  if (erro || !candidato) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-
-        <main className="max-w-6xl mx-auto px-6 py-10">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-
-            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-3xl mx-auto">
-              <TriangleAlert className="w-13 h-13 text-yellow-400" />
-            </div>
-
-            <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
-              Perfil de candidato não encontrado
-            </h1>
-
-            <p className="text-slate-500 mt-2">
-              {erro}
-            </p>
-
-            <button
-              onClick={() => router.push("/perfil/completar")}
-              className="mt-6 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
-            >
-              Completar Perfil
-            </button>
-
+      <Casca>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+            {erro ? <TriangleAlert className="w-10 h-10 text-amber-500" /> : <FileUser className="w-10 h-10 text-amber-600" />}
           </div>
-        </main>
-      </div>
+          <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
+            {erro ? "Perfil de candidato não encontrado" : "Você ainda não tem um currículo"}
+          </h1>
+          <p className="text-slate-500 mt-2">
+            {erro || "Crie seu currículo em poucos minutos para se candidatar às vagas."}
+          </p>
+          <button
+            onClick={() => router.push(erro && !token ? "/login" : "/perfil/completar")}
+            className="mt-6 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+          >
+            {erro && !token ? "Entrar" : "Criar meu currículo"}
+          </button>
+        </div>
+      </Casca>
     );
   }
 
-  if (!candidato) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-
-        <main className="max-w-6xl mx-auto px-6 py-10">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-
-            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-3xl mx-auto">
-              📄
-            </div>
-
-            <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
-              Você ainda não tem um currículo cadastrado
-            </h1>
-
-            <p className="text-slate-500 mt-2">
-              Complete seu perfil de candidato para se candidatar às vagas e
-              aparecer para os empregadores.
-            </p>
-
-            <button
-              onClick={() => router.push("/perfil/completar")}
-              className="mt-6 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
-            >
-              Cadastrar currículo
-            </button>
-
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const curriculo = curriculoDaFicha(candidato, usuario?.email);
+  const progresso = progressoCurriculo(curriculo);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
+    <Casca>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[#0F2C4A]">Meu currículo</h1>
+          <p className="text-slate-500 mt-1">É assim que as empresas veem você quando você se candidata.</p>
+        </div>
+        <button
+          onClick={() => router.push("/perfil/completar")}
+          className="bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+        >
+          Editar currículo
+        </button>
+      </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      {/* Progresso */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-semibold text-[#0F2C4A]">Seu currículo está {progresso.porcentagem}% completo</p>
+          {progresso.porcentagem === 100 && <span className="text-sm text-green-700 font-medium">Muito bem! ✓</span>}
+        </div>
+        <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${progresso.porcentagem === 100 ? "bg-green-500" : "bg-[#F0A93C]"}`}
+            style={{ width: `${progresso.porcentagem}%` }}
+          />
+        </div>
+        {progresso.faltando.length > 0 && (
+          <p className="text-xs text-slate-500 mt-2">
+            Para chamar mais atenção, complete: {progresso.faltando.join(", ")}.
+          </p>
+        )}
+      </div>
 
-        {/* Cabeçalho */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-slate-200 p-5 sm:p-8">
+          <CurriculoVisual curriculo={curriculo} modo="candidato" />
+        </div>
 
-          <div>
-            <h1 className="text-3xl font-bold text-[#0F2C4A]">
-              Perfil do Candidato
-            </h1>
-
-            <p className="text-slate-500 mt-2">
-              Visualize suas informações e mantenha seu currículo atualizado.
-            </p>
-          </div>
-
+        <div className="space-y-4">
           <button
-            onClick={() => router.push("/perfil/completar")}
-            className="mt-5 md:mt-0 bg-[#F0A93C] text-white px-5 py-3 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
+            onClick={() => router.push("/perfil/candidato/candidaturas")}
+            className="w-full bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
           >
-            Editar Perfil
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <ClipboardList className="w-7 h-7 text-[#0F2C4A]" />
+            </div>
+            <h3 className="font-bold text-[#0F2C4A] mt-4">Minhas candidaturas</h3>
+            <p className="text-sm text-slate-500 mt-1">Acompanhe as vagas em que você se candidatou e as respostas das empresas.</p>
           </button>
 
+          <button
+            onClick={() => router.push("/vagas")}
+            className="w-full bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
+          >
+            <h3 className="font-bold text-[#0F2C4A]">Procurar vagas →</h3>
+            <p className="text-sm text-slate-500 mt-1">Veja as vagas abertas em Patos e se candidate.</p>
+          </button>
         </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-
-          {/* Coluna Esquerda */}
-          <div className="lg:col-span-1">
-
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
-
-              {/* Avatar */}
-              <div className="flex flex-col items-center">
-
-                <div className="w-36 h-36 rounded-full bg-[#0F2C4A] flex items-center justify-center text-white text-6xl shadow-md">
-                  <UserRound className="w-16 h-16" />
-                </div>
-
-                <h2 className="mt-5 text-2xl font-bold text-[#0F2C4A] text-center">
-                  {candidato?.nome || usuario?.nome || "Usuário"}
-                </h2>
-
-                <p className="text-slate-500 text-sm mt-1 text-center">
-                  Candidato
-                </p>
-
-              </div>
-
-              <hr className="my-8 border-slate-200" />
-
-              {/* Informações */}
-              <div className="space-y-5">
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    E-mail
-                  </p>
-
-                  <p className="font-medium text-[#0F2C4A]">
-                    {usuario?.email || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Telefone
-                  </p>
-
-                  <p className="font-medium text-[#0F2C4A]">
-                    {candidato?.telefone || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    CPF
-                  </p>
-
-                  <p className="font-medium text-[#0F2C4A]">
-                    {candidato?.cpf || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Data de nascimento
-                  </p>
-
-                  <p className="font-medium text-[#0F2C4A]">
-                    {formatarData(candidato?.dataNascimento || null)}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Localização
-                  </p>
-
-                  <p className="font-medium text-[#0F2C4A]">
-                    Patos - PB
-                  </p>
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Coluna Direita */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Dados Pessoais */}
-            <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-
-              <h2 className="text-xl font-bold text-[#0F2C4A] mb-5">
-                Dados Pessoais
-              </h2>
-
-              <div className="grid md:grid-cols-2 gap-5">
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Nome Completo
-                  </p>
-
-                  <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {candidato?.nome || usuario?.nome || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    E-mail
-                  </p>
-
-                  <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {usuario?.email || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Telefone
-                  </p>
-
-                  <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {candidato?.telefone || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    CPF
-                  </p>
-
-                  <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {candidato?.cpf || "Não informado"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Data de Nascimento
-                  </p>
-
-                  <p className="mt-1 font-medium text-[#0F2C4A]">
-                    {formatarData(candidato?.dataNascimento || null)}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Cidade
-                  </p>
-
-                  <p className="mt-1 text-slate-500">
-                    Patos - PB
-                  </p>
-                </div>
-
-              </div>
-
-            </section>
-
-            {/* Habilidades */}
-            <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-
-              <h2 className="text-xl font-bold text-[#0F2C4A] mb-5">
-                Habilidades
-              </h2>
-
-              <div className="flex flex-wrap gap-3">
-
-                {candidato?.habilidades &&
-                candidato.habilidades.length > 0 ? (
-
-                  candidato.habilidades.map((habilidade) => (
-                    <span
-                      key={habilidade}
-                      className="px-4 py-2 rounded-full bg-blue-100 text-[#0F2C4A] text-sm font-medium"
-                    >
-                      {habilidade}
-                    </span>
-                  ))
-
-                ) : (
-
-                  <span className="px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-sm">
-                    Nenhuma habilidade cadastrada
-                  </span>
-
-                )}
-
-              </div>
-
-            </section>
-
-            {/* Formação Acadêmica */}
-            <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-
-              <h2 className="text-xl font-bold text-[#0F2C4A] mb-5">
-                Formação Acadêmica
-              </h2>
-
-              {candidato.formacoes && candidato.formacoes.length > 0 ? (
-                <div className="space-y-4">
-                  {candidato.formacoes.map((formacao) => (
-                    <div key={formacao.id} className="border border-slate-200 rounded-lg p-4">
-                      <p className="font-semibold text-[#0F2C4A]">{formacao.nivelEscolaridade}</p>
-                      <p className="text-sm text-slate-500">{formacao.instituicao}</p>
-                      {(formacao.anoInicio || formacao.anoConclusao) && (
-                        <p className="text-xs text-slate-400 mt-1">
-                          {formacao.anoInicio || "?"} — {formacao.anoConclusao || "atual"}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
-                  <p className="text-slate-500">
-                    Nenhuma formação cadastrada.
-                  </p>
-                  <p className="text-sm text-slate-400 mt-2">
-                    Você poderá adicionar cursos e graduações futuramente.
-                  </p>
-                </div>
-              )}
-
-              {candidato.cursos && candidato.cursos.length > 0 && (
-                <div className="mt-6 space-y-4">
-                  <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                    Cursos e qualificações
-                  </h3>
-                  {candidato.cursos.map((curso) => (
-                    <div key={curso.id} className="border border-slate-200 rounded-lg p-4">
-                      <p className="font-semibold text-[#0F2C4A]">{curso.nomeCurso}</p>
-                      <p className="text-sm text-slate-500">
-                        {[curso.instituicao, curso.cargaHoraria].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-            </section>
-
-            {/* Experiência Profissional */}
-            <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-
-              <h2 className="text-xl font-bold text-[#0F2C4A] mb-5">
-                Experiência Profissional
-              </h2>
-
-              {candidato.experiencias && candidato.experiencias.length > 0 ? (
-                <div className="space-y-4">
-                  {candidato.experiencias.map((exp) => (
-                    <div key={exp.id} className="border border-slate-200 rounded-lg p-4">
-                      <p className="font-semibold text-[#0F2C4A]">{exp.cargo}</p>
-                      <p className="text-sm text-slate-500">{exp.empresa}</p>
-                      {exp.descricao && (
-                        <p className="text-sm text-slate-500 mt-2">{exp.descricao}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
-                  <p className="text-slate-500">
-                    Nenhuma experiência cadastrada.
-                  </p>
-                  <p className="text-sm text-slate-400 mt-2">
-                    Adicione suas experiências para destacar seu perfil.
-                  </p>
-                </div>
-              )}
-
-            </section>
-
-            {/* Ações rápidas */}
-            <div className="grid sm:grid-cols-2 gap-6">
-
-              <button
-                onClick={() => router.push("/perfil/candidato/candidaturas")}
-                className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
-              >
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">
-                  <ClipboardList className="w-9 h-9"/>
-                </div>
-                <h3 className="font-bold text-[#0F2C4A] mt-4">
-                  Vagas concorridas
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  Veja as vagas às quais você já se candidatou e acompanhe o status.
-                </p>
-              </button>
-
-              <button
-                onClick={() => router.push("/perfil/completar")}
-                className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 text-left hover:border-[#1D6FA5] hover:shadow-xl transition-all"
-              >
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
-                  < FileUser className="w-9 h-9"/>
-                </div>
-                <h3 className="font-bold text-[#0F2C4A] mt-4">
-                  Ver e editar currículo completo
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  Gerencie seus dados, formação, experiências e habilidades.
-                </p>
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </main>
-    </div>
+      </div>
+    </Casca>
   );
 }

@@ -45,7 +45,21 @@ model Candidato {
   cargoDesejado     String?
   areaInteresse     String?
   pretensaoSalarial Float?
-  diferencial       String?
+  diferencial       String? // antigo; substituído por sobreMim
+
+  // ── Currículo v2 ──
+  sobreMim              String?
+  bairro                String?
+  telefoneWhatsapp      Boolean  @default(true)
+  turnos                String[] @default([]) // "manha" | "tarde" | "noite"
+  disponivelFimDeSemana Boolean?
+  inicioImediato        Boolean?
+  primeiroEmprego       Boolean  @default(false)
+  escolaridade          String?
+  estudandoAtualmente   Boolean?
+  referenciaNome        String?
+  referenciaTelefone    String?
+  referenciaRelacao     String?
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId String  @unique
@@ -85,6 +99,7 @@ model CandidatoExperiencia {
   dataInicio DateTime?
   dataFim    DateTime?
   atual      Boolean   @default(false)
+  duracao    String? // "ate-6m" | "6m-1a" | "1a-2a" | "mais-2a"
   descricao  String?
 
   candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
@@ -142,6 +157,10 @@ model Candidatura {
   mensagemResposta String?
   dataEntrevista   DateTime?
   respondidoEm     DateTime?
+
+  // Mensagem do candidato e cópia do currículo no momento da candidatura
+  mensagemCandidato String?
+  curriculoEnviado  Json?
 
   vaga   Vaga   @relation(fields: [vagaId], references: [id])
   vagaId String

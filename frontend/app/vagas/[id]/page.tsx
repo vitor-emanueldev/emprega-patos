@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
-import { detalhesVaga, candidatarVaga, type Vaga } from "@/lib/api";
+import { detalhesVaga, candidatarVaga, buscarMinhaFicha, minhasCandidaturas, type Vaga, type Candidato } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import CurriculoVisual from "@/components/CurriculoVisual";
+import { curriculoDaFicha, progressoCurriculo } from "@/lib/curriculo";
 
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
   ssr: false,
@@ -39,7 +41,7 @@ function formatarSalario(valor: number | null) {
 export default function DetalhesVagaPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, usuario } = useAuth();
 
   const [vaga, setVaga] = useState<Vaga | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -48,6 +50,21 @@ export default function DetalhesVagaPage() {
   const [candidatando, setCandidatando] = useState(false);
   const [jaCandidatou, setJaCandidatou] = useState(false);
   const [erroCandidatura, setErroCandidatura] = useState("");
+
+  // Revisão antes de enviar a candidatura
+  const [revisaoAberta, setRevisaoAberta] = useState(false);
+  const [ficha, setFicha] = useState<Candidato | null>(null);
+  const [carregandoFicha, setCarregandoFicha] = useState(false);
+  const [mensagem, setMensagem] = useState("");
+  const [verCurriculo, setVerCurriculo] = useState(false);
+
+  // Já se candidatou antes? (para não mostrar o botão de novo)
+  useEffect(() => {
+    if (!token || !id) return;
+    minhasCandidaturas(token)
+      .then((lista) => setJaCandidatou(lista.some((c) => c.vagaId === id)))
+      .catch(() => {});
+  }, [token, id]);
 
   useEffect(() => {
     async function carregar() {
@@ -63,7 +80,8 @@ export default function DetalhesVagaPage() {
     if (id) carregar();
   }, [id]);
 
-  async function handleCandidatar() {
+  // 1º passo: abre a revisão (confere se já tem currículo)
+  async function abrirRevisao() {
     setErroCandidatura("");
 
     if (!token) {
@@ -71,24 +89,53 @@ export default function DetalhesVagaPage() {
       return;
     }
 
+    setCarregandoFicha(true);
+    try {
+      const dados = await buscarMinhaFicha(token);
+      if (!dados) {
+        router.push(`/perfil/completar?redirect=/vagas/${id}`);
+        return;
+      }
+      setFicha(dados);
+      setMensagem("");
+      setVerCurriculo(false);
+      setRevisaoAberta(true);
+    } catch (e: any) {
+      setErroCandidatura(e.message || "Não foi possível carregar seu currículo.");
+    } finally {
+      setCarregandoFicha(false);
+    }
+  }
+
+  // 2º passo: envia a candidatura (o servidor guarda uma cópia do currículo)
+  async function enviarCandidatura() {
+    if (!token) return;
+    setErroCandidatura("");
     setCandidatando(true);
 
     try {
-      await candidatarVaga(token, id as string);
+      await candidatarVaga(token, id as string, mensagem);
       setJaCandidatou(true);
+      setRevisaoAberta(false);
     } catch (e: any) {
-      const mensagem = e.message || "";
-
-      if (mensagem.toLowerCase().includes("currículo")) {
-        router.push(`/perfil/candidato?redirect=/vagas/${id}`);
+      const texto = e.message || "";
+      if (texto.toLowerCase().includes("currículo")) {
+        router.push(`/perfil/completar?redirect=/vagas/${id}`);
         return;
       }
-
-      setErroCandidatura(mensagem);
+      if (texto.toLowerCase().includes("já se candidatou")) {
+        setJaCandidatou(true);
+        setRevisaoAberta(false);
+        return;
+      }
+      setErroCandidatura(texto);
     } finally {
       setCandidatando(false);
     }
   }
+
+  const curriculoRevisao = ficha ? curriculoDaFicha(ficha, usuario?.email) : null;
+  const progressoRevisao = curriculoRevisao ? progressoCurriculo(curriculoRevisao) : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -232,18 +279,24 @@ export default function DetalhesVagaPage() {
                 </div>
 
                 <button
-                  onClick={handleCandidatar}
-                  disabled={candidatando || jaCandidatou}
+                  onClick={abrirRevisao}
+                  disabled={candidatando || carregandoFicha || jaCandidatou}
                   className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {jaCandidatou
                     ? "Candidatura enviada ✓"
-                    : candidatando
-                    ? "Enviando..."
+                    : carregandoFicha
+                    ? "Abrindo..."
                     : "Candidatar-se agora"}
                 </button>
 
-                {erroCandidatura && (
+                {jaCandidatou && (
+                  <Link href="/perfil/candidato/candidaturas" className="block text-xs text-[#1D6FA5] mt-2 text-center hover:underline">
+                    Acompanhar minhas candidaturas →
+                  </Link>
+                )}
+
+                {erroCandidatura && !revisaoAberta && (
                   <p className="text-xs text-red-600 mt-2 text-center">
                     {erroCandidatura}
                   </p>
@@ -293,6 +346,99 @@ export default function DetalhesVagaPage() {
           </div>
         )}
       </main>
+      {/* ─── Revisão da candidatura ─── */}
+      {revisaoAberta && vaga && curriculoRevisao && (
+        <div
+          className="fixed inset-0 z-[2000] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => !candidatando && setRevisaoAberta(false)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5 sm:p-7"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <p className="text-xs uppercase tracking-wide text-slate-400">Você está se candidatando para</p>
+            <h2 className="text-xl font-bold text-[#0F2C4A]">{vaga.cargo}</h2>
+            <p className="text-sm text-slate-500">{vaga.empresa.nomeEmpresa}</p>
+
+            {/* Currículo que será enviado */}
+            <div className="mt-5 border border-slate-200 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setVerCurriculo(!verCurriculo)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+              >
+                <span>
+                  <span className="block text-sm font-semibold text-[#0F2C4A]">📄 Seu currículo</span>
+                  {progressoRevisao && (
+                    <span className="block text-xs text-slate-500">
+                      {progressoRevisao.porcentagem}% completo
+                      {progressoRevisao.faltando.length > 0 && ` · falta: ${progressoRevisao.faltando.join(", ")}`}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm text-[#1D6FA5] shrink-0">{verCurriculo ? "Ocultar" : "Ver"}</span>
+              </button>
+              {verCurriculo && (
+                <div className="border-t border-slate-200 p-4">
+                  <CurriculoVisual curriculo={curriculoRevisao} modo="candidato" />
+                </div>
+              )}
+              <div className="border-t border-slate-200 px-4 py-2.5">
+                <Link href={`/perfil/completar?redirect=/vagas/${id}`} className="text-sm font-medium text-[#1D6FA5] hover:underline">
+                  ✏️ Editar currículo antes de enviar
+                </Link>
+              </div>
+            </div>
+
+            {/* Mensagem para a empresa */}
+            <div className="mt-5">
+              <label className="block text-sm font-semibold text-[#0F2C4A] mb-1">
+                💬 Mensagem para a empresa <span className="font-normal text-slate-400">(opcional)</span>
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                Por que você quer esta vaga? Por que seria uma boa escolha? Uma mensagem curta faz diferença.
+              </p>
+              <textarea
+                value={mensagem}
+                onChange={(e) => setMensagem(e.target.value.slice(0, 1000))}
+                rows={4}
+                placeholder={`Ex: Moro perto e tenho experiência com atendimento. Tenho interesse na vaga de ${vaga.cargo} porque...`}
+                className="w-full rounded-md bg-white border border-slate-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-y"
+              />
+              <p className="text-xs text-slate-400 text-right">{mensagem.length}/1000</p>
+            </div>
+
+            <p className="text-xs text-slate-500 mt-2">
+              A empresa recebe o currículo como está agora. Se você editar depois, esta candidatura não muda — mas seu telefone e e-mail ficam sempre atualizados.
+            </p>
+
+            {erroCandidatura && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-3">{erroCandidatura}</p>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-5">
+              <button
+                type="button"
+                onClick={() => setRevisaoAberta(false)}
+                disabled={candidatando}
+                className="px-4 py-2.5 text-sm font-medium text-[#0F2C4A] hover:bg-slate-100 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={enviarCandidatura}
+                disabled={candidatando}
+                className="px-6 py-2.5 rounded-lg bg-[#0F2C4A] text-white font-semibold text-sm hover:bg-[#17436f] disabled:opacity-60"
+              >
+                {candidatando ? "Enviando..." : "Enviar candidatura"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
