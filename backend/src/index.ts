@@ -10,6 +10,7 @@ import estatisticasRoutes from "./routes/estatisticas.routes";
 import candidaturaRoutes from "./routes/candidatura.routes";
 import vagaSalvaRoutes from "./routes/vagaSalva.routes";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
+import { emailConfigurado } from "./utils/enviarEmail";
 
 // ─── Variáveis obrigatórias: se faltar alguma, o servidor nem sobe ───
 const VARIAVEIS_OBRIGATORIAS = ["DATABASE_URL", "JWT_SECRET", "GOOGLE_CLIENT_ID"];
@@ -21,6 +22,9 @@ if (faltando.length > 0) {
 }
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Aviso: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY não configuradas. O envio de fotos ficará desativado.");
+}
+if (!emailConfigurado()) {
+  console.warn("Aviso: GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN / EMAIL_REMETENTE não configuradas. Os avisos por e-mail ficarão desativados.");
 }
 
 const app = express();

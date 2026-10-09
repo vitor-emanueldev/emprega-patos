@@ -2,6 +2,8 @@ import { Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 import { conteudoDoCurriculo, curriculoParaEmpresa, incluirCurriculo } from "../utils/curriculo";
+import { enviarAviso } from "../utils/enviarEmail";
+import { emailCandidaturaAprovada, emailCandidaturaRecusada, emailNovoCandidato } from "../utils/modelosEmail";
 
 export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
@@ -24,7 +26,7 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
 
     const vaga = await prisma.vaga.findUnique({
       where: { id: vagaId },
-      include: { empresa: { select: { usuarioId: true } } },
+      include: { empresa: { select: { usuarioId: true, nomeEmpresa: true, usuario: { select: { email: true } } } } },
     });
 
     if (!vaga) {
@@ -48,6 +50,18 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
         curriculoEnviado: conteudoDoCurriculo(candidato) as any,
       },
     });
+
+    // Aviso por e-mail para a empresa (em segundo plano)
+    enviarAviso(
+      vaga.empresa.usuario?.email,
+      emailNovoCandidato({
+        nomeEmpresa: vaga.empresa.nomeEmpresa,
+        nomeCandidato: candidato.nome,
+        cargo: vaga.cargo,
+        vagaId: vaga.id,
+        mensagemCandidato: candidatura.mensagemCandidato,
+      })
+    );
 
     return res.status(201).json(candidatura);
 
@@ -162,7 +176,10 @@ async function buscarCandidaturaDaEmpresa(
 
   const candidatura = await prisma.candidatura.findUnique({
     where: { id: candidaturaId },
-    include: { vaga: true },
+    include: {
+      vaga: true,
+      candidato: { select: { nome: true, usuario: { select: { email: true } } } },
+    },
   });
 
   if (!candidatura) {
@@ -173,7 +190,7 @@ async function buscarCandidaturaDaEmpresa(
     return { ok: false as const, status: 403, mensagem: "Você não tem permissão para responder essa candidatura" };
   }
 
-  return { ok: true as const, candidatura };
+  return { ok: true as const, candidatura, empresa };
 }
 
 export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Response) {
@@ -195,6 +212,17 @@ export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Respo
         respondidoEm: new Date(),
       },
     });
+
+    const { candidatura, empresa } = resultado;
+    enviarAviso(
+      candidatura.candidato.usuario?.email,
+      emailCandidaturaRecusada({
+        nomeCandidato: candidatura.candidato.nome,
+        cargo: candidatura.vaga.cargo,
+        nomeEmpresa: empresa.nomeEmpresa,
+        mensagem: candidaturaAtualizada.mensagemResposta,
+      })
+    );
 
     return res.json(candidaturaAtualizada);
   } catch (error) {
@@ -223,6 +251,19 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
         respondidoEm: new Date(),
       },
     });
+
+    const { candidatura, empresa } = resultado;
+    enviarAviso(
+      candidatura.candidato.usuario?.email,
+      emailCandidaturaAprovada({
+        nomeCandidato: candidatura.candidato.nome,
+        cargo: candidatura.vaga.cargo,
+        nomeEmpresa: empresa.nomeEmpresa,
+        enderecoVaga: candidatura.vaga.endereco,
+        dataEntrevista: candidaturaAtualizada.dataEntrevista,
+        mensagem: candidaturaAtualizada.mensagemResposta,
+      })
+    );
 
     return res.json(candidaturaAtualizada);
   } catch (error) {
@@ -268,4 +309,4 @@ export async function cancelarCandidatura(req: RequisicaoAutenticada, res: Respo
     console.error("Erro ao cancelar candidatura:", error);
     return res.status(500).json({ erro: "Erro ao cancelar candidatura" });
   }
-}
+}
