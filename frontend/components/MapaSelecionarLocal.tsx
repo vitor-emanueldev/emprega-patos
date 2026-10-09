@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
@@ -52,6 +53,17 @@ function CliqueNoMapa({
   return null;
 }
 
+// Quando o local muda por fora (ex: endereço encontrado pelo CNPJ), leva o mapa até lá
+function SeguirPino({ latitude, longitude }: { latitude: number | null; longitude: number | null }) {
+  const mapa = useMap();
+  useEffect(() => {
+    if (latitude !== null && longitude !== null) {
+      mapa.flyTo([latitude, longitude], Math.max(mapa.getZoom(), 16), { duration: 0.8 });
+    }
+  }, [latitude, longitude, mapa]);
+  return null;
+}
+
 type Props = {
   latitude: number | null;
   longitude: number | null;
@@ -93,6 +105,8 @@ export default function MapaSelecionarLocal({
             onForaDosLimites={handleForaDosLimites}
           />
         )}
+
+        <SeguirPino latitude={latitude} longitude={longitude} />
 
         {PONTOS_REFERENCIA.map((ponto) => (
           <Marker

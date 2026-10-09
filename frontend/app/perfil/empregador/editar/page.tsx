@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, atualizarEmpresa } from "@/lib/api";
 import { Building2 } from "lucide-react";
+import { SETORES_EMPRESA } from "@/lib/setores";
 
 export default function EditarPerfilEmpregadorPage() {
   const router = useRouter();
@@ -183,12 +184,20 @@ export default function EditarPerfilEmpregadorPage() {
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
                 Setor de atuação
               </label>
-              <input
+              <select
                 value={setor}
                 onChange={(e) => setSetor(e.target.value)}
-                placeholder="Ex.: Varejo, Alimentação, Serviços..."
                 className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-              />
+              >
+                <option value="">Selecione...</option>
+                {/* empresa antiga com setor escrito à mão: mantém o valor dela como opção */}
+                {setor && !(SETORES_EMPRESA as readonly string[]).includes(setor) && <option value={setor}>{setor}</option>}
+                {SETORES_EMPRESA.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

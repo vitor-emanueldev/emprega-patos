@@ -58,7 +58,9 @@ export default function LoginPage() {
     try {
       const dados = await loginComGoogle(response.credential);
       salvarLogin(dados.token, dados.usuario);
-      router.push("/");
+      // Volta para onde a pessoa estava (só caminhos internos do site)
+      const destino = new URLSearchParams(window.location.search).get("redirect");
+      router.push(destino && destino.startsWith("/") && !destino.startsWith("//") ? destino : "/");
     } catch (erro) {
       console.error("Erro ao entrar com Google:", erro);
       alert("Não foi possível entrar. Tenta de novo.");

@@ -616,3 +616,35 @@ export async function atualizarVaga(token: string, id: string, dados: DadosAtual
 
   return resultado;
 }
+
+// ─── Vagas salvas ─────────────────────────────────────────────────────────────
+
+export type VagaSalva = Vaga & { salvaEm: string };
+
+export async function listarVagasSalvas(token: string): Promise<VagaSalva[]> {
+  const resposta = await fetchApi(`${API_URL}/vagas-salvas`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar vagas salvas");
+  return dados;
+}
+
+export async function idsVagasSalvas(token: string): Promise<string[]> {
+  const resposta = await fetchApi(`${API_URL}/vagas-salvas/ids`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro || "Erro ao buscar vagas salvas");
+  return dados;
+}
+
+export async function salvarVaga(token: string, vagaId: string, salvar: boolean) {
+  const resposta = await fetchApi(`${API_URL}/vagas/${vagaId}/salvar`, {
+    method: salvar ? "POST" : "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(dados.erro || "Não foi possível salvar a vaga");
+  return dados;
+}

@@ -8,11 +8,13 @@ import vagasRoutes from "./routes/vaga.routes";
 import candidatoRoutes from "./routes/candidato.routes";
 import estatisticasRoutes from "./routes/estatisticas.routes";
 import candidaturaRoutes from "./routes/candidatura.routes";
+import vagaSalvaRoutes from "./routes/vagaSalva.routes";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
 
 // ─── Variáveis obrigatórias: se faltar alguma, o servidor nem sobe ───
 const VARIAVEIS_OBRIGATORIAS = ["DATABASE_URL", "JWT_SECRET", "GOOGLE_CLIENT_ID"];
-const faltando = VARIAVEIS_OBRIGATORIAS.filter((nome) => !process.env[nome]);
+// .trim(): um valor só com espaços (ex: GOOGLE_CLIENT_ID="  ") também conta como faltando
+const faltando = VARIAVEIS_OBRIGATORIAS.filter((nome) => !process.env[nome]?.trim());
 if (faltando.length > 0) {
   console.error(`Variáveis de ambiente faltando: ${faltando.join(", ")}`);
   process.exit(1);
@@ -97,6 +99,7 @@ app.use(vagasRoutes);
 app.use(candidatoRoutes);
 app.use(estatisticasRoutes);
 app.use(candidaturaRoutes);
+app.use(vagaSalvaRoutes);
 
 // ─── Rota não encontrada ───
 app.use((req, res) => {

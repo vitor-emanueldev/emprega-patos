@@ -87,3 +87,14 @@ export const iconeSupermercado = criarCirculoSolido(
   "#0E9488",
   `<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M4 4h2l1.4 9.6A2 2 0 009.4 15.4h8.2a2 2 0 002-1.6L21 7H6.2M9.5 20a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>`
 );
+
+// Vaga selecionada na lista (cores invertidas, para destacar)
+export const iconeVagaSelecionada = criarPino("#0F2C4A", "#F0A93C");
+
+// "Você está aqui" — bolinha azul com halo
+export const iconeVoce = L.divIcon({
+  className: "",
+  html: `<div style="width:18px;height:18px;border-radius:50%;background:#1D6FA5;border:3px solid white;box-shadow:0 0 0 6px rgba(29,111,165,0.25)"></div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});

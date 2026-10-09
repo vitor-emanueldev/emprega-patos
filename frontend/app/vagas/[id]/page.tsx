@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import { detalhesVaga, candidatarVaga, buscarMinhaFicha, minhasCandidaturas, type Vaga, type Candidato } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import CurriculoVisual from "@/components/CurriculoVisual";
+import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import { curriculoDaFicha, progressoCurriculo } from "@/lib/curriculo";
 
 const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
@@ -302,9 +303,7 @@ export default function DetalhesVagaPage() {
                   </p>
                 )}
 
-                <button className="mt-2 w-full text-center text-sm font-medium text-[#0F2C4A] border border-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                  Salvar vaga
-                </button>
+                <BotaoSalvarVaga vagaId={vaga.id} variante="botao" />
               </div>
 
               {/* Mini-card da empresa */}

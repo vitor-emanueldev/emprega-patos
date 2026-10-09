@@ -25,6 +25,8 @@ model Usuario {
 
   candidato Candidato?
   empresa   Empresa?
+
+  vagasSalvas VagaSalva[]
 }
 
 model Candidato {
@@ -146,6 +148,21 @@ model Vaga {
   empresaId String
 
   candidaturas Candidatura[]
+  salvaPor     VagaSalva[]
+}
+
+// Vagas que o usuário marcou para ver depois ("Salvar vaga")
+model VagaSalva {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+
+  vaga   Vaga   @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  vagaId String
+
+  @@unique([usuarioId, vagaId])
 }
 
 model Candidatura {
