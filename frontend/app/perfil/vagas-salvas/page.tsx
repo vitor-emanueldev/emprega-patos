@@ -12,7 +12,7 @@ import { getIconePorCargo } from "@/lib/icones";
 
 export default function VagasSalvasPage() {
   const { token, pronto } = useAuth();
-  const { estaSalva } = useVagasSalvas();
+  const { estaSalva, aguardarPendentes } = useVagasSalvas();
   const [vagas, setVagas] = useState<VagaSalva[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -23,11 +23,13 @@ export default function VagasSalvasPage() {
       setCarregando(false);
       return;
     }
-    listarVagasSalvas(token)
+    // Se a pessoa acabou de salvar uma vaga, espera o servidor confirmar antes de buscar a lista
+    aguardarPendentes()
+      .then(() => listarVagasSalvas(token))
       .then(setVagas)
       .catch((e) => setErro(e.message || "Não foi possível carregar suas vagas salvas."))
       .finally(() => setCarregando(false));
-  }, [token, pronto]);
+  }, [token, pronto, aguardarPendentes]);
 
   // Se a pessoa tirar o coração aqui, a vaga some da lista
   const visiveis = vagas.filter((v) => estaSalva(v.id));

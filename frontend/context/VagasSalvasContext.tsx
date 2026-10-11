@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { idsVagasSalvas, salvarVaga } from "@/lib/api";
 
@@ -8,6 +8,8 @@ type VagasSalvasContextType = {
   estaSalva: (vagaId: string) => boolean;
   // devolve false se a pessoa não está logada (quem chamou decide o que fazer)
   alternar: (vagaId: string) => Promise<boolean>;
+  // espera terminar os salvamentos que ainda estão indo para o servidor
+  aguardarPendentes: () => Promise<void>;
 };
 
 const VagasSalvasContext = createContext<VagasSalvasContextType | null>(null);
@@ -15,6 +17,7 @@ const VagasSalvasContext = createContext<VagasSalvasContextType | null>(null);
 export function VagasSalvasProvider({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
   const [ids, setIds] = useState<Set<string>>(new Set());
+  const pendentes = useRef(new Set<Promise<unknown>>());
 
   // Carrega as vagas salvas quando a pessoa entra (e limpa quando sai)
   useEffect(() => {
@@ -42,8 +45,10 @@ export function VagasSalvasProvider({ children }: { children: React.ReactNode })
         return novo;
       });
 
+      const pedido = salvarVaga(token, vagaId, salvar);
+      pendentes.current.add(pedido);
       try {
-        await salvarVaga(token, vagaId, salvar);
+        await pedido;
       } catch (erro) {
         setIds((atual) => {
           const novo = new Set(atual);
@@ -52,13 +57,19 @@ export function VagasSalvasProvider({ children }: { children: React.ReactNode })
           return novo;
         });
         alert(erro instanceof Error ? erro.message : "Não foi possível salvar a vaga.");
+      } finally {
+        pendentes.current.delete(pedido);
       }
       return true;
     },
     [token, ids]
   );
 
-  return <VagasSalvasContext.Provider value={{ estaSalva, alternar }}>{children}</VagasSalvasContext.Provider>;
+  const aguardarPendentes = useCallback(async () => {
+    await Promise.allSettled([...pendentes.current]);
+  }, []);
+
+  return <VagasSalvasContext.Provider value={{ estaSalva, alternar, aguardarPendentes }}>{children}</VagasSalvasContext.Provider>;
 }
 
 export function useVagasSalvas() {

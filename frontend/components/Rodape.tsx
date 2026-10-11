@@ -58,6 +58,11 @@ export default function Rodape() {
             <MapPin className="w-3.5 h-3.5 text-[#F0A93C]" />
             Patos · Paraíba
           </p>
+          <p className="text-xs text-slate-300 mt-4 leading-relaxed">
+            <span className="text-slate-400">Parceria:</span> Prefeitura Municipal de Patos · CiTI-DE
+            <br />
+            <span className="text-slate-400">Desenvolvido por</span> <b className="text-white">DevGum</b>
+          </p>
         </div>
 
         <Coluna titulo="Navegue" links={LINKS_SITE} />
