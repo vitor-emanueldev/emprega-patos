@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
+import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { loginComGoogle } from "@/lib/api";
@@ -119,7 +120,10 @@ export default function LoginPage() {
 
             <p className="text-[11px] text-slate-400 mt-4 leading-relaxed">
               Ao continuar, você concorda com o uso dos seus dados básicos do Google
-              (nome, email e foto) apenas para criar sua conta no MapVagas.
+              (nome, email e foto) apenas para criar sua conta no MapVagas.{" "}
+              <Link href="/privacidade" className="underline hover:text-slate-600">
+                Política de Privacidade
+              </Link>
             </p>
           </div>
 
