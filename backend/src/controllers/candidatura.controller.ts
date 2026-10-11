@@ -3,7 +3,12 @@ import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 import { conteudoDoCurriculo, curriculoParaEmpresa, incluirCurriculo } from "../utils/curriculo";
 import { enviarAviso } from "../utils/enviarEmail";
-import { emailCandidaturaAprovada, emailCandidaturaRecusada, emailNovoCandidato } from "../utils/modelosEmail";
+import {
+  emailCandidaturaAprovada,
+  emailCandidaturaContratada,
+  emailCandidaturaRecusada,
+  emailNovoCandidato,
+} from "../utils/modelosEmail";
 
 export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) {
   if (!req.usuario) {
@@ -269,6 +274,65 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
   } catch (error) {
     console.error("Erro ao aceitar candidatura:", error);
     return res.status(500).json({ erro: "Erro ao aceitar candidatura" });
+  }
+}
+
+// PATCH /candidaturas/:id/contratar
+// Depois da entrevista, a empresa confirma a contratação.
+// Quando os contratados chegam à quantidade de vagas, a vaga é encerrada sozinha
+// (sai da lista e do mapa e para de receber candidaturas).
+export async function contratarCandidatura(req: RequisicaoAutenticada, res: Response) {
+  const candidaturaId = req.params.id;
+  const { mensagem } = req.body ?? {}; // já validado (contratarCandidaturaSchema)
+
+  const resultado = await buscarCandidaturaDaEmpresa(req, candidaturaId);
+  if (!resultado.ok) {
+    return res.status(resultado.status).json({ erro: resultado.mensagem });
+  }
+
+  const { candidatura, empresa } = resultado;
+
+  if (candidatura.status !== "aprovada") {
+    return res
+      .status(400)
+      .json({ erro: "Só é possível marcar como contratado quem já foi aprovado para entrevista." });
+  }
+
+  try {
+    const candidaturaAtualizada = await prisma.candidatura.update({
+      where: { id: candidaturaId },
+      data: {
+        status: "contratada",
+        mensagemResposta: mensagem || candidatura.mensagemResposta,
+        respondidoEm: new Date(),
+      },
+    });
+
+    const contratados = await prisma.candidatura.count({
+      where: { vagaId: candidatura.vagaId, status: "contratada" },
+    });
+    const quantidadeVagas = candidatura.vaga.quantidadeVagas ?? 1;
+
+    let vagaEncerrada = false;
+    if (candidatura.vaga.status === "aberta" && contratados >= quantidadeVagas) {
+      await prisma.vaga.update({ where: { id: candidatura.vagaId }, data: { status: "encerrada" } });
+      vagaEncerrada = true;
+    }
+
+    enviarAviso(
+      candidatura.candidato.usuario?.email,
+      emailCandidaturaContratada({
+        nomeCandidato: candidatura.candidato.nome,
+        cargo: candidatura.vaga.cargo,
+        nomeEmpresa: empresa.nomeEmpresa,
+        mensagem: mensagem || null,
+      })
+    );
+
+    return res.json({ candidatura: candidaturaAtualizada, contratados, quantidadeVagas, vagaEncerrada });
+  } catch (error) {
+    console.error("Erro ao contratar candidato:", error);
+    return res.status(500).json({ erro: "Erro ao marcar o candidato como contratado" });
   }
 }
 

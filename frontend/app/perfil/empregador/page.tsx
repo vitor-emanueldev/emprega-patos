@@ -275,7 +275,7 @@ export default function PerfilEmpregadorPage() {
                               : "bg-slate-100 text-slate-500"
                           }`}
                         >
-                          {vaga.status === "aberta" ? "Aberta" : vaga.status}
+                          {vaga.status === "aberta" ? "Aberta" : vaga.status === "encerrada" ? "Encerrada" : vaga.status === "pausada" ? "Pausada" : vaga.status}
                         </span>
                         <button
                           onClick={() => router.push(`/vagas/${vaga.id}/candidatos`)}
@@ -306,4 +306,4 @@ export default function PerfilEmpregadorPage() {
       </main>
     </div>
   );
-}
+}

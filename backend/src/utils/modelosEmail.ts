@@ -46,12 +46,11 @@ function caixaDeMensagem(titulo: string, mensagem: string) {
     </div>`;
 }
 
-function layout(opcoes: { preHeader: string; corpo: string; botaoTexto: string; botaoLink: string; rodape: string }) {
+function layout(opcoes: { corpo: string; botaoTexto: string; botaoLink: string; rodape: string }) {
   return `<!doctype html>
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#EEF1F5;font-family:Arial,Helvetica,sans-serif;">
-  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(opcoes.preHeader)}</span>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF1F5;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:12px;overflow:hidden;">
@@ -73,7 +72,7 @@ function layout(opcoes: { preHeader: string; corpo: string; botaoTexto: string; 
         <tr>
           <td style="padding:16px 24px;border-top:1px solid #E2E8F0;font-size:12px;line-height:1.5;color:#94A3B8;">
             ${opcoes.rodape}<br>
-            Este é um aviso automático do MapVagas. Não é preciso responder.
+            MapVagas · vagas de emprego em Patos-PB
           </td>
         </tr>
       </table>
@@ -94,7 +93,7 @@ export function emailNovoCandidato(d: {
   const link = urlDoSite(`/vagas/${d.vagaId}/candidatos`);
   const assunto = `Novo candidato para ${d.cargo}`;
   const corpo = `
-    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Você tem um novo candidato 🎉</p>
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Você tem um novo candidato</p>
     <p style="margin:12px 0 0;">Olá, <b>${esc(d.nomeEmpresa)}</b>!</p>
     <p style="margin:8px 0 0;"><b>${esc(d.nomeCandidato)}</b> se candidatou à vaga de <b>${esc(d.cargo)}</b>.</p>
     ${d.mensagemCandidato ? caixaDeMensagem("Mensagem do candidato", d.mensagemCandidato) : ""}
@@ -102,7 +101,6 @@ export function emailNovoCandidato(d: {
   return {
     assunto,
     html: layout({
-      preHeader: `${d.nomeCandidato} se candidatou à vaga de ${d.cargo}.`,
       corpo,
       botaoTexto: "Ver candidatos",
       botaoLink: link,
@@ -132,22 +130,21 @@ export function emailCandidaturaAprovada(d: {
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;width:100%;background:#FFF7EA;border:1px solid #F6D9A8;border-radius:8px;">
       <tr><td style="padding:14px 16px;">
         <p style="margin:0;font-size:12px;font-weight:bold;color:#B26B00;text-transform:uppercase;letter-spacing:.5px;">Entrevista</p>
-        <p style="margin:6px 0 0;font-size:17px;font-weight:bold;color:${AZUL};">📅 ${esc(quando)}</p>
-        ${d.enderecoVaga ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">📍 ${esc(d.enderecoVaga)}</p>` : ""}
+        <p style="margin:6px 0 0;font-size:17px;font-weight:bold;color:${AZUL};">${esc(quando)}</p>
+        ${d.enderecoVaga ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">Local: ${esc(d.enderecoVaga)}</p>` : ""}
       </td></tr>
     </table>`
     : "";
   const corpo = `
-    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Você foi aprovado(a)! 🎉</p>
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Você foi aprovado(a)!</p>
     <p style="margin:12px 0 0;">Olá, <b>${esc(primeiroNome(d.nomeCandidato))}</b>!</p>
     <p style="margin:8px 0 0;">A empresa <b>${esc(d.nomeEmpresa)}</b> aprovou sua candidatura para <b>${esc(d.cargo)}</b>.</p>
     ${detalhes}
     ${d.mensagem ? caixaDeMensagem(`Mensagem de ${d.nomeEmpresa}`, d.mensagem) : ""}
-    <p style="margin:20px 0 0;">Boa sorte! 🍀</p>`;
+    <p style="margin:20px 0 0;">Boa sorte!</p>`;
   return {
     assunto,
     html: layout({
-      preHeader: quando ? `Entrevista: ${quando}` : `Sua candidatura para ${d.cargo} foi aprovada.`,
       corpo,
       botaoTexto: "Ver minhas candidaturas",
       botaoLink: link,
@@ -159,6 +156,36 @@ export function emailCandidaturaAprovada(d: {
       (quando && d.enderecoVaga ? `Local: ${d.enderecoVaga}\n` : "") +
       (d.mensagem ? `\nMensagem de ${d.nomeEmpresa}:\n${d.mensagem}\n` : "") +
       `\nVeja suas candidaturas: ${link}\n\nBoa sorte!\n— MapVagas`,
+  };
+}
+
+// ─── 2b. Candidato: foi contratado ───
+export function emailCandidaturaContratada(d: {
+  nomeCandidato: string;
+  cargo: string;
+  nomeEmpresa: string;
+  mensagem?: string | null;
+}): EmailPronto {
+  const link = urlDoSite("/perfil/candidato/candidaturas");
+  const assunto = `Parabéns! Você foi contratado(a) para ${d.cargo}`;
+  const corpo = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Parabéns, você foi contratado(a)!</p>
+    <p style="margin:12px 0 0;">Olá, <b>${esc(primeiroNome(d.nomeCandidato))}</b>!</p>
+    <p style="margin:8px 0 0;">A empresa <b>${esc(d.nomeEmpresa)}</b> confirmou sua contratação para a vaga de <b>${esc(d.cargo)}</b>.</p>
+    ${d.mensagem ? caixaDeMensagem(`Mensagem de ${d.nomeEmpresa}`, d.mensagem) : ""}
+    <p style="margin:20px 0 0;">Desejamos muito sucesso nessa nova etapa!</p>`;
+  return {
+    assunto,
+    html: layout({
+      corpo,
+      botaoTexto: "Ver minhas candidaturas",
+      botaoLink: link,
+      rodape: "Você recebeu este e-mail porque se candidatou a esta vaga no MapVagas.",
+    }),
+    texto:
+      `Olá, ${primeiroNome(d.nomeCandidato)}!\n\nA empresa ${d.nomeEmpresa} confirmou sua contratação para a vaga de ${d.cargo}.\n` +
+      (d.mensagem ? `\nMensagem de ${d.nomeEmpresa}:\n${d.mensagem}\n` : "") +
+      `\nVeja suas candidaturas: ${link}\n\nMuito sucesso!\n— MapVagas`,
   };
 }
 
@@ -180,7 +207,6 @@ export function emailCandidaturaRecusada(d: {
   return {
     assunto,
     html: layout({
-      preHeader: `Resposta da ${d.nomeEmpresa} sobre a vaga de ${d.cargo}.`,
       corpo,
       botaoTexto: "Ver outras vagas",
       botaoLink: link,

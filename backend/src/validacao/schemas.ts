@@ -277,6 +277,10 @@ export const candidatarSchema = z.object({
   mensagem: textoOpcional("Mensagem para a empresa", 1000),
 });
 
+export const contratarCandidaturaSchema = z.object({
+  mensagem: textoOpcional("Mensagem", 1000),
+});
+
 export const rejeitarCandidaturaSchema = z.object({
   mensagem: z
     .string({ required_error: "Escreva uma mensagem para o candidato." })

@@ -8,9 +8,18 @@ import { minhasCandidaturas, cancelarCandidatura, type Candidatura } from "@/lib
 
 function corDoStatus(status: string) {
   const normalizado = status.toLowerCase();
+  if (normalizado.includes("contrat")) return "bg-emerald-600 text-white";
   if (normalizado.includes("aprov")) return "bg-green-100 text-green-700";
   if (normalizado.includes("recus") || normalizado.includes("rejeit")) return "bg-red-100 text-red-700";
   return "bg-amber-100 text-amber-700";
+}
+
+function rotuloDoStatus(status: string) {
+  const normalizado = status.toLowerCase();
+  if (normalizado.includes("contrat")) return "Contratado 🎉";
+  if (normalizado.includes("aprov")) return "Entrevista marcada";
+  if (normalizado.includes("recus") || normalizado.includes("rejeit")) return "Não selecionado";
+  return "Em análise";
 }
 
 function formatarDataHora(data: string | null | undefined) {
@@ -117,6 +126,7 @@ export default function MinhasCandidaturasPage() {
           {candidaturas.map((candidatura) => {
             const statusNormalizado = candidatura.status.toLowerCase();
             const aprovada = statusNormalizado.includes("aprov");
+            const contratada = statusNormalizado.includes("contrat");
             const recusada = statusNormalizado.includes("recus") || statusNormalizado.includes("rejeit");
 
             return (
@@ -138,7 +148,7 @@ export default function MinhasCandidaturasPage() {
                     <span
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${corDoStatus(candidatura.status)}`}
                     >
-                      {candidatura.status}
+                      {rotuloDoStatus(candidatura.status)}
                     </span>
 
                     {statusNormalizado === "pendente" && (
@@ -153,12 +163,21 @@ export default function MinhasCandidaturasPage() {
                   </div>
                 </div>
 
-                {(aprovada || recusada) && (
+                {(aprovada || recusada || contratada) && (
                   <div
                     className={`mt-4 rounded-lg p-4 border ${
-                      aprovada ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                      contratada
+                        ? "bg-emerald-50 border-emerald-200"
+                        : aprovada
+                        ? "bg-green-50 border-green-200"
+                        : "bg-red-50 border-red-200"
                     }`}
                   >
+                    {contratada && (
+                      <p className="text-sm font-semibold text-emerald-800">
+                        Parabéns! A empresa confirmou sua contratação.
+                      </p>
+                    )}
                     {aprovada && candidatura.dataEntrevista && (
                       <p className="text-sm font-semibold text-green-800">
                         🗓️ Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
@@ -179,4 +198,4 @@ export default function MinhasCandidaturasPage() {
       </main>
     </div>
   );
-}
+}

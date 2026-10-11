@@ -5,12 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import Header from "@/components/Header";
 import CurriculoVisual from "@/components/CurriculoVisual";
 import { linkWhatsapp, rotuloTurno, type CurriculoVisao } from "@/lib/curriculo";
-import { MessageCircle, UserRound } from "lucide-react";
+import { BadgeCheck, MessageCircle, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   candidaturasDaVaga,
   aceitarCandidatura,
   rejeitarCandidatura,
+  contratarCandidatura,
+  atualizarVaga,
   detalhesVaga,
   type CandidaturaComCandidato,
   type Vaga,
@@ -18,6 +20,7 @@ import {
 
 function corDoStatus(status: string) {
   const normalizado = status.toLowerCase();
+  if (normalizado.includes("contrat")) return "bg-emerald-600 text-white";
   if (normalizado.includes("aprov")) return "bg-green-100 text-green-700";
   if (normalizado.includes("recus") || normalizado.includes("rejeit")) return "bg-red-100 text-red-700";
   return "bg-amber-100 text-amber-700";
@@ -25,6 +28,7 @@ function corDoStatus(status: string) {
 
 function rotuloDoStatus(status: string) {
   const normalizado = status.toLowerCase();
+  if (normalizado.includes("contrat")) return "Contratado ✓";
   if (normalizado.includes("aprov")) return "Aprovado — entrevista marcada";
   if (normalizado.includes("recus") || normalizado.includes("rejeit")) return "Recusado";
   return "Aguardando resposta";
@@ -75,7 +79,7 @@ export default function CandidatosDaVagaPage() {
 
   const [curriculoAbertoId, setCurriculoAbertoId] = useState<string | null>(null);
   const [formularioAbertoId, setFormularioAbertoId] = useState<string | null>(null);
-  const [tipoFormulario, setTipoFormulario] = useState<"aceitar" | "rejeitar" | null>(null);
+  const [tipoFormulario, setTipoFormulario] = useState<"aceitar" | "rejeitar" | "contratar" | null>(null);
   const [processandoId, setProcessandoId] = useState<string | null>(null);
   const [erroFormulario, setErroFormulario] = useState("");
 
@@ -83,6 +87,12 @@ export default function CandidatosDaVagaPage() {
   const [horaEntrevista, setHoraEntrevista] = useState("");
   const [mensagemAceite, setMensagemAceite] = useState("");
   const [mensagemRejeicao, setMensagemRejeicao] = useState("");
+  const [mensagemContratacao, setMensagemContratacao] = useState("");
+  const [avisoVaga, setAvisoVaga] = useState("");
+  const [reabrindo, setReabrindo] = useState(false);
+
+  const contratados = candidaturas.filter((c) => c.status === "contratada").length;
+  const quantidadeVagas = vaga?.quantidadeVagas ?? 1;
 
   useEffect(() => {
     if (!pronto) return; // espera ler o login salvo no navegador
@@ -110,7 +120,7 @@ export default function CandidatosDaVagaPage() {
     carregar();
   }, [token, pronto, vagaId]);
 
-  function abrirFormulario(candidaturaId: string, tipo: "aceitar" | "rejeitar") {
+  function abrirFormulario(candidaturaId: string, tipo: "aceitar" | "rejeitar" | "contratar") {
     setFormularioAbertoId(candidaturaId);
     setTipoFormulario(tipo);
     setErroFormulario("");
@@ -118,6 +128,7 @@ export default function CandidatosDaVagaPage() {
     setHoraEntrevista("");
     setMensagemAceite("");
     setMensagemRejeicao("");
+    setMensagemContratacao("");
   }
 
   function fecharFormulario() {
@@ -148,6 +159,43 @@ export default function CandidatosDaVagaPage() {
       setErroFormulario(erroCapturado.message || "Não foi possível aceitar o candidato.");
     } finally {
       setProcessandoId(null);
+    }
+  }
+
+  async function handleContratar(candidaturaId: string) {
+    if (!token) return;
+    setErroFormulario("");
+    setProcessandoId(candidaturaId);
+    try {
+      const resultado = await contratarCandidatura(token, candidaturaId, mensagemContratacao);
+      setCandidaturas((prev) =>
+        prev.map((c) => (c.id === candidaturaId ? { ...c, ...resultado.candidatura } : c))
+      );
+      if (resultado.vagaEncerrada) {
+        setVaga((v) => (v ? { ...v, status: "encerrada" } : v));
+        setAvisoVaga(
+          `Vaga completa! ${resultado.contratados} de ${resultado.quantidadeVagas} contratado(s). Ela saiu da lista e do mapa e não recebe mais candidaturas.`
+        );
+      }
+      fecharFormulario();
+    } catch (erroCapturado: any) {
+      setErroFormulario(erroCapturado.message || "Não foi possível marcar como contratado.");
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function handleReabrir() {
+    if (!token) return;
+    setReabrindo(true);
+    try {
+      await atualizarVaga(token, vagaId, { status: "aberta" });
+      setVaga((v) => (v ? { ...v, status: "aberta" } : v));
+      setAvisoVaga("Vaga reaberta: ela voltou para a lista e o mapa.");
+    } catch (erroCapturado: any) {
+      setAvisoVaga(erroCapturado.message || "Não foi possível reabrir a vaga.");
+    } finally {
+      setReabrindo(false);
     }
   }
 
@@ -195,6 +243,35 @@ export default function CandidatosDaVagaPage() {
           </button>
         </div>
 
+        {vaga && !carregando && !erro && (
+          <div
+            className={`rounded-xl border p-4 mb-6 flex items-center justify-between gap-4 flex-wrap ${
+              vaga.status === "aberta" ? "bg-white border-slate-200" : "bg-emerald-50 border-emerald-200"
+            }`}
+          >
+            <div>
+              <p className="text-sm font-semibold text-[#0F2C4A]">
+                Contratados: {contratados} de {quantidadeVagas} {quantidadeVagas === 1 ? "vaga" : "vagas"}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {vaga.status === "aberta"
+                  ? "Vaga aberta no site. Quando completar, ela sai da lista e do mapa sozinha."
+                  : "Vaga encerrada: não aparece mais no site e não recebe novas candidaturas."}
+              </p>
+              {avisoVaga && <p className="text-xs font-medium text-emerald-700 mt-1">{avisoVaga}</p>}
+            </div>
+            {vaga.status !== "aberta" && (
+              <button
+                onClick={handleReabrir}
+                disabled={reabrindo}
+                className="text-xs font-semibold text-[#1D6FA5] border border-[#1D6FA5] rounded-md px-3 py-1.5 hover:bg-[#1D6FA5]/5 disabled:opacity-60"
+              >
+                {reabrindo ? "Reabrindo..." : "Reabrir vaga"}
+              </button>
+            )}
+          </div>
+        )}
+
         {carregando && (
           <p className="text-sm text-slate-400 text-center py-16">Carregando candidatos...</p>
         )}
@@ -216,6 +293,8 @@ export default function CandidatosDaVagaPage() {
             const formularioAberto = formularioAbertoId === candidatura.id;
             const processando = processandoId === candidatura.id;
             const pendente = candidatura.status.toLowerCase() === "pendente";
+            const aprovada = candidatura.status === "aprovada";
+            const contratada = candidatura.status === "contratada";
 
             return (
               <div
@@ -274,11 +353,19 @@ export default function CandidatosDaVagaPage() {
                 {!pendente && (
                   <div
                     className={`mt-4 rounded-lg p-4 border ${
-                      candidatura.status.toLowerCase().includes("aprov")
+                      contratada
+                        ? "bg-emerald-50 border-emerald-200"
+                        : candidatura.status.toLowerCase().includes("aprov")
                         ? "bg-green-50 border-green-200"
                         : "bg-red-50 border-red-200"
                     }`}
                   >
+                    {contratada && (
+                      <p className="text-sm font-semibold text-emerald-800 flex items-center gap-1.5">
+                        <BadgeCheck className="w-4 h-4" />
+                        Contratado{candidatura.respondidoEm ? ` em ${new Date(candidatura.respondidoEm).toLocaleDateString("pt-BR")}` : ""}
+                      </p>
+                    )}
                     {candidatura.status.toLowerCase().includes("aprov") && (
                       <p className="text-sm font-semibold text-green-800">
                         Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
@@ -325,6 +412,24 @@ export default function CandidatosDaVagaPage() {
                         className="text-xs font-semibold text-white bg-red-600 rounded-md px-3 py-1.5 hover:bg-red-700"
                       >
                         Rejeitar candidato
+                      </button>
+                    </>
+                  )}
+
+                  {aprovada && (
+                    <>
+                      <button
+                        onClick={() => abrirFormulario(candidatura.id, "contratar")}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700"
+                      >
+                        <BadgeCheck className="w-3.5 h-3.5" />
+                        Marcar como contratado
+                      </button>
+                      <button
+                        onClick={() => abrirFormulario(candidatura.id, "rejeitar")}
+                        className="text-xs font-semibold text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50"
+                      >
+                        Não foi contratado
                       </button>
                     </>
                   )}
@@ -411,6 +516,49 @@ export default function CandidatosDaVagaPage() {
                   </div>
                 )}
 
+                {/* Formulário de contratar */}
+                {formularioAberto && tipoFormulario === "contratar" && (
+                  <div className="mt-5 border-t border-slate-200 pt-5 bg-emerald-50 -mx-5 -mb-5 px-5 pb-5 rounded-b-xl">
+                    <h3 className="text-sm font-bold text-[#0F2C4A] mb-1">Confirmar contratação</h3>
+                    <p className="text-xs text-slate-500 mb-3">
+                      {c.nome.split(" ")[0]} vai receber um e-mail de parabéns.
+                      {contratados + 1 >= quantidadeVagas && vaga?.status === "aberta"
+                        ? " Com essa contratação a vaga fica completa e sai do site."
+                        : ""}
+                    </p>
+
+                    {erroFormulario && (
+                      <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-3">
+                        {erroFormulario}
+                      </p>
+                    )}
+
+                    <label className="block text-xs text-[#0F2C4A] font-medium mb-1">
+                      Mensagem para o candidato (opcional)
+                    </label>
+                    <textarea
+                      value={mensagemContratacao}
+                      onChange={(e) => setMensagemContratacao(e.target.value)}
+                      rows={3}
+                      placeholder="Ex: Seja bem-vindo(a)! Seu primeiro dia é segunda, às 8h."
+                      className="w-full rounded-md bg-white border border-slate-200 px-3 py-2 text-sm text-gray-900 resize-none"
+                    />
+
+                    <div className="flex items-center justify-end gap-3 mt-4">
+                      <button onClick={fecharFormulario} className="text-sm font-medium text-slate-500 hover:underline">
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleContratar(candidatura.id)}
+                        disabled={processando}
+                        className="rounded-md bg-emerald-600 text-white font-semibold px-4 py-2 text-sm hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        {processando ? "Enviando..." : "Confirmar contratação"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Formulário de rejeitar */}
                 {formularioAberto && tipoFormulario === "rejeitar" && (
                   <div className="mt-5 border-t border-slate-200 pt-5 bg-red-50 -mx-5 -mb-5 px-5 pb-5 rounded-b-xl">
@@ -459,4 +607,4 @@ export default function CandidatosDaVagaPage() {
       </main>
     </div>
   );
-}
+}

@@ -561,6 +561,31 @@ export async function aceitarCandidatura(
   return resultado;
 }
 
+// Empregador confirma a contratação (depois da entrevista).
+// Se completar a quantidade de vagas, a vaga é encerrada sozinha.
+export async function contratarCandidatura(
+  token: string,
+  candidaturaId: string,
+  mensagem?: string
+): Promise<{ candidatura: Candidatura; contratados: number; quantidadeVagas: number; vagaEncerrada: boolean }> {
+  const resposta = await fetchApi(`${API_URL}/candidaturas/${candidaturaId}/contratar`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ mensagem: mensagem?.trim() || undefined }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Erro ao marcar como contratado");
+  }
+
+  return resultado;
+}
+
 // Empregador rejeita o candidato, com mensagem obrigatória explicando o motivo
 export async function rejeitarCandidatura(
   token: string,

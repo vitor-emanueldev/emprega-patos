@@ -175,9 +175,15 @@ export default function DetalhesVagaPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-3 py-1">
-                      Vaga aberta
-                    </span>
+                    {vaga.status === "aberta" ? (
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-3 py-1">
+                        Vaga aberta
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-600 bg-slate-200 rounded-full px-3 py-1">
+                        Vaga encerrada
+                      </span>
+                    )}
                     <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-full px-3 py-1">
                       {vaga.tipoContrato}
                     </span>
@@ -293,11 +299,13 @@ export default function DetalhesVagaPage() {
 
                 <button
                   onClick={abrirRevisao}
-                  disabled={candidatando || carregandoFicha || jaCandidatou}
+                  disabled={candidatando || carregandoFicha || jaCandidatou || vaga.status !== "aberta"}
                   className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {jaCandidatou
                     ? "Candidatura enviada ✓"
+                    : vaga.status !== "aberta"
+                    ? "Vaga encerrada"
                     : carregandoFicha
                     ? "Abrindo..."
                     : "Candidatar-se agora"}
