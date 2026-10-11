@@ -20,13 +20,14 @@ function Casca({ children }: { children: React.ReactNode }) {
 
 export default function PerfilCandidatoPage() {
   const router = useRouter();
-  const { usuario, token } = useAuth();
+  const { usuario, token, pronto } = useAuth();
 
   const [candidato, setCandidato] = useState<Candidato | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregarPerfil() {
       if (!token) {
         setCarregando(false);
@@ -42,7 +43,7 @@ export default function PerfilCandidatoPage() {
       }
     }
     carregarPerfil();
-  }, [token]);
+  }, [token, pronto]);
 
   if (carregando) {
     return (

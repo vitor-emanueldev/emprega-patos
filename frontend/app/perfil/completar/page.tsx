@@ -63,7 +63,7 @@ function SimNao({
 function CompletarPerfilContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token, usuario } = useAuth();
+  const { token, usuario, pronto } = useAuth();
   const redirect = searchParams.get("redirect");
 
   const [etapa, setEtapa] = useState<1 | 2 | 3 | 4>(1);
@@ -108,6 +108,7 @@ function CompletarPerfilContent() {
   const sugestoesHabilidade = buscarSugestoesHabilidade(habilidadeDigitada, habilidades);
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregarSeExistir() {
       if (!token) {
         setCarregandoInicial(false);
@@ -168,7 +169,7 @@ function CompletarPerfilContent() {
     }
 
     carregarSeExistir();
-  }, [token]);
+  }, [token, pronto]);
 
   // ── Ajudantes das listas ──
   function alternarTurno(valor: string) {

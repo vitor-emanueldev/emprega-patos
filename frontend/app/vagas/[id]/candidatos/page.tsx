@@ -66,7 +66,7 @@ export default function CandidatosDaVagaPage() {
   const router = useRouter();
   const params = useParams();
   const vagaId = params.id as string;
-  const { token } = useAuth();
+  const { token, pronto } = useAuth();
 
   const [vaga, setVaga] = useState<Vaga | null>(null);
   const [candidaturas, setCandidaturas] = useState<CandidaturaComCandidato[]>([]);
@@ -85,6 +85,7 @@ export default function CandidatosDaVagaPage() {
   const [mensagemRejeicao, setMensagemRejeicao] = useState("");
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregar() {
       if (!token) {
         setCarregando(false);
@@ -107,7 +108,7 @@ export default function CandidatosDaVagaPage() {
     }
 
     carregar();
-  }, [token, vagaId]);
+  }, [token, pronto, vagaId]);
 
   function abrirFormulario(candidaturaId: string, tipo: "aceitar" | "rejeitar") {
     setFormularioAbertoId(candidaturaId);

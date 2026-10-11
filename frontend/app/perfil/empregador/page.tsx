@@ -22,7 +22,7 @@ type Empresa = {
 
 export default function PerfilEmpregadorPage() {
   const router = useRouter();
-  const { usuario, token } = useAuth();
+  const { usuario, token, pronto } = useAuth();
 
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const [vagas, setVagas] = useState<Vaga[]>([]);
@@ -30,6 +30,7 @@ export default function PerfilEmpregadorPage() {
   const [carregandoVagas, setCarregandoVagas] = useState(true);
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregar() {
       if (!token) {
         setCarregando(false);
@@ -54,7 +55,7 @@ export default function PerfilEmpregadorPage() {
     }
 
     carregar();
-  }, [token]);
+  }, [token, pronto]);
 
   if (carregando) {
     return (

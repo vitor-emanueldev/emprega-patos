@@ -19,6 +19,7 @@ import {
   iconeSupermercado,
 } from "@/lib/mapaIcones";
 import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
+import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 
 // Mapa da aba "Mapa" (o mapa da página inicial e da página da vaga continua sendo o MapaVagas)
 
@@ -167,7 +168,10 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
             >
               <Popup minWidth={220} maxWidth={260}>
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0">{vaga.cargo}</p>
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0 pt-1.5">{vaga.cargo}</p>
+                    <BotaoSalvarVaga vagaId={vaga.id} className="-mr-1 -mt-0.5" />
+                  </div>
                   <p className="text-xs text-slate-500 !m-0">{vaga.empresa.nomeEmpresa}</p>
                   <div className="flex flex-wrap gap-1.5">
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>

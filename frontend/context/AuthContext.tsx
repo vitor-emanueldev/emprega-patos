@@ -12,6 +12,9 @@ type Usuario = {
 type AuthContextType = {
   usuario: Usuario | null;
   token: string | null;
+  // true depois que a sessão salva no navegador foi lida.
+  // Antes disso o token é null mesmo para quem está logado.
+  pronto: boolean;
   salvarLogin: (token: string, usuario: Usuario) => void;
   sair: () => void;
 };
@@ -40,6 +43,7 @@ function limparSessaoSalva() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [pronto, setPronto] = useState(false);
 
   // quando a página carrega, verifica se já tem token salvo e se ainda vale
   useEffect(() => {
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (tokenSalvo && usuarioSalvo) {
       if (tokenExpirado(tokenSalvo)) {
         limparSessaoSalva();
+        setPronto(true);
         return;
       }
       try {
@@ -59,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         limparSessaoSalva();
       }
     }
+    setPronto(true);
   }, []);
 
   // Se alguma chamada à API responder 401 (token vencido ou inválido),
@@ -90,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, token, salvarLogin, sair }}>
+    <AuthContext.Provider value={{ usuario, token, pronto, salvarLogin, sair }}>
       {children}
     </AuthContext.Provider>
   );

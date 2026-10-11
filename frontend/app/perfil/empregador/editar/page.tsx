@@ -10,7 +10,7 @@ import { SETORES_EMPRESA } from "@/lib/setores";
 
 export default function EditarPerfilEmpregadorPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, pronto } = useAuth();
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
@@ -25,6 +25,7 @@ export default function EditarPerfilEmpregadorPage() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregar() {
       if (!token) {
         router.push("/login");
@@ -54,7 +55,7 @@ export default function EditarPerfilEmpregadorPage() {
     }
 
     carregar();
-  }, [token, router]);
+  }, [token, pronto, router]);
 
   function formatCNPJ(valor: string) {
     return valor

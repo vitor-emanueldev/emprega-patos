@@ -22,7 +22,7 @@ function formatarDataHora(data: string | null | undefined) {
 
 export default function MinhasCandidaturasPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, pronto } = useAuth();
 
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -30,6 +30,7 @@ export default function MinhasCandidaturasPage() {
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function carregar() {
       if (!token) {
         setCarregando(false);
@@ -48,7 +49,7 @@ export default function MinhasCandidaturasPage() {
     }
 
     carregar();
-  }, [token]);
+  }, [token, pronto]);
 
   async function handleCancelar(candidaturaId: string) {
     if (!token) return;

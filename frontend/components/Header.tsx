@@ -31,7 +31,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="relative bg-white border-b-4 border-[#0F2C4A] px-4 sm:px-8 py-3 flex items-center justify-between">
+    <header className="sticky top-0 z-[1100] bg-white border-b-4 border-[#0F2C4A] px-4 sm:px-8 py-3 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-full bg-[#1D6FA5] flex items-center justify-center text-white text-xs font-bold">
           MV

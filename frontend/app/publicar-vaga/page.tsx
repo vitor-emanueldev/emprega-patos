@@ -34,7 +34,7 @@ type Empresa = {
 
 export default function PublicarVagaPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, pronto } = useAuth();
 
   const [verificando, setVerificando] = useState(true);
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
@@ -63,6 +63,7 @@ export default function PublicarVagaPage() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    if (!pronto) return; // espera ler o login salvo no navegador
     async function checar() {
       if (!token) {
         router.push("/login");
@@ -87,7 +88,7 @@ export default function PublicarVagaPage() {
     }
 
     checar();
-  }, [token, router]);
+  }, [token, pronto, router]);
 
   function handleVoltar() {
     setEtapaAtual((prev) => Math.max(prev - 1, 0));
