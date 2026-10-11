@@ -205,6 +205,8 @@ export const candidatoSchema = z.object({
 // ─── Vaga ────────────────────────────────────────────────────────────
 
 export const STATUS_VAGA = ["aberta", "pausada", "encerrada"] as const;
+// "aceita" = vaga aberta a todos e também a pessoas com deficiência; "exclusiva" = só para PcD
+export const PCD_VAGA = ["nao", "aceita", "exclusiva"] as const;
 
 const camposVaga = {
   cargo: texto("Cargo", 120),
@@ -219,6 +221,14 @@ const camposVaga = {
   requisitos: lista("Requisitos", 30, 300).optional(),
   responsabilidades: lista("Responsabilidades", 30, 300),
   beneficios: lista("Benefícios", 30, 300).optional(),
+  cargaHoraria: textoOpcional("Carga horária", 80),
+  quantidadeVagas: z.coerce
+    .number({ invalid_type_error: "Quantidade de vagas deve ser um número." })
+    .int("Quantidade de vagas inválida.")
+    .min(1, "Informe pelo menos 1 vaga.")
+    .max(500, "Quantidade de vagas inválida.")
+    .optional(),
+  pcd: z.enum(PCD_VAGA, { errorMap: () => ({ message: "Opção de vaga PcD inválida." }) }).optional(),
 };
 
 export const publicarVagaSchema = z.object({
@@ -240,6 +250,7 @@ export const filtrosVagaSchema = z.object({
   bairro: z.string().trim().max(100).optional(),
   salarioMin: numero("Salário mínimo", 0, 1_000_000).optional(),
   salarioMax: numero("Salário máximo", 0, 1_000_000).optional(),
+  pcd: z.enum(["sim"]).optional(), // ?pcd=sim → só vagas PcD (exclusivas ou que também aceitam)
 });
 
 // ─── Candidatura ─────────────────────────────────────────────────────

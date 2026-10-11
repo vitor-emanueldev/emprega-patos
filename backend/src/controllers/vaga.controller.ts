@@ -5,7 +5,7 @@ import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 export async function listarVagas(req: Request, res: Response) {
   try {
     // filtros já validados (filtrosVagaSchema)
-    const { busca, tipoContrato, area, salarioMin, salarioMax, bairro } = res.locals.query ?? {};
+    const { busca, tipoContrato, area, salarioMin, salarioMax, bairro, pcd } = res.locals.query ?? {};
 
     const where: any = {
       status: "aberta",
@@ -21,6 +21,7 @@ export async function listarVagas(req: Request, res: Response) {
     if (tipoContrato) where.tipoContrato = String(tipoContrato);
     if (area) where.area = String(area);
     if (bairro) where.bairro = String(bairro);
+    if (pcd === "sim") where.pcd = { not: "nao" };
 
     if (salarioMin || salarioMax) {
       where.salario = {};
@@ -113,6 +114,9 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
     requisitos,
     responsabilidades,
     beneficios,
+    cargaHoraria,
+    quantidadeVagas,
+    pcd,
   } = req.body;
 
   if (
@@ -153,6 +157,9 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
         requisitos: Array.isArray(requisitos) ? requisitos : [],
         responsabilidades: Array.isArray(responsabilidades) ? responsabilidades : [],
         beneficios: Array.isArray(beneficios) ? beneficios : [],
+        cargaHoraria: cargaHoraria || null,
+        quantidadeVagas: quantidadeVagas ?? 1,
+        pcd: pcd ?? "nao",
         status: "aberta",
         empresaId: empresa.id,
       },
@@ -176,6 +183,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
     cargo, descricao, tipoContrato, area, salario,
     endereco, bairro, latitude, longitude,
     requisitos, responsabilidades, beneficios, status,
+    cargaHoraria, quantidadeVagas, pcd,
   } = req.body;
 
   try {
@@ -212,6 +220,9 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
         requisitos: Array.isArray(requisitos) ? requisitos : undefined,
         responsabilidades: Array.isArray(responsabilidades) ? responsabilidades : undefined,
         beneficios: Array.isArray(beneficios) ? beneficios : undefined,
+        cargaHoraria, // null limpa; undefined mantém
+        quantidadeVagas,
+        pcd,
         status: status || undefined,
       },
     });

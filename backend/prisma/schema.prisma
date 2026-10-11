@@ -144,6 +144,10 @@ model Vaga {
   bairro            String
   createdAt         DateTime @default(now())
 
+  cargaHoraria    String? // ex: "44h semanais", "Seg a sex, 8h às 17h"
+  quantidadeVagas Int     @default(1)
+  pcd             String  @default("nao") // "nao" | "aceita" (também para PcD) | "exclusiva" (só PcD)
+
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
 

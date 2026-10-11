@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SeloPcd from "@/components/SeloPcd";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -180,6 +181,7 @@ export default function DetalhesVagaPage() {
                     <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-full px-3 py-1">
                       {vaga.tipoContrato}
                     </span>
+                    <SeloPcd pcd={vaga.pcd} />
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       📍 {vaga.bairro}, Patos - PB
                     </span>
@@ -277,6 +279,16 @@ export default function DetalhesVagaPage() {
                   <p className="flex items-center gap-2">
                     📄 {vaga.tipoContrato}
                   </p>
+                  {vaga.cargaHoraria && <p className="flex items-center gap-2">🕒 {vaga.cargaHoraria}</p>}
+                  {vaga.quantidadeVagas != null && vaga.quantidadeVagas > 1 && (
+                    <p className="flex items-center gap-2">👥 {vaga.quantidadeVagas} vagas</p>
+                  )}
+                  {vaga.pcd === "exclusiva" && (
+                    <p className="flex items-center gap-2">♿ Exclusiva para pessoas com deficiência</p>
+                  )}
+                  {vaga.pcd === "aceita" && (
+                    <p className="flex items-center gap-2">♿ Também para pessoas com deficiência</p>
+                  )}
                 </div>
 
                 <button

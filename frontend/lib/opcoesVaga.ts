@@ -1,0 +1,45 @@
+// Opções fixas usadas ao publicar/editar vaga e nos filtros.
+// Ter uma lista só garante que o que a empresa escolhe bate com o que o candidato filtra.
+
+export const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário", "Meio período", "Estágio"] as const;
+
+// Sugestões de um toque no formulário (a empresa ainda pode escrever outros)
+export const BENEFICIOS_COMUNS = [
+  "Vale-transporte",
+  "Vale-alimentação",
+  "Vale-refeição",
+  "Plano de saúde",
+  "Plano odontológico",
+  "Comissão",
+  "Bônus por metas",
+  "Desconto em produtos",
+  "Uniforme",
+  "Folga aos domingos",
+] as const;
+
+// Vaga para pessoas com deficiência (PcD)
+export type OpcaoPcd = "nao" | "aceita" | "exclusiva";
+
+export const OPCOES_PCD: { valor: OpcaoPcd; rotulo: string; explicacao: string }[] = [
+  { valor: "nao", rotulo: "Não", explicacao: "Vaga comum." },
+  {
+    valor: "aceita",
+    rotulo: "Também para PcD",
+    explicacao: "Aberta a todos e também a pessoas com deficiência. Aparece no filtro de vagas PcD.",
+  },
+  {
+    valor: "exclusiva",
+    rotulo: "Exclusiva para PcD",
+    explicacao: "Só para pessoas com deficiência (ex: cota da Lei 8.213/91).",
+  },
+];
+
+export function rotuloPcd(pcd?: string | null) {
+  if (pcd === "exclusiva") return "Exclusiva para PcD";
+  if (pcd === "aceita") return "Também para PcD";
+  return null;
+}
+
+export function ehVagaPcd(pcd?: string | null) {
+  return pcd === "aceita" || pcd === "exclusiva";
+}

@@ -3,10 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { Check } from "lucide-react";
 import Header from "@/components/Header";
+import ListaItens, { limparLista } from "@/components/ListaItens";
+import SeloPcd from "@/components/SeloPcd";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, publicarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
+import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
+import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, type OpcaoPcd } from "@/lib/opcoesVaga";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
   ssr: false,
@@ -21,7 +26,10 @@ const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLoc
 });
 
 const ETAPAS = ["Vaga", "Localização", "Revisão"];
-const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário"];
+const OUTRA_AREA = "__outra__";
+
+const classeCampo =
+  "w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]";
 
 type Empresa = {
   id: string;
@@ -31,6 +39,12 @@ type Empresa = {
   latitude: number | null;
   longitude: number | null;
 };
+
+function iniciais(nome?: string) {
+  const partes = (nome || "").trim().split(/\s+/).filter(Boolean);
+  if (!partes.length) return "?";
+  return (partes[0][0] + (partes[1]?.[0] ?? "")).toUpperCase();
+}
 
 export default function PublicarVagaPage() {
   const router = useRouter();
@@ -43,14 +57,18 @@ export default function PublicarVagaPage() {
 
   // Etapa 0 - Vaga
   const [cargo, setCargo] = useState("");
-  const [tipoContrato, setTipoContrato] = useState("CLT");
-  const [area, setArea] = useState("");
+  const [tipoContrato, setTipoContrato] = useState<string>("CLT");
+  const [areaEscolhida, setAreaEscolhida] = useState(""); // item da lista ou OUTRA_AREA
+  const [areaOutra, setAreaOutra] = useState("");
   const [salario, setSalario] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [responsabilidades, setResponsabilidades] = useState("");
-  const [beneficios, setBeneficios] = useState("");
+  const [responsabilidades, setResponsabilidades] = useState<string[]>([""]);
+  const [requisitos, setRequisitos] = useState<string[]>([""]);
+  const [beneficiosMarcados, setBeneficiosMarcados] = useState<string[]>([]);
+  const [beneficiosOutros, setBeneficiosOutros] = useState<string[]>([""]);
   const [cargaHoraria, setCargaHoraria] = useState("");
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
+  const [pcd, setPcd] = useState<OpcaoPcd>("nao");
 
   // Etapa 1 - Localização
   const [usarNovoLocal, setUsarNovoLocal] = useState(false);
@@ -61,6 +79,11 @@ export default function PublicarVagaPage() {
 
   const [publicando, setPublicando] = useState(false);
   const [erro, setErro] = useState("");
+
+  const area = areaEscolhida === OUTRA_AREA ? areaOutra.trim() : areaEscolhida;
+  const listaResponsabilidades = limparLista(responsabilidades);
+  const listaRequisitos = limparLista(requisitos);
+  const listaBeneficios = limparLista([...beneficiosMarcados, ...beneficiosOutros]);
 
   useEffect(() => {
     if (!pronto) return; // espera ler o login salvo no navegador
@@ -90,30 +113,62 @@ export default function PublicarVagaPage() {
     checar();
   }, [token, pronto, router]);
 
+  // Local final da vaga (o da empresa ou um novo)
+  const local = usarNovoLocal
+    ? { endereco, bairro, latitude, longitude }
+    : {
+        endereco: empresa?.endereco ?? "",
+        bairro: empresa?.bairro ?? "",
+        latitude: empresa?.latitude ?? null,
+        longitude: empresa?.longitude ?? null,
+      };
+
+  // Confere a etapa antes de avançar: devolve o problema ou "" se estiver tudo certo
+  function problemaDaEtapa(etapa: number) {
+    if (etapa === 0) {
+      if (!cargo.trim()) return "Informe o cargo/título da vaga.";
+      if (!area) return "Escolha a área/função da vaga.";
+      if (!descricao.trim()) return "Escreva a descrição da vaga.";
+      if (listaResponsabilidades.length === 0) return "Informe pelo menos uma responsabilidade.";
+      const qtd = Number(vagasDisponiveis);
+      if (!Number.isInteger(qtd) || qtd < 1) return "Informe quantas vagas estão disponíveis (pelo menos 1).";
+    }
+    if (etapa === 1) {
+      if (!local.endereco?.trim() || !local.bairro?.trim()) return "Informe o endereço e o bairro da vaga.";
+      if (local.latitude === null || local.longitude === null) return "Marque no mapa onde a vaga fica.";
+    }
+    return "";
+  }
+
   function handleVoltar() {
+    setErro("");
     setEtapaAtual((prev) => Math.max(prev - 1, 0));
   }
 
   function handleProximo() {
+    const problema = problemaDaEtapa(etapaAtual);
+    if (problema) {
+      setErro(problema);
+      return;
+    }
+    setErro("");
     setEtapaAtual((prev) => Math.min(prev + 1, ETAPAS.length - 1));
+  }
+
+  function alternarBeneficio(b: string) {
+    setBeneficiosMarcados((atual) => (atual.includes(b) ? atual.filter((x) => x !== b) : [...atual, b]));
   }
 
   async function handlePublicar() {
     setErro("");
 
-    const enderecoFinal = usarNovoLocal ? endereco : empresa?.endereco ?? "";
-    const bairroFinal = usarNovoLocal ? bairro : empresa?.bairro ?? "";
-    const latitudeFinal = usarNovoLocal ? latitude : empresa?.latitude ?? null;
-    const longitudeFinal = usarNovoLocal ? longitude : empresa?.longitude ?? null;
-
-    if (!cargo || !tipoContrato || !area || !descricao || !responsabilidades.trim()) {
-      setErro("Preencha todos os campos obrigatórios da vaga.");
-      return;
-    }
-
-    if (!enderecoFinal || !bairroFinal || latitudeFinal === null || longitudeFinal === null) {
-      setErro("Selecione uma localização válida para a vaga.");
-      return;
+    for (const etapa of [0, 1]) {
+      const problema = problemaDaEtapa(etapa);
+      if (problema) {
+        setErro(problema);
+        setEtapaAtual(etapa);
+        return;
+      }
     }
 
     if (!token) {
@@ -125,24 +180,21 @@ export default function PublicarVagaPage() {
     setPublicando(true);
     try {
       await publicarVaga(token, {
-        cargo,
-        descricao,
+        cargo: cargo.trim(),
+        descricao: descricao.trim(),
         tipoContrato,
         area,
         salario: parseSalario(salario),
-        endereco: enderecoFinal,
-        bairro: bairroFinal,
-        latitude: latitudeFinal,
-        longitude: longitudeFinal,
-        requisitos: [],
-        responsabilidades: responsabilidades
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        beneficios: beneficios
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        endereco: local.endereco,
+        bairro: local.bairro,
+        latitude: local.latitude as number,
+        longitude: local.longitude as number,
+        requisitos: listaRequisitos,
+        responsabilidades: listaResponsabilidades,
+        beneficios: listaBeneficios,
+        cargaHoraria: cargaHoraria.trim() || null,
+        quantidadeVagas: Number(vagasDisponiveis),
+        pcd,
       });
 
       router.push("/vagas");
@@ -163,8 +215,8 @@ export default function PublicarVagaPage() {
     );
   }
 
-  const enderecoExibicao = usarNovoLocal ? endereco : empresa?.endereco;
-  const bairroExibicao = usarNovoLocal ? bairro : empresa?.bairro;
+  const enderecoExibicao = local.endereco;
+  const bairroExibicao = local.bairro;
 
   return (
     <div className="min-h-screen bg-[#0F2C4A]">
@@ -223,20 +275,21 @@ export default function PublicarVagaPage() {
 
             {/* ETAPA 0 - VAGA */}
             {etapaAtual === 0 && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Cargo/título da vaga *</label>
                   <input
                     value={cargo}
                     onChange={(e) => setCargo(e.target.value)}
                     placeholder="Vendedor externo"
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                    maxLength={120}
+                    className={classeCampo}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm text-[#0F2C4A] font-medium mb-2">Tipo de contrato *</label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {TIPOS_CONTRATO.map((tipo) => (
                       <button
                         key={tipo}
@@ -254,15 +307,28 @@ export default function PublicarVagaPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Área *</label>
-                    <input
-                      value={area}
-                      onChange={(e) => setArea(e.target.value)}
-                      placeholder="Comércio"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
-                    />
+                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Área / função *</label>
+                    <select value={areaEscolhida} onChange={(e) => setAreaEscolhida(e.target.value)} className={classeCampo}>
+                      <option value="">Selecione...</option>
+                      {CATEGORIAS_VAGA.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                      <option value={OUTRA_AREA}>Outra (escrever)</option>
+                    </select>
+                    {areaEscolhida === OUTRA_AREA && (
+                      <input
+                        value={areaOutra}
+                        onChange={(e) => setAreaOutra(e.target.value)}
+                        placeholder="Ex: Auxiliar administrativo"
+                        maxLength={100}
+                        className={`${classeCampo} mt-2`}
+                      />
+                    )}
+                    <p className="text-xs text-slate-400 mt-1">É por aqui que o candidato filtra as vagas.</p>
                   </div>
                   <div>
                     <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário</label>
@@ -270,8 +336,9 @@ export default function PublicarVagaPage() {
                       value={salario}
                       onChange={(e) => setSalario(formatSalario(e.target.value))}
                       placeholder="R$ 0,00"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      className={classeCampo}
                     />
+                    <p className="text-xs text-slate-400 mt-1">Deixe em branco para &quot;a combinar&quot;.</p>
                   </div>
                 </div>
 
@@ -281,56 +348,115 @@ export default function PublicarVagaPage() {
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
                     rows={4}
+                    maxLength={5000}
                     placeholder="Ex: o funcionário deverá buscar novas oportunidades para comércios, tal qual negociar vendas frutíferas quando necessário."
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                    className={`${classeCampo} resize-none`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                    Responsabilidades * <span className="text-xs text-slate-400 font-normal">(uma por linha)</span>
-                  </label>
-                  <textarea
-                    value={responsabilidades}
-                    onChange={(e) => setResponsabilidades(e.target.value)}
-                    rows={4}
-                    placeholder={"Repor mercadorias nas prateleiras\nConferir a validade dos produtos"}
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-2">Responsabilidades *</label>
+                  <ListaItens
+                    itens={responsabilidades}
+                    aoMudar={setResponsabilidades}
+                    placeholder="Ex: Repor mercadorias nas prateleiras"
+                    textoAdicionar="Adicionar responsabilidade"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                    Benefícios <span className="text-xs text-slate-400 font-normal">(um por linha)</span>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-2">
+                    Requisitos <span className="text-xs text-slate-400 font-normal">(opcional)</span>
                   </label>
-                  <textarea
-                    value={beneficios}
-                    onChange={(e) => setBeneficios(e.target.value)}
-                    rows={3}
-                    placeholder={"Desconto em compras no mercado\nCarga horária 44h/sem"}
-                    className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5] resize-none"
+                  <ListaItens
+                    itens={requisitos}
+                    aoMudar={setRequisitos}
+                    placeholder="Ex: Ensino médio completo"
+                    textoAdicionar="Adicionar requisito"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-2">
+                    Benefícios <span className="text-xs text-slate-400 font-normal">(toque para marcar)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {BENEFICIOS_COMUNS.map((b) => {
+                      const marcado = beneficiosMarcados.includes(b);
+                      return (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => alternarBeneficio(b)}
+                          aria-pressed={marcado}
+                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            marcado
+                              ? "bg-[#F0A93C] border-[#F0A93C] text-white"
+                              : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                          }`}
+                        >
+                          {marcado && <Check className="w-3.5 h-3.5" />}
+                          {b}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-slate-500 mb-2">Outros benefícios:</p>
+                  <ListaItens
+                    itens={beneficiosOutros}
+                    aoMudar={setBeneficiosOutros}
+                    placeholder="Ex: Cesta básica"
+                    textoAdicionar="Adicionar outro benefício"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Carga horária</label>
                     <input
                       value={cargaHoraria}
                       onChange={(e) => setCargaHoraria(e.target.value)}
-                      placeholder="Sob demanda"
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      placeholder="Ex: Seg a sáb, 8h às 17h"
+                      maxLength={80}
+                      className={classeCampo}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Vagas disponíveis</label>
+                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Vagas disponíveis *</label>
                     <input
                       type="number"
                       min={1}
+                      max={500}
                       value={vagasDisponiveis}
                       onChange={(e) => setVagasDisponiveis(e.target.value)}
-                      className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
+                      className={classeCampo}
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
+                    Vaga para pessoas com deficiência (PcD)?
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                    {OPCOES_PCD.map((op) => (
+                      <button
+                        key={op.valor}
+                        type="button"
+                        onClick={() => setPcd(op.valor)}
+                        aria-pressed={pcd === op.valor}
+                        className={`text-left rounded-md border px-3 py-3 transition-colors ${
+                          pcd === op.valor
+                            ? "border-[#1D6FA5] bg-[#1D6FA5]/5"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <p className={`text-sm font-medium ${pcd === op.valor ? "text-[#1D6FA5]" : "text-slate-600"}`}>
+                          {op.rotulo}
+                        </p>
+                        <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{op.explicacao}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -433,21 +559,27 @@ export default function PublicarVagaPage() {
             {/* ETAPA 2 - REVISÃO */}
             {etapaAtual === 2 && (
               <div className="space-y-4">
+                <p className="text-sm text-slate-500">Confira tudo antes de publicar. Para corrigir, use &quot;← Voltar&quot;.</p>
                 <CampoRevisao label="Cargo/título da vaga" valor={cargo} />
-                <CampoRevisao label="Tipo de contrato" valor={tipoContrato} />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <CampoRevisao label="Área" valor={area} />
-                  <CampoRevisao label="Salário" valor={salario} />
+                  <CampoRevisao label="Tipo de contrato" valor={tipoContrato} />
+                  <CampoRevisao label="Área / função" valor={area} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <CampoRevisao label="Salário" valor={salario || "A combinar"} />
+                  <CampoRevisao label="Vagas disponíveis" valor={vagasDisponiveis} />
                 </div>
 
                 <CampoRevisao label="Descrição da vaga" valor={descricao} textarea />
-                <CampoRevisao label="Responsabilidades" valor={responsabilidades} textarea />
-                <CampoRevisao label="Benefícios" valor={beneficios} textarea />
+                <ListaRevisao label="Responsabilidades" itens={listaResponsabilidades} />
+                <ListaRevisao label="Requisitos" itens={listaRequisitos} vazio="Nenhum requisito informado" />
+                <ListaRevisao label="Benefícios" itens={listaBeneficios} vazio="Nenhum benefício informado" />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <CampoRevisao label="Carga horária" valor={cargaHoraria} />
-                  <CampoRevisao label="Vagas disponíveis" valor={vagasDisponiveis} />
+                  <CampoRevisao label="Carga horária" valor={cargaHoraria || "Não informada"} />
+                  <CampoRevisao label="Vaga PcD" valor={rotuloPcd(pcd) || "Não"} />
                 </div>
 
                 <CampoRevisao label="Endereço" valor={enderecoExibicao || ""} />
@@ -456,6 +588,11 @@ export default function PublicarVagaPage() {
             )}
 
             {/* Ações */}
+            {erro && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-8 -mb-4">
+                {erro}
+              </p>
+            )}
             <div className="flex items-center justify-between mt-8">
               <button
                 onClick={handleVoltar}
@@ -491,22 +628,24 @@ export default function PublicarVagaPage() {
             <div className="bg-white rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-md bg-[#F0A93C] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  EP
+                  {iniciais(empresa?.nomeEmpresa)}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#0F2C4A]">{cargo || "Cargo"}</p>
                   <p className="text-xs text-slate-500">{empresa?.nomeEmpresa || "Sua empresa"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-3 text-xs text-slate-600">
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-slate-600">
                 <span className="bg-slate-100 rounded px-2 py-0.5">{tipoContrato}</span>
                 {area && <span className="bg-slate-100 rounded px-2 py-0.5">{area}</span>}
+                <SeloPcd pcd={pcd} pequeno />
               </div>
-              {salario && (
-                <p className="text-sm font-semibold text-[#0F2C4A] mt-2">Salário: {salario}</p>
-              )}
+              <p className="text-sm font-semibold text-[#0F2C4A] mt-2">
+                {salario ? `Salário: ${salario}` : "Salário a combinar"}
+              </p>
               <p className="text-xs text-slate-500 mt-1">
                 {bairroExibicao || enderecoExibicao || "Local: ?"}
+                {Number(vagasDisponiveis) > 1 && ` · ${vagasDisponiveis} vagas`}
               </p>
             </div>
 
@@ -543,6 +682,28 @@ function CampoRevisao({
           className="w-full rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-gray-700 cursor-default"
         />
       )}
+    </div>
+  );
+}
+
+function ListaRevisao({ label, itens, vazio = "—" }: { label: string; itens: string[]; vazio?: string }) {
+  return (
+    <div>
+      <label className="block text-sm text-[#0F2C4A] font-medium mb-1">{label}</label>
+      <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
+        {itens.length ? (
+          <ul className="space-y-1">
+            {itens.map((item, i) => (
+              <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                <span className="text-[#F0A93C] mt-0.5">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-400">{vazio}</p>
+        )}
+      </div>
     </div>
   );
 }

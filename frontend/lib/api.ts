@@ -153,6 +153,9 @@ export type Vaga = {
   requisitos: string[];
   responsabilidades: string[];
   beneficios: string[];
+  cargaHoraria?: string | null;
+  quantidadeVagas?: number;
+  pcd?: "nao" | "aceita" | "exclusiva";
   status: string;
   createdAt: string;
   empresa: {
@@ -222,6 +225,9 @@ export type DadosVaga = {
   requisitos?: string[];
   responsabilidades: string[];
   beneficios?: string[];
+  cargaHoraria?: string | null;
+  quantidadeVagas?: number;
+  pcd?: "nao" | "aceita" | "exclusiva";
 };
 
 export async function publicarVaga(token: string, dados: DadosVaga) {

@@ -6,9 +6,9 @@ import Header from "@/components/Header";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import Link from "next/link";
+import SeloPcd from "@/components/SeloPcd";
+import { TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
-const TIPOS_CONTRATO = ["Temporário", "Estágio", "CLT", "PJ"];
-const AREAS = ["Comércio", "Educação", "Saúde", "Serviços", "Indústria"];
 
 function normalizar(texto: string) {
   return texto
@@ -48,6 +48,7 @@ function VagasConteudo() {
   const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
   const [salarioMin, setSalarioMin] = useState(0);
   const [salarioMax, setSalarioMax] = useState(5000);
+  const [somentePcd, setSomentePcd] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -62,6 +63,18 @@ function VagasConteudo() {
     }
     carregar();
   }, []);
+
+  // Áreas e contratos saem das vagas publicadas: só aparece opção que tem vaga
+  const areasDisponiveis = useMemo(
+    () => Array.from(new Set(vagas.map((v) => v.area).filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [vagas]
+  );
+  const contratosDisponiveis = useMemo(() => {
+    const existentes = new Set(vagas.map((v) => v.tipoContrato));
+    const extras = Array.from(existentes).filter((t) => !(TIPOS_CONTRATO as readonly string[]).includes(t));
+    return [...TIPOS_CONTRATO.filter((t) => existentes.has(t)), ...extras];
+  }, [vagas]);
+  const totalPcd = useMemo(() => vagas.filter((v) => ehVagaPcd(v.pcd)).length, [vagas]);
 
   const bairrosDisponiveis = useMemo(() => {
     const unicos = new Set(vagas.map((v) => v.bairro).filter(Boolean));
@@ -99,12 +112,14 @@ function VagasConteudo() {
           vaga.salario == null ||
           (vaga.salario >= salarioMin && vaga.salario <= salarioMax);
 
-        return bateBusca && bateTipo && bateArea && bateBairro && bateSalario;
+        const batePcd = !somentePcd || ehVagaPcd(vaga.pcd);
+
+        return bateBusca && bateTipo && bateArea && bateBairro && bateSalario && batePcd;
       })
       .sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-  }, [vagas, busca, tiposSelecionados, areasSelecionadas, bairrosSelecionados, salarioMin, salarioMax]);
+  }, [vagas, busca, tiposSelecionados, areasSelecionadas, bairrosSelecionados, salarioMin, salarioMax, somentePcd]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -125,7 +140,7 @@ function VagasConteudo() {
               TIPO DE CONTRATO
             </p>
             <div className="flex flex-wrap gap-2">
-              {TIPOS_CONTRATO.map((tipo) => {
+              {contratosDisponiveis.map((tipo) => {
                 const ativo = tiposSelecionados.includes(tipo);
                 return (
                   <button
@@ -151,7 +166,7 @@ function VagasConteudo() {
               ÁREA
             </p>
             <div className="flex flex-wrap gap-2">
-              {AREAS.map((area) => {
+              {areasDisponiveis.map((area) => {
                 const ativo = areasSelecionadas.includes(area);
                 return (
                   <button
@@ -171,6 +186,21 @@ function VagasConteudo() {
               })}
             </div>
           </div>
+
+          {totalPcd > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-500 tracking-wide mb-2">ACESSIBILIDADE</p>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={somentePcd}
+                  onChange={(e) => setSomentePcd(e.target.checked)}
+                  className="accent-[#1D6FA5]"
+                />
+                Somente vagas PcD ({totalPcd})
+              </label>
+            </div>
+          )}
 
           <div>
             <p className="text-xs font-bold text-slate-500 tracking-wide mb-2">
@@ -284,6 +314,11 @@ function VagasConteudo() {
                     <p className="text-xs font-medium text-[#1D6FA5]">
                       {vaga.empresa.nomeEmpresa}
                     </p>
+                    {vaga.pcd && vaga.pcd !== "nao" && (
+                      <div className="mt-1">
+                        <SeloPcd pcd={vaga.pcd} pequeno />
+                      </div>
+                    )}
                     <p className="text-xs text-slate-500 mt-0.5">
                       {vaga.bairro}
                       {vaga.salario != null && (

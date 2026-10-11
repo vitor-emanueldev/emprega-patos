@@ -20,6 +20,7 @@ import {
 } from "@/lib/mapaIcones";
 import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
+import SeloPcd from "@/components/SeloPcd";
 
 // Mapa da aba "Mapa" (o mapa da página inicial e da página da vaga continua sendo o MapaVagas)
 
@@ -176,6 +177,7 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
                   <div className="flex flex-wrap gap-1.5">
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
+                    <SeloPcd pcd={vaga.pcd} pequeno />
                   </div>
                   <p className="text-xs text-slate-500 !m-0">
                     📍 {vaga.bairro}

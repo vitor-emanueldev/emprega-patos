@@ -1,5 +1,6 @@
 import type { Vaga } from "@/lib/api";
 import { distanciaKm } from "@/lib/formatar";
+import { TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
 // Filtros da aba Mapa
 export type Filtros = {
@@ -8,9 +9,10 @@ export type Filtros = {
   categoria: string; // "" = todas
   bairro: string; // "" = todos
   salarioMin: number | null;
+  pcd: boolean; // só vagas para pessoas com deficiência
 };
 
-export const FILTROS_VAZIOS: Filtros = { busca: "", contratos: [], categoria: "", bairro: "", salarioMin: null };
+export const FILTROS_VAZIOS: Filtros = { busca: "", contratos: [], categoria: "", bairro: "", salarioMin: null, pcd: false };
 
 export const FAIXAS_SALARIO = [
   { valor: null, rotulo: "Qualquer" },
@@ -21,7 +23,7 @@ export const FAIXAS_SALARIO = [
 ] as const;
 
 // Mesma ordem do formulário de publicar vaga
-const ORDEM_CONTRATO = ["CLT", "PJ / Freelance", "Temporário"];
+const ORDEM_CONTRATO: readonly string[] = TIPOS_CONTRATO;
 
 export type Posicao = { latitude: number; longitude: number };
 export type VagaComDistancia = Vaga & { distanciaKm: number | null };
@@ -32,7 +34,7 @@ export function normalizar(texto: string) {
 }
 
 export function contarFiltrosAtivos(f: Filtros) {
-  return f.contratos.length + (f.categoria ? 1 : 0) + (f.bairro ? 1 : 0) + (f.salarioMin ? 1 : 0);
+  return f.contratos.length + (f.categoria ? 1 : 0) + (f.bairro ? 1 : 0) + (f.salarioMin ? 1 : 0) + (f.pcd ? 1 : 0);
 }
 
 // As opções saem das vagas que existem: nunca aparece opção que dá zero resultado
@@ -55,6 +57,7 @@ export function opcoesDosFiltros(vagas: Vaga[]) {
     contratos: Array.from(contar((v) => v.tipoContrato).keys()).sort((a, b) => ordem(a) - ordem(b)),
     categorias: ordenarPorNome(contar((v) => v.area)),
     bairros: ordenarPorNome(contar((v) => v.bairro)),
+    totalPcd: vagas.filter((v) => ehVagaPcd(v.pcd)).length,
   };
 }
 
@@ -70,6 +73,7 @@ export function aplicarFiltros(vagas: Vaga[], f: Filtros, origem?: Posicao | nul
       if (f.categoria && v.area !== f.categoria) return false;
       if (f.bairro && v.bairro !== f.bairro) return false;
       if (f.salarioMin && (v.salario == null || v.salario < f.salarioMin)) return false;
+      if (f.pcd && !ehVagaPcd(v.pcd)) return false;
       return true;
     })
     .map((v) => ({

@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { List, Loader2, LocateFixed, Map as MapIcon, Search, SlidersHorizontal, X } from "lucide-react";
+import { Accessibility, List, Loader2, LocateFixed, Map as MapIcon, Search, SlidersHorizontal, X } from "lucide-react";
 import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
+import SeloPcd from "@/components/SeloPcd";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import { formatarDistancia } from "@/lib/formatar";
@@ -123,6 +124,23 @@ export default function MapaPage() {
         </div>
       )}
 
+      {opcoes.totalPcd > 0 && (
+        <div>
+          <p className="text-[11px] font-medium text-slate-500 mb-1">Acessibilidade</p>
+          <button
+            type="button"
+            onClick={() => mudar({ pcd: !filtros.pcd })}
+            aria-pressed={filtros.pcd}
+            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-md px-3 py-2 border transition-colors ${
+              filtros.pcd ? "bg-[#1D6FA5] text-white border-[#1D6FA5]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            <Accessibility className="w-3.5 h-3.5" />
+            Vagas PcD ({opcoes.totalPcd})
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:flex gap-3">
         <div className="lg:min-w-[190px]">
           <label className="block text-[11px] font-medium text-slate-500 mb-1">Categoria</label>
@@ -213,6 +231,7 @@ export default function MapaPage() {
           <div className="flex flex-wrap items-center gap-1.5 mt-2 pl-10">
             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
+            <SeloPcd pcd={vaga.pcd} pequeno />
             <span className="text-[11px] text-slate-500">
               📍 {vaga.bairro}
               {vaga.distanciaKm != null && <strong className="text-[#0F2C4A]"> · {formatarDistancia(vaga.distanciaKm)}</strong>}
