@@ -7,11 +7,14 @@ import { Check } from "lucide-react";
 import Header from "@/components/Header";
 import ListaItens, { limparLista } from "@/components/ListaItens";
 import SeloPcd from "@/components/SeloPcd";
+import LogoEmpresa from "@/components/LogoEmpresa";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, publicarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
 import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, type OpcaoPcd } from "@/lib/opcoesVaga";
+import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
+import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
   ssr: false,
@@ -38,6 +41,7 @@ type Empresa = {
   bairro: string | null;
   latitude: number | null;
   longitude: number | null;
+  logoUrl?: string | null;
 };
 
 function iniciais(nome?: string) {
@@ -76,6 +80,8 @@ export default function PublicarVagaPage() {
   const [bairro, setBairro] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+
+  const enderecoAuto = useEnderecoAutomatico({ endereco, setEndereco, bairro, setBairro });
 
   const [publicando, setPublicando] = useState(false);
   const [erro, setErro] = useState("");
@@ -540,7 +546,7 @@ export default function PublicarVagaPage() {
                         Localização no mapa *
                       </label>
                       <p className="text-xs text-slate-500 mb-2">
-                        Clique no mapa no ponto exato onde a vaga fica.
+                        Clique no mapa no ponto exato onde a vaga fica. O endereço e o bairro são preenchidos sozinhos.
                       </p>
                       <MapaSelecionarLocal
                         latitude={latitude}
@@ -548,8 +554,10 @@ export default function PublicarVagaPage() {
                         onSelecionar={(lat, lng) => {
                           setLatitude(lat);
                           setLongitude(lng);
+                          enderecoAuto.aoMarcarPonto(lat, lng);
                         }}
                       />
+                      <AvisoEnderecoMapa estado={enderecoAuto.estado} usarSugestao={enderecoAuto.usarSugestao} />
                     </div>
                   </>
                 )}
@@ -627,9 +635,16 @@ export default function PublicarVagaPage() {
 
             <div className="bg-white rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-md bg-[#F0A93C] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  {iniciais(empresa?.nomeEmpresa)}
-                </div>
+                <LogoEmpresa
+                  logoUrl={empresa?.logoUrl}
+                  nome={empresa?.nomeEmpresa || ""}
+                  className="w-9 h-9 rounded-md"
+                  semLogo={
+                    <div className="w-9 h-9 rounded-md bg-[#F0A93C] flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      {iniciais(empresa?.nomeEmpresa)}
+                    </div>
+                  }
+                />
                 <div>
                   <p className="text-sm font-semibold text-[#0F2C4A]">{cargo || "Cargo"}</p>
                   <p className="text-xs text-slate-500">{empresa?.nomeEmpresa || "Sua empresa"}</p>

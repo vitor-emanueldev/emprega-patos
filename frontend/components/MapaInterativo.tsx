@@ -21,6 +21,8 @@ import {
 import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
+import LogoEmpresa from "@/components/LogoEmpresa";
+import { getIconePorCargo } from "@/lib/icones";
 
 // Mapa da aba "Mapa" (o mapa da página inicial e da página da vaga continua sendo o MapaVagas)
 
@@ -116,6 +118,16 @@ function AjustarTamanho() {
   return null;
 }
 
+// Sem logo: o mesmo ícone do cargo usado na lista
+function IconeDoCargo({ cargo }: { cargo: string }) {
+  const Icone = getIconePorCargo(cargo);
+  return (
+    <div className="w-14 h-14 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center">
+      <Icone className="w-6 h-6 text-[#0F2C4A]" />
+    </div>
+  );
+}
+
 export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVaga, minhaPosicao }: Props) {
   const [mostrarReferencias, setMostrarReferencias] = useState(true);
   const marcadores = useRef(new Map<string, LeafletMarker>());
@@ -167,13 +179,22 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
               }}
               eventHandlers={{ click: () => onSelecionarVaga(vaga.id) }}
             >
-              <Popup minWidth={220} maxWidth={260}>
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-start justify-between gap-1">
-                    <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0 pt-1.5">{vaga.cargo}</p>
-                    <BotaoSalvarVaga vagaId={vaga.id} className="-mr-1 -mt-0.5" />
+              <Popup minWidth={240} maxWidth={280}>
+                <div className="flex flex-col gap-2">
+                  {/* Logo em destaque no topo do balão */}
+                  <div className="flex items-start gap-2.5">
+                    <LogoEmpresa
+                      logoUrl={vaga.empresa.logoUrl}
+                      nome={vaga.empresa.nomeEmpresa}
+                      className="w-14 h-14 rounded-lg shadow-sm"
+                      semLogo={<IconeDoCargo cargo={vaga.cargo} />}
+                    />
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0">{vaga.cargo}</p>
+                      <p className="text-xs text-slate-500 !m-0 mt-0.5">{vaga.empresa.nomeEmpresa}</p>
+                    </div>
+                    <BotaoSalvarVaga vagaId={vaga.id} className="-mr-1 -mt-1" />
                   </div>
-                  <p className="text-xs text-slate-500 !m-0">{vaga.empresa.nomeEmpresa}</p>
                   <div className="flex flex-wrap gap-1.5">
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>

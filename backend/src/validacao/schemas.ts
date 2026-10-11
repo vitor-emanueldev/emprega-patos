@@ -106,6 +106,7 @@ export const empresaSchema = z.object({
   setor: textoOpcional("Setor", 100),
   descricao: textoOpcional("Descrição", 2000),
   telefone: telefone("Telefone"),
+  logoUrl: urlImagem,
   latitude: latitude.nullish(),
   longitude: longitude.nullish(),
 });

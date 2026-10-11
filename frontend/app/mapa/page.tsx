@@ -7,6 +7,7 @@ import { Accessibility, List, Loader2, LocateFixed, Map as MapIcon, Search, Slid
 import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
+import LogoEmpresa from "@/components/LogoEmpresa";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import { formatarDistancia } from "@/lib/formatar";
@@ -219,9 +220,16 @@ export default function MapaPage() {
           }`}
         >
           <div className="flex items-start gap-2">
-            <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
-              <Icone className="w-4 h-4 text-[#0F2C4A]" />
-            </div>
+            <LogoEmpresa
+              logoUrl={vaga.empresa.logoUrl}
+              nome={vaga.empresa.nomeEmpresa}
+              className="w-8 h-8 rounded-full"
+              semLogo={
+                <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
+                  <Icone className="w-4 h-4 text-[#0F2C4A]" />
+                </div>
+              }
+            />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[#0F2C4A] truncate">{vaga.cargo}</p>
               <p className="text-xs text-slate-500 truncate">{vaga.empresa.nomeEmpresa}</p>

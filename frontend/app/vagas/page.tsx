@@ -7,6 +7,7 @@ import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
+import LogoEmpresa from "@/components/LogoEmpresa";
 import { TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
 
@@ -303,9 +304,16 @@ function VagasConteudo() {
                   key={vaga.id}
                   className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex items-center gap-4"
                 >
-                  <div className="w-12 h-12 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Icone className="w-6 h-6 text-[#0F2C4A]" />
-                  </div>
+                  <LogoEmpresa
+                    logoUrl={vaga.empresa.logoUrl}
+                    nome={vaga.empresa.nomeEmpresa}
+                    className="w-12 h-12 rounded-full"
+                    semLogo={
+                      <div className="w-12 h-12 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
+                        <Icone className="w-6 h-6 text-[#0F2C4A]" />
+                      </div>
+                    }
+                  />
 
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[#0F2C4A] text-sm">
@@ -364,4 +372,4 @@ export default function VagasPage() {
       <VagasConteudo />
     </Suspense>
   );
-}
+}

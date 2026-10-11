@@ -34,7 +34,7 @@ export async function listarVagas(req: Request, res: Response) {
       orderBy: { createdAt: "desc" },
       include: {
         empresa: {
-          select: { nomeEmpresa: true },
+          select: { nomeEmpresa: true, logoUrl: true },
         },
       },
     });
@@ -54,7 +54,7 @@ export async function detalhesVaga(req: Request, res: Response) {
       where: { id },
       include: {
         empresa: {
-          select: { nomeEmpresa: true, endereco: true },
+          select: { nomeEmpresa: true, endereco: true, logoUrl: true },
         },
       },
     });
@@ -233,4 +233,4 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
     console.error("Erro ao atualizar vaga:", error);
     return res.status(500).json({ erro: "Erro ao atualizar vaga." });
   }
-}
+}

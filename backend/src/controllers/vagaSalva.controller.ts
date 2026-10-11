@@ -10,7 +10,7 @@ export async function listarVagasSalvas(req: RequisicaoAutenticada, res: Respons
     const salvas = await prisma.vagaSalva.findMany({
       where: { usuarioId: req.usuario.id },
       orderBy: { createdAt: "desc" },
-      include: { vaga: { include: { empresa: { select: { nomeEmpresa: true } } } } },
+      include: { vaga: { include: { empresa: { select: { nomeEmpresa: true, logoUrl: true } } } } },
     });
     return res.json(salvas.map((s) => ({ ...s.vaga, salvaEm: s.createdAt })));
   } catch (erro) {

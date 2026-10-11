@@ -85,6 +85,7 @@ export async function cadastrarEmpresa(
     bairro?: string;
     latitude?: number;
     longitude?: number;
+    logoUrl?: string | null;
   }
 ) {
   const resposta = await fetchApi(`${API_URL}/empresas`, {
@@ -107,7 +108,8 @@ export async function cadastrarEmpresa(
 
 export type DadosAtualizarEmpresa = {
   nomeEmpresa: string;
-  cnpj: string;
+  cnpj?: string;
+  logoUrl?: string | null;
   setor?: string;
   descricao?: string;
   telefone?: string;
@@ -161,6 +163,7 @@ export type Vaga = {
   empresa: {
     nomeEmpresa: string;
     setor?: string;
+    logoUrl?: string | null;
   };
 };
 
@@ -419,6 +422,26 @@ export async function enviarFotoCandidato(token: string, foto: Blob): Promise<st
 
   if (!resposta.ok) {
     throw new Error(resultado.erro || "Não foi possível enviar a foto");
+  }
+
+  return resultado.url;
+}
+
+// Logo da empresa: o servidor ajusta (sem cortar), guarda e devolve o link
+export async function enviarLogoEmpresa(token: string, imagem: Blob): Promise<string> {
+  const resposta = await fetchApi(`${API_URL}/empresas/logo`, {
+    method: "POST",
+    headers: {
+      "Content-Type": imagem.type || "image/png",
+      Authorization: `Bearer ${token}`,
+    },
+    body: imagem,
+  });
+
+  const resultado = await resposta.json().catch(() => ({}));
+
+  if (!resposta.ok) {
+    throw new Error(resultado.erro || "Não foi possível enviar a logo");
   }
 
   return resultado.url;

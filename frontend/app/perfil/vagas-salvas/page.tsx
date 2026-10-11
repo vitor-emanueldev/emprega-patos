@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
+import LogoEmpresa from "@/components/LogoEmpresa";
 import { useAuth } from "@/context/AuthContext";
 import { useVagasSalvas } from "@/context/VagasSalvasContext";
 import { listarVagasSalvas, type VagaSalva } from "@/lib/api";
@@ -76,9 +77,16 @@ export default function VagasSalvasPage() {
             const fechada = vaga.status !== "aberta";
             return (
               <div key={vaga.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex items-center gap-4">
-                <div className="w-12 h-12 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
-                  <Icone className="w-6 h-6 text-[#0F2C4A]" />
-                </div>
+                <LogoEmpresa
+                  logoUrl={vaga.empresa.logoUrl}
+                  nome={vaga.empresa.nomeEmpresa}
+                  className="w-12 h-12 rounded-full"
+                  semLogo={
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-slate-100 flex items-center justify-center">
+                      <Icone className="w-6 h-6 text-[#0F2C4A]" />
+                    </div>
+                  }
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-[#0F2C4A] text-sm">{vaga.cargo}</p>
                   <p className="text-xs font-medium text-[#1D6FA5]">{vaga.empresa.nomeEmpresa}</p>

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, atualizarEmpresa } from "@/lib/api";
 import { Building2 } from "lucide-react";
+import LogoUpload from "@/components/LogoUpload";
 import { SETORES_EMPRESA } from "@/lib/setores";
 
 export default function EditarPerfilEmpregadorPage() {
@@ -13,6 +14,7 @@ export default function EditarPerfilEmpregadorPage() {
   const { token, pronto } = useAuth();
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [setor, setSetor] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -36,11 +38,12 @@ export default function EditarPerfilEmpregadorPage() {
         const dados = await verificarEmpresa(token);
 
         if (!dados) {
-          router.push("/perfil/empregador/cadastrar");
+          router.push("/cadastrar-empresa");
           return;
         }
 
         setNomeEmpresa(dados.nomeEmpresa || "");
+        setLogoUrl(dados.logoUrl || "");
         setCnpj(dados.cnpj || "");
         setSetor(dados.setor || "");
         setDescricao(dados.descricao || "");
@@ -83,13 +86,14 @@ export default function EditarPerfilEmpregadorPage() {
       return;
     }
 
-    if (!nomeEmpresa || !cnpj) {
-      setErro("Preencha ao menos o nome da empresa e o CNPJ.");
+    if (!nomeEmpresa.trim()) {
+      setErro("Preencha o nome da empresa.");
       return;
     }
 
-    if (cnpj.replace(/\D/g, "").length !== 14) {
-      setErro("Digite um CNPJ válido.");
+    // CNPJ é opcional (pequenos negócios podem não ter); se preencher, precisa estar completo
+    if (cnpj && cnpj.replace(/\D/g, "").length !== 14) {
+      setErro("Digite um CNPJ válido (14 números) ou deixe em branco.");
       return;
     }
 
@@ -98,7 +102,8 @@ export default function EditarPerfilEmpregadorPage() {
     try {
       await atualizarEmpresa(token, {
         nomeEmpresa,
-        cnpj,
+        cnpj: cnpj || undefined,
+        logoUrl: logoUrl || null,
         setor,
         descricao,
         telefone,
@@ -135,9 +140,14 @@ export default function EditarPerfilEmpregadorPage() {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
 
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-[#F0A93C] text-white flex items-center justify-center text-4xl mx-auto shadow-md">
-              < Building2 className=  "w-13 h-13"/>
-            </div>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Logo da empresa" className="w-20 h-20 rounded-full object-contain bg-white border border-slate-200 p-1 mx-auto shadow-md" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-[#F0A93C] text-white flex items-center justify-center text-4xl mx-auto shadow-md">
+                < Building2 className=  "w-13 h-13"/>
+              </div>
+            )}
 
             <h1 className="text-2xl font-bold text-[#0F2C4A] mt-5">
               Editar Perfil da Empresa
@@ -157,6 +167,13 @@ export default function EditarPerfilEmpregadorPage() {
           <div className="space-y-5">
 
             <div>
+              <label className="block text-sm text-[#0F2C4A] font-medium mb-2">
+                Logo da empresa <span className="text-xs text-slate-400 font-normal">(opcional)</span>
+              </label>
+              <LogoUpload token={token} logoUrl={logoUrl} aoMudar={setLogoUrl} />
+            </div>
+
+            <div>
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
                 Nome da Empresa *
               </label>
@@ -170,7 +187,7 @@ export default function EditarPerfilEmpregadorPage() {
 
             <div>
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
-                CNPJ *
+                CNPJ <span className="text-xs text-slate-400 font-normal">(opcional)</span>
               </label>
               <input
                 value={cnpj}
@@ -275,4 +292,4 @@ export default function EditarPerfilEmpregadorPage() {
       </main>
     </div>
   );
-}
+}

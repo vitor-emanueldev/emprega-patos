@@ -9,6 +9,9 @@ import { cadastrarEmpresa } from "@/lib/api";
 import { formatCNPJ, formatTelefone, telefoneValido } from "@/lib/masks";
 import { apenasDigitos, cnpjValido, consultarCnpj, localizarEndereco } from "@/lib/cnpj";
 import { SETORES_EMPRESA } from "@/lib/setores";
+import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
+import LogoUpload from "@/components/LogoUpload";
+import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
   ssr: false,
@@ -27,6 +30,7 @@ export default function CadastrarEmpresaPage() {
   const { token } = useAuth();
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [setorEmpresa, setSetorEmpresa] = useState("");
   const [descricaoEmpresa, setDescricaoEmpresa] = useState("");
@@ -36,6 +40,7 @@ export default function CadastrarEmpresaPage() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [erro, setErro] = useState("");
+  const enderecoAuto = useEnderecoAutomatico({ endereco, setEndereco, bairro, setBairro });
 
   const [cadastrando, setCadastrando] = useState(false);
 
@@ -148,6 +153,7 @@ export default function CadastrarEmpresaPage() {
         bairro,
         latitude,
         longitude,
+        logoUrl: logoUrl || undefined,
       });
 
       router.push("/publicar-vaga");
@@ -176,6 +182,13 @@ export default function CadastrarEmpresaPage() {
           )}
 
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-[#0F2C4A] font-medium mb-2">
+                Logo da empresa <span className="text-xs text-slate-400 font-normal">(opcional)</span>
+              </label>
+              <LogoUpload token={token} logoUrl={logoUrl} aoMudar={setLogoUrl} />
+            </div>
+
             <div>
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Nome da empresa *</label>
               <input
@@ -282,7 +295,7 @@ export default function CadastrarEmpresaPage() {
                 Localização no mapa *
               </label>
               <p className={`text-xs mb-2 ${avisoLocal ? "text-[#1D6FA5] font-medium" : "text-slate-500"}`}>
-                {avisoLocal || "Clique no mapa no ponto exato onde sua empresa fica."}
+                {avisoLocal || "Clique no mapa no ponto exato onde sua empresa fica. O endereço e o bairro são preenchidos sozinhos."}
               </p>
               <MapaSelecionarLocal
                 latitude={latitude}
@@ -290,13 +303,10 @@ export default function CadastrarEmpresaPage() {
                 onSelecionar={(lat, lng) => {
                   setLatitude(lat);
                   setLongitude(lng);
+                  enderecoAuto.aoMarcarPonto(lat, lng);
                 }}
               />
-              {latitude !== null && longitude !== null && (
-                <p className="text-xs text-slate-500 mt-2">
-                  Local selecionado: {latitude.toFixed(5)}, {longitude.toFixed(5)}
-                </p>
-              )}
+              <AvisoEnderecoMapa estado={enderecoAuto.estado} usarSugestao={enderecoAuto.usarSugestao} />
             </div>
           </div>
 
@@ -313,4 +323,4 @@ export default function CadastrarEmpresaPage() {
       </main>
     </div>
   );
-}
+}

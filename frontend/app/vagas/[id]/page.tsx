@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
+import LogoEmpresa from "@/components/LogoEmpresa";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -162,9 +163,16 @@ export default function DetalhesVagaPage() {
             <div className="space-y-4">
               {/* Cabeçalho da vaga */}
               <div className="bg-white rounded-xl shadow-md p-6 flex items-start gap-4">
-                <div className="w-14 h-14 shrink-0 rounded-lg bg-emerald-50 flex items-center justify-center text-2xl">
-                  📦
-                </div>
+                <LogoEmpresa
+                  logoUrl={vaga.empresa.logoUrl}
+                  nome={vaga.empresa.nomeEmpresa}
+                  className="w-14 h-14 rounded-lg"
+                  semLogo={
+                    <div className="w-14 h-14 shrink-0 rounded-lg bg-emerald-50 flex items-center justify-center text-2xl">
+                      📦
+                    </div>
+                  }
+                />
 
                 <div className="min-w-0">
                   <h1 className="text-xl font-bold text-[#0F2C4A]">
@@ -329,9 +337,16 @@ export default function DetalhesVagaPage() {
               {/* Mini-card da empresa */}
               <div className="bg-white rounded-xl shadow-md p-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 shrink-0 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">
-                    📦
-                  </div>
+                  <LogoEmpresa
+                    logoUrl={vaga.empresa.logoUrl}
+                    nome={vaga.empresa.nomeEmpresa}
+                    className="w-10 h-10 rounded-lg"
+                    semLogo={
+                      <div className="w-10 h-10 shrink-0 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">
+                        📦
+                      </div>
+                    }
+                  />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[#0F2C4A] truncate">
                       {vaga.empresa.nomeEmpresa}

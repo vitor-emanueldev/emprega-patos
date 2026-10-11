@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import type { Vaga } from "@/lib/api";
 import { iconeVaga, iconeHospital, iconeFaculdade, iconeShopping, iconeFarmacia, iconeEmergencia, iconeSupermercado } from "@/lib/mapaIcones";
 import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
+import LogoEmpresa from "@/components/LogoEmpresa";
 
 type Props = {
   vagas: Vaga[];
@@ -67,9 +68,16 @@ export default function MapaVagas({ vagas, vagaSelecionada, onSelecionarVaga, mo
             <Popup minWidth={220}>
               <div className="flex flex-col gap-2 py-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-[#F0A93C]/15 flex items-center justify-center text-lg shrink-0">
-                    💼
-                  </div>
+                  <LogoEmpresa
+                    logoUrl={vaga.empresa.logoUrl}
+                    nome={vaga.empresa.nomeEmpresa}
+                    className="w-12 h-12 rounded-lg shadow-sm"
+                    semLogo={
+                      <div className="w-9 h-9 rounded-full bg-[#F0A93C]/15 flex items-center justify-center text-lg shrink-0">
+                        💼
+                      </div>
+                    }
+                  />
                   <div>
                     <p className="text-sm font-semibold text-[#0F2C4A] leading-tight">{vaga.cargo}</p>
                     <p className="text-xs text-slate-500">{vaga.empresa.nomeEmpresa}</p>

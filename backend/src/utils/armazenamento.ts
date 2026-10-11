@@ -74,6 +74,26 @@ export async function processarFoto(bytes: Buffer): Promise<Buffer> {
   }
 }
 
+// Logo da empresa: NÃO recorta (logo costuma ser retangular). Encaixa a imagem inteira
+// num quadrado de 400x400, mantém o fundo transparente e remove metadados.
+const TAMANHO_LOGO = 400;
+export async function processarLogo(bytes: Buffer): Promise<Buffer> {
+  try {
+    const imagem = sharp(bytes, { limitInputPixels: 40_000_000 }).rotate();
+    const info = await imagem.metadata();
+    if (!info.format || !["jpeg", "png", "webp", "heif", "avif"].includes(info.format)) {
+      throw new ErroImagemInvalida("Formato de imagem não suportado. Use JPG, PNG ou WebP.");
+    }
+    return await imagem
+      .resize(TAMANHO_LOGO, TAMANHO_LOGO, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .webp({ quality: 88, alphaQuality: 90 })
+      .toBuffer();
+  } catch (erro) {
+    if (erro instanceof ErroImagemInvalida) throw erro;
+    throw new ErroImagemInvalida("O arquivo enviado não é uma imagem válida.");
+  }
+}
+
 export async function enviarFoto(pasta: string, conteudo: Buffer): Promise<string> {
   const cfg = configuracao();
   if (!cfg) throw new Error("Upload de fotos não configurado.");

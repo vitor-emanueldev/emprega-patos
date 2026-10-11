@@ -117,6 +117,7 @@ model Empresa {
   setor       String?
   descricao   String?
   telefone    String?
+  logoUrl     String? // logo enviada pelo botão (Supabase Storage)
   latitude    Float?
   longitude   Float?
   createdAt   DateTime @default(now())

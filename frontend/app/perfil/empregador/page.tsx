@@ -11,6 +11,7 @@ type Empresa = {
   id: string;
   nomeEmpresa: string;
   cnpj: string;
+  logoUrl?: string | null;
   setor?: string;
   descricao?: string;
   telefone?: string;
@@ -129,9 +130,14 @@ export default function PerfilEmpregadorPage() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
               <div className="flex flex-col items-center">
-                <div className="w-36 h-36 rounded-full bg-[#F0A93C] flex items-center justify-center text-white text-6xl shadow-md">
-                  <Building2 className="w-16 h-16"/>
-                </div>
+                {empresa.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={empresa.logoUrl} alt={`Logo de ${empresa.nomeEmpresa}`} className="w-36 h-36 rounded-full object-contain bg-white border border-slate-200 p-2 shadow-md" />
+                ) : (
+                  <div className="w-36 h-36 rounded-full bg-[#F0A93C] flex items-center justify-center text-white text-6xl shadow-md">
+                    <Building2 className="w-16 h-16"/>
+                  </div>
+                )}
                 <h2 className="mt-5 text-2xl font-bold text-[#0F2C4A] text-center">
                   {empresa.nomeEmpresa}
                 </h2>
