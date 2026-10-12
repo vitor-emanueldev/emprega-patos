@@ -23,7 +23,6 @@ const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLoc
   ),
 });
 
-const OUTRA_AREA = "__outra__";
 
 const classeCampo =
   "w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]";
@@ -48,7 +47,6 @@ export default function EditarVagaPage() {
   const [descricao, setDescricao] = useState("");
   const [tipoContrato, setTipoContrato] = useState("CLT");
   const [areaEscolhida, setAreaEscolhida] = useState("");
-  const [areaOutra, setAreaOutra] = useState("");
   const [salario, setSalario] = useState("");
   const [responsabilidades, setResponsabilidades] = useState<string[]>([""]);
   const [requisitos, setRequisitos] = useState<string[]>([""]);
@@ -64,7 +62,7 @@ export default function EditarVagaPage() {
   const [status, setStatus] = useState("aberta");
   const enderecoAuto = useEnderecoAutomatico({ endereco, setEndereco, bairro, setBairro });
 
-  const area = areaEscolhida === OUTRA_AREA ? areaOutra.trim() : areaEscolhida;
+  const area = areaEscolhida;
   // Tipos antigos (ex: "PJ") continuam aparecendo para não sumir da vaga
   const tipos: string[] = (TIPOS_CONTRATO as readonly string[]).includes(tipoContrato)
     ? [...TIPOS_CONTRATO]
@@ -80,8 +78,7 @@ export default function EditarVagaPage() {
         if ((CATEGORIAS_VAGA as readonly string[]).includes(vaga.area)) {
           setAreaEscolhida(vaga.area);
         } else {
-          setAreaEscolhida(vaga.area ? OUTRA_AREA : "");
-          setAreaOutra(vaga.area || "");
+          setAreaEscolhida(""); // área antiga fora da lista: a empresa escolhe uma da lista
         }
         setSalario(vaga.salario != null ? formatSalario(String(Math.round(vaga.salario * 100))) : "");
         setResponsabilidades(vaga.responsabilidades?.length ? vaga.responsabilidades : [""]);
@@ -226,17 +223,7 @@ export default function EditarVagaPage() {
                       {c}
                     </option>
                   ))}
-                  <option value={OUTRA_AREA}>Outra (escrever)</option>
                 </select>
-                {areaEscolhida === OUTRA_AREA && (
-                  <input
-                    value={areaOutra}
-                    onChange={(e) => setAreaOutra(e.target.value)}
-                    placeholder="Ex: Auxiliar administrativo"
-                    maxLength={100}
-                    className={`${classeCampo} mt-2`}
-                  />
-                )}
               </div>
               <div>
                 <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário</label>

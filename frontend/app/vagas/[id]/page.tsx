@@ -13,7 +13,7 @@ import CurriculoVisual from "@/components/CurriculoVisual";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import { curriculoDaFicha, progressoCurriculo } from "@/lib/curriculo";
 
-const MapaVagas = dynamic(() => import("@/components/MapaVagas"), {
+const MapaInterativo = dynamic(() => import("@/components/MapaInterativo"), {
   ssr: false,
   loading: () => (
     <div
@@ -367,11 +367,12 @@ export default function DetalhesVagaPage() {
               {vaga.latitude && vaga.longitude && (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                   <div style={{ height: 192 }}>
-                    <MapaVagas
+                    <MapaInterativo
                       vagas={[vaga]}
                       vagaSelecionada={vaga.id}
                       onSelecionarVaga={() => {}}
                       mostrarLegenda={false}
+                      abrirBalaoAoSelecionar={false}
                     />
                   </div>
                 </div>

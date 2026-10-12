@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ehCategoriaValida } from "./categoriasVagas";
 
 // Mensagens padrão em português para os casos sem mensagem própria
 z.setErrorMap((issue, ctx) => {
@@ -213,7 +214,7 @@ const camposVaga = {
   cargo: texto("Cargo", 120),
   descricao: texto("Descrição", 5000),
   tipoContrato: texto("Tipo de contrato", 40),
-  area: texto("Área", 100),
+  area: texto("Área", 100).refine(ehCategoriaValida, "Escolha uma área/função da lista."),
   salario: salario("Salário"),
   endereco: texto("Endereço", 300),
   bairro: texto("Bairro", 100),

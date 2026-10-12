@@ -111,7 +111,9 @@ function CompletarPerfilContent() {
     if (!pronto) return; // espera ler o login salvo no navegador
     async function carregarSeExistir() {
       if (!token) {
-        setCarregandoInicial(false);
+        // Sem login: manda entrar com o Google e depois volta para cá
+        const aqui = window.location.pathname + window.location.search;
+        router.replace(`/login?redirect=${encodeURIComponent(aqui)}`);
         return;
       }
 

@@ -24,13 +24,16 @@ import SeloPcd from "@/components/SeloPcd";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { getIconePorCargo } from "@/lib/icones";
 
-// Mapa da aba "Mapa" (o mapa da página inicial e da página da vaga continua sendo o MapaVagas)
+// Mapa único do site: aba Mapa, página inicial e página da vaga usam este mesmo componente.
+// Mudou aqui, muda em todos.
 
 type Props = {
   vagas: Vaga[];
   vagaSelecionada: string | null;
   onSelecionarVaga: (id: string) => void;
   minhaPosicao?: Posicao | null;
+  mostrarLegenda?: boolean; // mapas pequenos (ex: página da vaga) escondem a legenda
+  abrirBalaoAoSelecionar?: boolean; // false = só centraliza na vaga, sem abrir o balão
 };
 
 const iconesReferencia = {
@@ -81,7 +84,9 @@ function FocarSelecionada({
   vagaSelecionada,
   marcadores,
   posicoes,
+  abrirBalao,
 }: {
+  abrirBalao: boolean;
   vagaSelecionada: string | null;
   marcadores: React.RefObject<Map<string, LeafletMarker>>;
   posicoes: Map<string, [number, number]>;
@@ -92,9 +97,10 @@ function FocarSelecionada({
     const pos = posicoes.get(vagaSelecionada);
     if (!pos) return;
     mapa.flyTo(pos, Math.max(mapa.getZoom(), 16), { duration: 0.6 });
+    if (!abrirBalao) return;
     const t = setTimeout(() => marcadores.current?.get(vagaSelecionada)?.openPopup(), 650);
     return () => clearTimeout(t);
-  }, [vagaSelecionada, mapa, marcadores, posicoes]);
+  }, [vagaSelecionada, mapa, marcadores, posicoes, abrirBalao]);
   return null;
 }
 
@@ -128,7 +134,14 @@ function IconeDoCargo({ cargo }: { cargo: string }) {
   );
 }
 
-export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVaga, minhaPosicao }: Props) {
+export default function MapaInterativo({
+  vagas,
+  vagaSelecionada,
+  onSelecionarVaga,
+  minhaPosicao,
+  mostrarLegenda = true,
+  abrirBalaoAoSelecionar = true,
+}: Props) {
   const [mostrarReferencias, setMostrarReferencias] = useState(true);
   const marcadores = useRef(new Map<string, LeafletMarker>());
   const posicoes = useMemo(() => posicoesSemSobreposicao(vagas), [vagas]);
@@ -149,7 +162,7 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
           maxZoom={19}
         />
         <AjustarTamanho />
-        <FocarSelecionada vagaSelecionada={vagaSelecionada} marcadores={marcadores} posicoes={posicoes} />
+        <FocarSelecionada vagaSelecionada={vagaSelecionada} marcadores={marcadores} posicoes={posicoes} abrirBalao={abrirBalaoAoSelecionar} />
         <FocarMinhaPosicao posicao={minhaPosicao} />
 
         {mostrarReferencias &&
@@ -218,6 +231,7 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
       </MapContainer>
 
       {/* Legenda: dá para esconder os pontos de referência para ver só as vagas */}
+      {mostrarLegenda && (
       <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 rounded-lg shadow-md p-3 text-xs max-w-[180px]">
         <div className="space-y-1.5">
           {(mostrarReferencias ? LEGENDA : LEGENDA.slice(0, 1)).map((l) => (
@@ -235,6 +249,7 @@ export default function MapaInterativo({ vagas, vagaSelecionada, onSelecionarVag
           {mostrarReferencias ? "Esconder pontos de referência" : "Mostrar pontos de referência"}
         </button>
       </div>
+      )}
     </div>
   );
 }

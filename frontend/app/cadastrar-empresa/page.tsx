@@ -27,7 +27,7 @@ const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLoc
 
 export default function CadastrarEmpresaPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, pronto } = useAuth();
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -43,6 +43,11 @@ export default function CadastrarEmpresaPage() {
   const enderecoAuto = useEnderecoAutomatico({ endereco, setEndereco, bairro, setBairro });
 
   const [cadastrando, setCadastrando] = useState(false);
+
+  // Sem login: manda entrar com o Google e depois volta para o cadastro
+  useEffect(() => {
+    if (pronto && !token) router.replace("/login?redirect=/cadastrar-empresa");
+  }, [pronto, token, router]);
 
   // ── Busca automática do CNPJ (dados públicos da Receita Federal) ──
   const [consultandoCnpj, setConsultandoCnpj] = useState(false);

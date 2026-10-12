@@ -29,7 +29,6 @@ const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLoc
 });
 
 const ETAPAS = ["Vaga", "Localização", "Revisão"];
-const OUTRA_AREA = "__outra__";
 
 const classeCampo =
   "w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]";
@@ -62,8 +61,7 @@ export default function PublicarVagaPage() {
   // Etapa 0 - Vaga
   const [cargo, setCargo] = useState("");
   const [tipoContrato, setTipoContrato] = useState<string>("CLT");
-  const [areaEscolhida, setAreaEscolhida] = useState(""); // item da lista ou OUTRA_AREA
-  const [areaOutra, setAreaOutra] = useState("");
+  const [areaEscolhida, setAreaEscolhida] = useState(""); // sempre um item da lista
   const [salario, setSalario] = useState("");
   const [descricao, setDescricao] = useState("");
   const [responsabilidades, setResponsabilidades] = useState<string[]>([""]);
@@ -86,7 +84,7 @@ export default function PublicarVagaPage() {
   const [publicando, setPublicando] = useState(false);
   const [erro, setErro] = useState("");
 
-  const area = areaEscolhida === OUTRA_AREA ? areaOutra.trim() : areaEscolhida;
+  const area = areaEscolhida;
   const listaResponsabilidades = limparLista(responsabilidades);
   const listaRequisitos = limparLista(requisitos);
   const listaBeneficios = limparLista([...beneficiosMarcados, ...beneficiosOutros]);
@@ -323,17 +321,7 @@ export default function PublicarVagaPage() {
                           {c}
                         </option>
                       ))}
-                      <option value={OUTRA_AREA}>Outra (escrever)</option>
                     </select>
-                    {areaEscolhida === OUTRA_AREA && (
-                      <input
-                        value={areaOutra}
-                        onChange={(e) => setAreaOutra(e.target.value)}
-                        placeholder="Ex: Auxiliar administrativo"
-                        maxLength={100}
-                        className={`${classeCampo} mt-2`}
-                      />
-                    )}
                     <p className="text-xs text-slate-400 mt-1">É por aqui que o candidato filtra as vagas.</p>
                   </div>
                   <div>

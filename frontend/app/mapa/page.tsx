@@ -61,6 +61,18 @@ export default function MapaPage() {
   const ativos = contarFiltrosAtivos(filtros);
   const mudar = (parcial: Partial<Filtros>) => setFiltros((f) => ({ ...f, ...parcial }));
 
+  // Atalhos vindos da página inicial: /mapa?categoria=...&pcd=1&perto=1&busca=...
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const inicial: Partial<Filtros> = {};
+    if (p.get("busca")) inicial.busca = p.get("busca")!;
+    if (p.get("categoria")) inicial.categoria = p.get("categoria")!;
+    if (p.get("pcd") === "1") inicial.pcd = true;
+    if (Object.keys(inicial).length) setFiltros((f) => ({ ...f, ...inicial }));
+    if (p.get("perto") === "1") localizacao.pedir();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Se a vaga selecionada sumiu por causa de um filtro, tira a seleção
   useEffect(() => {
     if (vagaSelecionada && !filtradas.some((v) => v.id === vagaSelecionada)) setVagaSelecionada(null);
