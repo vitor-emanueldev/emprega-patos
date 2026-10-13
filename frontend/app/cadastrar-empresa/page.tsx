@@ -148,7 +148,7 @@ export default function CadastrarEmpresaPage() {
 
     setCadastrando(true);
     try {
-      await cadastrarEmpresa(token, {
+      const criada = await cadastrarEmpresa(token, {
         nomeEmpresa,
         cnpj,
         setor: setorEmpresa,
@@ -161,7 +161,8 @@ export default function CadastrarEmpresaPage() {
         logoUrl: logoUrl || undefined,
       });
 
-      router.push("/publicar-vaga");
+      // Aprovada (CNPJ ativo) já pode publicar; pendente vai para o painel, que explica a verificação
+      router.push(criada?.verificacao === "aprovada" ? "/publicar-vaga" : "/perfil/empregador");
 
     } catch (erro: any) {
       setErro(erro.message || "Erro ao cadastrar empresa");
@@ -218,7 +219,9 @@ export default function CadastrarEmpresaPage() {
                 {consultandoCnpj ? (
                   <p className="text-xs text-slate-500 mt-1">Buscando dados do CNPJ...</p>
                 ) : !avisoCnpj ? (
-                  <p className="text-xs text-slate-400 mt-1">Digite o CNPJ e preenchemos o resto para você.</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Com CNPJ ativo, sua empresa é aprovada na hora. Sem CNPJ, a equipe confere antes de liberar.
+                  </p>
                 ) : null}
               </div>
               <div>

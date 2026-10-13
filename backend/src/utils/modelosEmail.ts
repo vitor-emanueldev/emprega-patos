@@ -218,3 +218,74 @@ export function emailCandidaturaRecusada(d: {
       `\nVeja outras vagas: ${link}\n\n— MapVagas`,
   };
 }
+
+// ─── 4. Empresa: aprovada pelo administrador ───
+export function emailEmpresaAprovada(d: { nomeEmpresa: string; nomeResponsavel: string }): EmailPronto {
+  const link = urlDoSite("/publicar-vaga");
+  const assunto = `${d.nomeEmpresa} foi aprovada no MapVagas`;
+  const corpo = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Sua empresa foi aprovada!</p>
+    <p style="margin:12px 0 0;">Olá, <b>${esc(primeiroNome(d.nomeResponsavel || d.nomeEmpresa))}</b>!</p>
+    <p style="margin:8px 0 0;">A equipe do MapVagas conferiu os dados e aprovou <b>${esc(d.nomeEmpresa)}</b>. Agora você já pode publicar vagas, que aparecem no mapa da cidade.</p>`;
+  return {
+    assunto,
+    html: layout({
+      corpo,
+      botaoTexto: "Publicar uma vaga",
+      botaoLink: link,
+      rodape: "Você recebeu este e-mail porque cadastrou sua empresa no MapVagas.",
+    }),
+    texto:
+      `Olá, ${primeiroNome(d.nomeResponsavel || d.nomeEmpresa)}!\n\n` +
+      `A equipe do MapVagas aprovou ${d.nomeEmpresa}. Agora você já pode publicar vagas.\n\n` +
+      `Publicar uma vaga: ${link}\n\n— MapVagas`,
+  };
+}
+
+// ─── 5. Empresa: recusada pelo administrador ───
+export function emailEmpresaRecusada(d: { nomeEmpresa: string; nomeResponsavel: string; motivo: string }): EmailPronto {
+  const link = urlDoSite("/perfil/empregador/editar");
+  const assunto = `Precisamos de mais informações sobre ${d.nomeEmpresa}`;
+  const corpo = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Sua empresa ainda não foi aprovada</p>
+    <p style="margin:12px 0 0;">Olá, <b>${esc(primeiroNome(d.nomeResponsavel || d.nomeEmpresa))}</b>!</p>
+    <p style="margin:8px 0 0;">A equipe do MapVagas analisou o cadastro de <b>${esc(d.nomeEmpresa)}</b> e não pôde aprovar por enquanto.</p>
+    ${caixaDeMensagem("Motivo", d.motivo)}
+    <p style="margin:20px 0 0;">Você pode corrigir os dados no perfil da empresa. Assim que salvar, o cadastro volta para uma nova análise.</p>`;
+  return {
+    assunto,
+    html: layout({
+      corpo,
+      botaoTexto: "Corrigir dados da empresa",
+      botaoLink: link,
+      rodape: "Você recebeu este e-mail porque cadastrou sua empresa no MapVagas.",
+    }),
+    texto:
+      `Olá, ${primeiroNome(d.nomeResponsavel || d.nomeEmpresa)}!\n\n` +
+      `A equipe do MapVagas analisou o cadastro de ${d.nomeEmpresa} e não pôde aprovar por enquanto.\n\n` +
+      `Motivo:\n${d.motivo}\n\n` +
+      `Corrija os dados e salve para uma nova análise: ${link}\n\n— MapVagas`,
+  };
+}
+
+// ─── 6. Administradores: empresa esperando verificação ───
+export function emailNovaEmpresaParaVerificar(d: { nomeEmpresa: string; motivo: "nova" | "corrigida" }): EmailPronto {
+  const link = urlDoSite("/admin");
+  const assunto =
+    d.motivo === "nova" ? `Nova empresa para verificar: ${d.nomeEmpresa}` : `Empresa corrigiu os dados: ${d.nomeEmpresa}`;
+  const corpo = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">Empresa aguardando verificação</p>
+    <p style="margin:12px 0 0;"><b>${esc(d.nomeEmpresa)}</b> ${
+      d.motivo === "nova" ? "se cadastrou sem CNPJ ativo confirmado" : "corrigiu os dados depois de uma recusa"
+    } e está esperando a aprovação de um administrador para publicar vagas.</p>`;
+  return {
+    assunto,
+    html: layout({
+      corpo,
+      botaoTexto: "Abrir a administração",
+      botaoLink: link,
+      rodape: "Você recebeu este e-mail porque é administrador do MapVagas.",
+    }),
+    texto: `${d.nomeEmpresa} está esperando verificação no MapVagas.\n\nAbrir a administração: ${link}\n\n— MapVagas`,
+  };
+}

@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import ListaItens, { limparLista } from "@/components/ListaItens";
 import SeloPcd from "@/components/SeloPcd";
 import LogoEmpresa from "@/components/LogoEmpresa";
+import AvisoVerificacao from "@/components/AvisoVerificacao";
 import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, publicarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
@@ -41,6 +42,8 @@ type Empresa = {
   latitude: number | null;
   longitude: number | null;
   logoUrl?: string | null;
+  verificacao?: string;
+  motivoRecusa?: string | null;
 };
 
 function iniciais(nome?: string) {
@@ -215,6 +218,21 @@ export default function PublicarVagaPage() {
       <div className="min-h-screen bg-[#0F2C4A]">
         <Header />
         <p className="text-white text-center pt-20">Carregando...</p>
+      </div>
+    );
+  }
+
+  // Empresa ainda não aprovada: explica em vez de mostrar o formulário
+  if (empresa?.verificacao && empresa.verificacao !== "aprovada") {
+    return (
+      <div className="min-h-screen bg-[#0F2C4A]">
+        <Header />
+        <main className="max-w-2xl mx-auto pt-10 pb-16 px-4">
+          <div className="bg-white rounded-xl shadow-xl p-8">
+            <h1 className="text-xl font-bold text-[#0F2C4A] mb-4">Publicar nova vaga</h1>
+            <AvisoVerificacao verificacao={empresa.verificacao} motivoRecusa={empresa.motivoRecusa} />
+          </div>
+        </main>
       </div>
     );
   }

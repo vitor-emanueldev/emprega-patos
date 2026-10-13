@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
-import { Bookmark } from "lucide-react";
+import { Bookmark, ShieldCheck } from "lucide-react";
 
 export default function Header() {
   const { usuario, sair } = useAuth();
@@ -127,6 +127,16 @@ export default function Header() {
                   <Bookmark className="w-5 h-4 text-[#F0A93C]" />
                   Vagas salvas
                 </Link>
+                {usuario.admin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuMobileAberto(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-[#0F2C4A] hover:bg-slate-50"
+                  >
+                    <ShieldCheck className="w-5 h-4 text-[#1D6FA5]" />
+                    Administração
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setMenuMobileAberto(false);
@@ -204,6 +214,15 @@ export default function Header() {
                   >
                     Vagas salvas
                   </Link>
+                  {usuario.admin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMenuAberto(false)}
+                      className="block px-4 py-2.5 text-sm text-[#0F2C4A] hover:bg-slate-50 border-t border-slate-100"
+                    >
+                      Administração
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setMenuAberto(false);
@@ -228,4 +247,4 @@ export default function Header() {
       </div>
     </header>
   );
-}
+}

@@ -189,6 +189,7 @@ export default function EditarPerfilEmpregadorPage() {
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
                 CNPJ <span className="text-xs text-slate-400 font-normal">(opcional)</span>
               </label>
+              <p className="text-xs text-slate-400 mb-1.5">Com CNPJ ativo na Receita, a empresa é aprovada na hora.</p>
               <input
                 value={cnpj}
                 onChange={(e) => setCnpj(formatCNPJ(e.target.value))}

@@ -447,6 +447,60 @@ export async function enviarLogoEmpresa(token: string, imagem: Blob): Promise<st
   return resultado.url;
 }
 
+// ─── Administração (verificação de empresas) ──────────────────────────────────
+
+export type SituacaoEmpresa = "pendente" | "aprovada" | "recusada";
+
+export type EmpresaAdmin = {
+  id: string;
+  nomeEmpresa: string;
+  cnpj: string | null;
+  setor: string | null;
+  descricao: string | null;
+  telefone: string | null;
+  endereco: string | null;
+  bairro: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  logoUrl: string | null;
+  verificacao: SituacaoEmpresa;
+  verificadaEm: string | null;
+  motivoRecusa: string | null;
+  createdAt: string;
+  usuario: { nome: string; email: string } | null;
+  _count?: { vagas: number };
+};
+
+async function chamarAdmin(token: string, caminho: string, metodo = "GET", corpo?: unknown) {
+  const resposta = await fetchApi(`${API_URL}${caminho}`, {
+    method: metodo,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) {
+    const erro: any = new Error(dados.erro || "Erro na administração");
+    erro.status = resposta.status;
+    throw erro;
+  }
+  return dados;
+}
+
+export async function listarEmpresasAdmin(
+  token: string,
+  situacao: SituacaoEmpresa
+): Promise<{ empresas: EmpresaAdmin[]; totais: Record<string, number> }> {
+  return chamarAdmin(token, `/admin/empresas?situacao=${situacao}`);
+}
+
+export async function aprovarEmpresaAdmin(token: string, empresaId: string) {
+  return chamarAdmin(token, `/admin/empresas/${empresaId}/aprovar`, "PATCH");
+}
+
+export async function recusarEmpresaAdmin(token: string, empresaId: string, motivo: string) {
+  return chamarAdmin(token, `/admin/empresas/${empresaId}/recusar`, "PATCH", { motivo });
+}
+
 // ─── Candidatura ──────────────────────────────────────────────────────────────
 
 export type Candidatura = {

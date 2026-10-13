@@ -7,6 +7,7 @@ type Usuario = {
   id: string;
   nome: string;
   email: string;
+  admin?: boolean; // só decide se o menu "Administração" aparece; quem libera é o servidor
 };
 
 type AuthContextType = {

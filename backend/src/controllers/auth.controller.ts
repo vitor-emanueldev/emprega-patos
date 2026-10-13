@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../prisma";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
+import { ehAdmin } from "../utils/admin";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -73,6 +74,7 @@ export async function loginGoogle(req: Request, res: Response) {
         nome: usuario.nome,
         email: usuario.email,
         fotoUrl: usuario.fotoUrl,
+        admin: ehAdmin(usuario.email), // só para o site mostrar o menu; a permissão é conferida no servidor
       },
     });
 
@@ -80,4 +82,4 @@ export async function loginGoogle(req: Request, res: Response) {
     console.error("Erro no login com Google:", erro);
     res.status(401).json({ erro: "Falha ao autenticar com Google." });
   }
-}
+}

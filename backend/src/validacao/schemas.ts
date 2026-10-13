@@ -279,6 +279,14 @@ export const candidatarSchema = z.object({
   mensagem: textoOpcional("Mensagem para a empresa", 1000),
 });
 
+export const recusarEmpresaSchema = z.object({
+  motivo: z
+    .string({ required_error: "Escreva o motivo da recusa." })
+    .trim()
+    .min(1, "Escreva o motivo da recusa.")
+    .max(1000, "O motivo pode ter no máximo 1000 caracteres."),
+});
+
 export const contratarCandidaturaSchema = z.object({
   mensagem: textoOpcional("Mensagem", 1000),
 });

@@ -9,6 +9,7 @@ import candidatoRoutes from "./routes/candidato.routes";
 import estatisticasRoutes from "./routes/estatisticas.routes";
 import candidaturaRoutes from "./routes/candidatura.routes";
 import vagaSalvaRoutes from "./routes/vagaSalva.routes";
+import adminRoutes from "./routes/admin.routes";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
 import { emailConfigurado } from "./utils/enviarEmail";
 
@@ -22,6 +23,9 @@ if (faltando.length > 0) {
 }
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Aviso: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY não configuradas. O envio de fotos ficará desativado.");
+}
+if (!process.env.ADMIN_EMAILS?.trim()) {
+  console.warn("Aviso: ADMIN_EMAILS não configurada. Ninguém consegue entrar na área de administração.");
 }
 if (!emailConfigurado()) {
   console.warn("Aviso: GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN / EMAIL_REMETENTE não configuradas. Os avisos por e-mail ficarão desativados.");
@@ -104,6 +108,7 @@ app.use(candidatoRoutes);
 app.use(estatisticasRoutes);
 app.use(candidaturaRoutes);
 app.use(vagaSalvaRoutes);
+app.use(adminRoutes);
 
 // ─── Rota não encontrada ───
 app.use((req, res) => {

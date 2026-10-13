@@ -9,6 +9,7 @@ export async function listarVagas(req: Request, res: Response) {
 
     const where: any = {
       status: "aberta",
+      empresa: { verificacao: "aprovada" }, // empresa em verificação ou recusada não aparece
     };
 
     if (busca) {
@@ -141,6 +142,15 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
 
     if (!empresa) {
       return res.status(404).json({ erro: "Você precisa cadastrar uma empresa antes de publicar vagas." });
+    }
+
+    if (empresa.verificacao !== "aprovada") {
+      return res.status(403).json({
+        erro:
+          empresa.verificacao === "recusada"
+            ? "Sua empresa não foi aprovada. Corrija os dados no perfil da empresa para uma nova análise."
+            : "Sua empresa está em verificação. Você poderá publicar vagas assim que ela for aprovada.",
+      });
     }
 
     const novaVaga = await prisma.vaga.create({

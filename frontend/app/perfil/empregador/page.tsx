@@ -6,12 +6,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { verificarEmpresa, minhasVagas, type Vaga } from "@/lib/api";
 import { Building2 } from "lucide-react";
+import AvisoVerificacao from "@/components/AvisoVerificacao";
 
 type Empresa = {
   id: string;
   nomeEmpresa: string;
   cnpj: string;
   logoUrl?: string | null;
+  verificacao?: string;
+  motivoRecusa?: string | null;
   setor?: string;
   descricao?: string;
   telefone?: string;
@@ -125,6 +128,12 @@ export default function PerfilEmpregadorPage() {
           </button>
         </div>
 
+        {empresa.verificacao && empresa.verificacao !== "aprovada" && (
+          <div className="mb-8">
+            <AvisoVerificacao verificacao={empresa.verificacao} motivoRecusa={empresa.motivoRecusa} />
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Coluna Esquerda */}
           <div className="lg:col-span-1">
@@ -234,7 +243,7 @@ export default function PerfilEmpregadorPage() {
             <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-bold text-[#0F2C4A]">Vagas Publicadas</h2>
-                {vagas.length > 0 && (
+                {vagas.length > 0 && empresa.verificacao !== "pendente" && empresa.verificacao !== "recusada" && (
                   <button
                     onClick={() => router.push("/publicar-vaga")}
                     className="text-sm font-semibold text-[#1D6FA5] hover:underline"
@@ -249,12 +258,16 @@ export default function PerfilEmpregadorPage() {
               ) : vagas.length === 0 ? (
                 <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
                   <p className="text-slate-500">Nenhuma vaga publicada.</p>
+                  {(!empresa.verificacao || empresa.verificacao === "aprovada") ? (
                   <button
                     onClick={() => router.push("/publicar-vaga")}
                     className="mt-5 bg-[#F0A93C] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#dd9a30] transition-colors"
                   >
                     Publicar nova vaga
                   </button>
+                  ) : (
+                    <p className="text-xs text-slate-400 mt-3">Você poderá publicar assim que a empresa for aprovada.</p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

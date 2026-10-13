@@ -118,6 +118,12 @@ model Empresa {
   descricao   String?
   telefone    String?
   logoUrl     String? // logo enviada pelo botão (Supabase Storage)
+
+  // Verificação: com CNPJ ativo entra "aprovada" na hora; sem CNPJ fica "pendente"
+  // até um administrador aprovar. Só empresa "aprovada" publica e aparece no site.
+  verificacao  String    @default("aprovada") // "pendente" | "aprovada" | "recusada"
+  verificadaEm DateTime?
+  motivoRecusa String?
   latitude    Float?
   longitude   Float?
   createdAt   DateTime @default(now())

@@ -9,6 +9,33 @@ import {
   processarLogo,
   uploadDeFotoConfigurado,
 } from "../utils/armazenamento";
+import { apenasDigitos, cnpjValido, consultarCnpjReceita } from "../utils/cnpj";
+import { emailsAdmin } from "../utils/admin";
+import { enviarAviso } from "../utils/enviarEmail";
+import { emailNovaEmpresaParaVerificar } from "../utils/modelosEmail";
+
+// Avisa os administradores que tem empresa esperando verificação
+function avisarAdmins(nomeEmpresa: string, motivo: "nova" | "corrigida") {
+  for (const email of emailsAdmin()) {
+    enviarAviso(email, emailNovaEmpresaParaVerificar({ nomeEmpresa, motivo }));
+  }
+}
+
+// Decide a verificação a partir do CNPJ informado.
+// Devolve um erro (para mostrar à pessoa) ou a situação da empresa.
+async function verificarPeloCnpj(
+  cnpj: string
+): Promise<{ erro: string } | { verificacao: "aprovada" | "pendente" }> {
+  if (!cnpjValido(cnpj)) {
+    return { erro: "CNPJ inválido. Confira os números ou deixe o campo em branco." };
+  }
+  const resultado = await consultarCnpjReceita(cnpj);
+  if (resultado.tipo === "nao_encontrado") {
+    return { erro: "CNPJ não encontrado na Receita Federal. Confira os números ou deixe o campo em branco." };
+  }
+  // CNPJ ativo: aprovada na hora. Inativo ou Receita fora do ar: um administrador confere.
+  return { verificacao: resultado.tipo === "ativa" ? "aprovada" : "pendente" };
+}
 
 // Só aceita logo que veio do nosso botão de envio (nada de link de fora)
 function logoPermitida(logoNova: string | null | undefined, logoAtual: string | null) {
@@ -64,6 +91,14 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
       return res.status(400).json({ erro: "Este usuário já possui uma empresa vinculada" });
     }
 
+    // Sem CNPJ: fica pendente até um administrador aprovar
+    let verificacao: "aprovada" | "pendente" = "pendente";
+    if (apenasDigitos(cnpj)) {
+      const r = await verificarPeloCnpj(cnpj);
+      if ("erro" in r) return res.status(400).json({ erro: r.erro, campo: "cnpj" });
+      verificacao = r.verificacao;
+    }
+
     const novaEmpresa = await prisma.empresa.create({
       data: {
         nomeEmpresa,
@@ -77,8 +112,12 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
         latitude: latitude ?? undefined,
         longitude: longitude ?? undefined,
         usuarioId: req.usuario.id,
+        verificacao,
+        verificadaEm: verificacao === "aprovada" ? new Date() : null,
       },
     });
+
+    if (verificacao === "pendente") avisarAdmins(novaEmpresa.nomeEmpresa, "nova");
 
     res.status(201).json(novaEmpresa);
 
@@ -120,7 +159,7 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
   try {
     const atual = await prisma.empresa.findUnique({
       where: { usuarioId: req.usuario.id },
-      select: { logoUrl: true },
+      select: { logoUrl: true, cnpj: true, verificacao: true },
     });
 
     if (!atual) {
@@ -131,9 +170,27 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
       return res.status(400).json({ erro: "Envie a logo pelo botão de logo.", campo: "logoUrl" });
     }
 
+    // CNPJ novo: verifica de novo. Empresa recusada que corrigiu os dados: volta para a fila.
+    let verificacao: string | undefined;
+    const cnpjNovo = apenasDigitos(cnpj);
+    if (cnpjNovo && cnpjNovo !== apenasDigitos(atual.cnpj)) {
+      const r = await verificarPeloCnpj(cnpjNovo);
+      if ("erro" in r) return res.status(400).json({ erro: r.erro, campo: "cnpj" });
+      verificacao = r.verificacao;
+    } else if (atual.verificacao === "recusada") {
+      verificacao = "pendente";
+    }
+
     const empresaAtualizada = await prisma.empresa.update({
       where: { usuarioId: req.usuario.id },
       data: {
+        ...(verificacao
+          ? {
+              verificacao,
+              verificadaEm: verificacao === "aprovada" ? new Date() : null,
+              motivoRecusa: verificacao === "aprovada" ? null : undefined,
+            }
+          : {}),
         nomeEmpresa,
         cnpj: cnpj ?? undefined,
         endereco,
@@ -146,6 +203,10 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
         longitude: longitude ?? undefined,
       },
     });
+
+    if (verificacao === "pendente" && atual.verificacao !== "pendente") {
+      avisarAdmins(empresaAtualizada.nomeEmpresa, atual.verificacao === "recusada" ? "corrigida" : "nova");
+    }
 
     // Trocou ou tirou a logo: apaga a antiga do armazenamento
     if (logoUrl !== undefined && atual.logoUrl && atual.logoUrl !== empresaAtualizada.logoUrl) {
