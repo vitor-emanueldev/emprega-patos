@@ -12,6 +12,7 @@ import vagaSalvaRoutes from "./routes/vagaSalva.routes";
 import adminRoutes from "./routes/admin.routes";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
 import { emailConfigurado } from "./utils/enviarEmail";
+import { prisma } from "./prisma";
 
 // ─── Variáveis obrigatórias: se faltar alguma, o servidor nem sobe ───
 const VARIAVEIS_OBRIGATORIAS = ["DATABASE_URL", "JWT_SECRET", "GOOGLE_CLIENT_ID"];
@@ -75,6 +76,23 @@ app.use(
 );
 
 app.use(express.json({ limit: "100kb" }));
+
+// ─── Saúde: usada pelo UptimeRobot para manter o servidor acordado ───
+// Fica antes dos limites de requisição (o robô acessa a cada 5 min).
+// Faz uma consulta mínima no banco, o que também mantém o Supabase ativo.
+app.get("/saude", async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, rejeitar) => setTimeout(() => rejeitar(new Error("tempo esgotado")), 5000)),
+    ]);
+    return res.json({ ok: true, banco: "ok" });
+  } catch (erro) {
+    console.error("Saúde: banco não respondeu:", erro);
+    return res.status(503).json({ ok: false, banco: "erro" });
+  }
+});
 
 // ─── Limites de requisição por IP ───
 // Geral: generoso, porque operadoras de celular colocam muita gente no mesmo IP
