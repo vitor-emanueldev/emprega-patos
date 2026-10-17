@@ -14,7 +14,8 @@ const CREDITOS =
   '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> ' +
   '&copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> ' +
   'Dados &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
-const TEMPO_MAXIMO_MS = 10000;
+// Tempo para o estilo chegar (internet lenta de celular pode demorar); depois disso usa a reserva
+const TEMPO_MAXIMO_MS = 15000;
 
 function temWebGL() {
   try {
@@ -41,9 +42,11 @@ export default function FundoMapa() {
 
     let carregou = false;
     const gl = camada.getMaplibreMap();
-    gl.once("load", () => {
+    const marcarCarregado = () => {
       carregou = true;
-    });
+    };
+    gl.once("style.load", marcarCarregado); // o estilo chegou: dali em diante é só desenhar
+    gl.once("load", marcarCarregado);
     gl.on("error", () => {
       if (!carregou) setReserva(true); // o estilo nem chegou: usa o mapa reserva
     });
