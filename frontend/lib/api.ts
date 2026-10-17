@@ -86,6 +86,7 @@ export async function cadastrarEmpresa(
     latitude?: number;
     longitude?: number;
     logoUrl?: string | null;
+    instagram?: string | null;
   }
 ) {
   const resposta = await fetchApi(`${API_URL}/empresas`, {
@@ -110,6 +111,7 @@ export type DadosAtualizarEmpresa = {
   nomeEmpresa: string;
   cnpj?: string;
   logoUrl?: string | null;
+  instagram?: string | null;
   setor?: string;
   descricao?: string;
   telefone?: string;
@@ -164,6 +166,7 @@ export type Vaga = {
     nomeEmpresa: string;
     setor?: string;
     logoUrl?: string | null;
+    instagram?: string | null;
   };
 };
 
@@ -463,6 +466,7 @@ export type EmpresaAdmin = {
   latitude: number | null;
   longitude: number | null;
   logoUrl: string | null;
+  instagram?: string | null;
   verificacao: SituacaoEmpresa;
   verificadaEm: string | null;
   motivoRecusa: string | null;

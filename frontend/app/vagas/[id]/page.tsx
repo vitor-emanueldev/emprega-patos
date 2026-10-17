@@ -3,6 +3,8 @@
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
 import LogoEmpresa from "@/components/LogoEmpresa";
+import { Camera } from "lucide-react";
+import { linkInstagram } from "@/lib/instagram";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -361,6 +363,19 @@ export default function DetalhesVagaPage() {
                 <span className="inline-block mt-3 text-xs text-slate-500 bg-slate-100 rounded-full px-3 py-1">
                   {vaga.bairro}, Patos - PB
                 </span>
+                {vaga.empresa.instagram && (
+                  <a
+                    href={linkInstagram(vaga.empresa.instagram)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Ver o Instagram da empresa"
+                    className="mt-3 flex items-center gap-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-[#0F2C4A] hover:bg-slate-50 transition-colors"
+                  >
+                    <Camera className="w-4 h-4 shrink-0 text-[#1D6FA5]" />
+                    <span className="font-semibold whitespace-nowrap">Instagram</span>
+                    <span className="min-w-0 truncate text-slate-500">@{vaga.empresa.instagram}</span>
+                  </a>
+                )}
               </div>
 
               {/* Mapa */}

@@ -76,7 +76,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude, logoUrl } = req.body;
+  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude, logoUrl, instagram } = req.body;
 
   if (!logoPermitida(logoUrl, null)) {
     return res.status(400).json({ erro: "Envie a logo pelo botão de logo.", campo: "logoUrl" });
@@ -109,6 +109,7 @@ export async function tornarEmpresa(req: RequisicaoAutenticada, res: Response) {
         descricao,
         telefone,
         logoUrl: logoUrl ?? undefined,
+        instagram: instagram ?? undefined,
         latitude: latitude ?? undefined,
         longitude: longitude ?? undefined,
         usuarioId: req.usuario.id,
@@ -154,7 +155,7 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude, logoUrl } = req.body;
+  const { nomeEmpresa, cnpj, endereco, bairro, setor, descricao, telefone, latitude, longitude, logoUrl, instagram } = req.body;
 
   try {
     const atual = await prisma.empresa.findUnique({
@@ -199,6 +200,7 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
         descricao,
         telefone,
         logoUrl, // null tira a logo; undefined mantém
+        instagram, // null apaga; undefined mantém
         latitude: latitude ?? undefined,
         longitude: longitude ?? undefined,
       },

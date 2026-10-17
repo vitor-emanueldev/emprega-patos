@@ -34,6 +34,7 @@ export async function listarEmpresasAdmin(req: RequisicaoAutenticada, res: Respo
           latitude: true,
           longitude: true,
           logoUrl: true,
+          instagram: true,
           verificacao: true,
           verificadaEm: true,
           motivoRecusa: true,

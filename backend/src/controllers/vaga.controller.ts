@@ -55,7 +55,7 @@ export async function detalhesVaga(req: Request, res: Response) {
       where: { id },
       include: {
         empresa: {
-          select: { nomeEmpresa: true, endereco: true, logoUrl: true },
+          select: { nomeEmpresa: true, endereco: true, logoUrl: true, instagram: true },
         },
       },
     });

@@ -99,6 +99,15 @@ const cnpj = z
   .refine((v) => v === undefined || apenasDigitos(v).length === 14, "CNPJ inválido. Ele deve ter 14 dígitos.")
   .nullish();
 
+// Instagram: só o nome de usuário (o site já tira @ e link). Vazio vira null (apaga).
+const instagram = z
+  .string({ invalid_type_error: "Instagram deve ser um texto." })
+  .trim()
+  .transform((v) => v.replace(/^@+/, "").toLowerCase())
+  .refine((v) => v === "" || /^[a-z0-9._]{1,30}$/.test(v), "Instagram inválido. Use só o nome de usuário, ex: minhaloja.")
+  .transform((v) => (v === "" ? null : v))
+  .nullish();
+
 export const empresaSchema = z.object({
   nomeEmpresa: texto("Nome da empresa", 150),
   cnpj,
@@ -108,6 +117,7 @@ export const empresaSchema = z.object({
   descricao: textoOpcional("Descrição", 2000),
   telefone: telefone("Telefone"),
   logoUrl: urlImagem,
+  instagram,
   latitude: latitude.nullish(),
   longitude: longitude.nullish(),
 });

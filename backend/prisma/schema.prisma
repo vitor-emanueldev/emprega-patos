@@ -118,6 +118,7 @@ model Empresa {
   descricao   String?
   telefone    String?
   logoUrl     String? // logo enviada pelo botão (Supabase Storage)
+  instagram   String? // nome de usuário do Instagram, sem @
 
   // Verificação: com CNPJ ativo entra "aprovada" na hora; sem CNPJ fica "pendente"
   // até um administrador aprovar. Só empresa "aprovada" publica e aparece no site.

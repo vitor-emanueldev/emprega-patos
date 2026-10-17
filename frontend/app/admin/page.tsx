@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Camera, Check, ChevronDown, Mail, Map as MapIcon, MapPin, MessageCircle, Phone, Search, ShieldCheck, X } from "lucide-react";
 import Header from "@/components/Header";
+import { linkInstagram } from "@/lib/instagram";
 import { useAuth } from "@/context/AuthContext";
 import {
   aprovarEmpresaAdmin,
@@ -35,13 +36,14 @@ function linksVerificacao(e: EmpresaAdmin) {
       : null,
     busca: `https://www.google.com/search?q=${encodeURIComponent(`${e.nomeEmpresa} Patos PB`)}`,
     whatsapp: digitos.length >= 10 ? `https://wa.me/55${digitos}?text=${encodeURIComponent(mensagem)}` : null,
+    instagram: e.instagram ? linkInstagram(e.instagram) : null,
   };
 }
 
 const PASSOS_VERIFICACAO = [
   "Nome e descrição fazem sentido? (não é teste, piada ou algo ofensivo)",
   "Abra o Google Maps e o Street View: existe comércio nesse endereço?",
-  "Busque o nome no Google ou no Instagram: a empresa aparece?",
+  "Busque o nome no Google e abra o Instagram (se a empresa informou): ela aparece?",
   "Fale com o responsável pelo WhatsApp e confirme que a empresa e a vaga são reais.",
   "Na dúvida, peça uma foto da fachada ou recuse explicando o motivo (vai por e-mail).",
 ];
@@ -282,6 +284,11 @@ export default function AdminPage() {
                           <a href={l.busca} target="_blank" rel="noopener noreferrer" className={`${botao} text-slate-600 border-slate-200 hover:bg-slate-50`}>
                             <Search className="w-3.5 h-3.5" /> Buscar no Google
                           </a>
+                          {l.instagram && (
+                            <a href={l.instagram} target="_blank" rel="noopener noreferrer" className={`${botao} text-slate-600 border-slate-200 hover:bg-slate-50`}>
+                              <Camera className="w-3.5 h-3.5" /> Instagram
+                            </a>
+                          )}
                           {l.whatsapp && (
                             <a href={l.whatsapp} target="_blank" rel="noopener noreferrer" className={`${botao} text-white bg-green-600 border-green-600 hover:bg-green-700`}>
                               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp

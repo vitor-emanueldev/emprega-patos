@@ -11,6 +11,7 @@ import { apenasDigitos, cnpjValido, consultarCnpj, localizarEndereco } from "@/l
 import { SETORES_EMPRESA } from "@/lib/setores";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import LogoUpload from "@/components/LogoUpload";
+import CampoInstagram from "@/components/CampoInstagram";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
@@ -35,6 +36,7 @@ export default function CadastrarEmpresaPage() {
   const [setorEmpresa, setSetorEmpresa] = useState("");
   const [descricaoEmpresa, setDescricaoEmpresa] = useState("");
   const [telefoneEmpresa, setTelefoneEmpresa] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -159,6 +161,7 @@ export default function CadastrarEmpresaPage() {
         latitude,
         longitude,
         logoUrl: logoUrl || undefined,
+        instagram: instagram || undefined,
       });
 
       // Aprovada (CNPJ ativo) já pode publicar; pendente vai para o painel, que explica a verificação
@@ -266,6 +269,8 @@ export default function CadastrarEmpresaPage() {
                 className="w-full rounded-md bg-slate-100 border border-slate-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D6FA5]"
               />
             </div>
+
+            <CampoInstagram valor={instagram} aoMudar={setInstagram} />
 
             <div>
               <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Descrição da empresa</label>
