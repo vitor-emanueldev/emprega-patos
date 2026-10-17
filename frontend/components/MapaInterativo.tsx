@@ -67,9 +67,10 @@ function FocarSelecionada({
     if (!vagaSelecionada) return;
     const pos = posicoes.get(vagaSelecionada);
     if (!pos) return;
-    mapa.flyTo(pos, Math.max(mapa.getZoom(), 16), { duration: 0.6 });
+    // setView (e não flyTo): com o fundo novo, o flyTo deixava os pinos "flutuando" fora do lugar
+    mapa.setView(pos, Math.max(mapa.getZoom(), 16), { animate: true });
     if (!abrirBalao) return;
-    const t = setTimeout(() => marcadores.current?.get(vagaSelecionada)?.openPopup(), 650);
+    const t = setTimeout(() => marcadores.current?.get(vagaSelecionada)?.openPopup(), 400);
     return () => clearTimeout(t);
   }, [vagaSelecionada, mapa, marcadores, posicoes, abrirBalao]);
   return null;
@@ -79,7 +80,7 @@ function FocarSelecionada({
 function FocarMinhaPosicao({ posicao }: { posicao?: Posicao | null }) {
   const mapa = useMap();
   useEffect(() => {
-    if (posicao) mapa.flyTo([posicao.latitude, posicao.longitude], 15, { duration: 0.8 });
+    if (posicao) mapa.setView([posicao.latitude, posicao.longitude], 15, { animate: true });
   }, [posicao, mapa]);
   return null;
 }

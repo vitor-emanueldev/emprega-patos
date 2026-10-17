@@ -41,7 +41,7 @@ function SeguirPino({ latitude, longitude }: { latitude: number | null; longitud
   const mapa = useMap();
   useEffect(() => {
     if (latitude !== null && longitude !== null) {
-      mapa.flyTo([latitude, longitude], Math.max(mapa.getZoom(), 16), { duration: 0.8 });
+      mapa.setView([latitude, longitude], Math.max(mapa.getZoom(), 16), { animate: true });
     }
   }, [latitude, longitude, mapa]);
   return null;
