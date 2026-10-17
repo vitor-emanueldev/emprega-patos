@@ -3,11 +3,11 @@
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
 import LogoEmpresa from "@/components/LogoEmpresa";
+import { rotuloValor } from "@/lib/opcoesVaga";
 import { Camera } from "lucide-react";
 import { linkInstagram } from "@/lib/instagram";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import { detalhesVaga, candidatarVaga, buscarMinhaFicha, minhasCandidaturas, type Vaga, type Candidato } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -15,17 +15,7 @@ import CurriculoVisual from "@/components/CurriculoVisual";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import { curriculoDaFicha, progressoCurriculo } from "@/lib/curriculo";
 
-const MapaInterativo = dynamic(() => import("@/components/MapaInterativo"), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="bg-slate-100 flex items-center justify-center text-sm text-slate-400"
-      style={{ height: 192 }}
-    >
-      Carregando mapa...
-    </div>
-  ),
-});
+import ComoChegar from "@/components/ComoChegar";
 
 function tempoPublicacao(createdAt: string) {
   const diffMs = Date.now() - new Date(createdAt).getTime();
@@ -282,7 +272,7 @@ export default function DetalhesVagaPage() {
             <div className="space-y-4">
               {/* Card de salário e ação */}
               <div className="bg-white rounded-xl shadow-md p-5">
-                <p className="text-xs text-slate-400">Salário mensal</p>
+                <p className="text-xs text-slate-400">{rotuloValor(vaga.tipoContrato)} mensal</p>
                 <p className="text-2xl font-bold text-[#0F2C4A] mt-0.5">
                   {formatarSalario(vaga.salario)}
                 </p>
@@ -378,20 +368,8 @@ export default function DetalhesVagaPage() {
                 )}
               </div>
 
-              {/* Mapa */}
-              {vaga.latitude && vaga.longitude && (
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div style={{ height: 192 }}>
-                    <MapaInterativo
-                      vagas={[vaga]}
-                      vagaSelecionada={vaga.id}
-                      onSelecionarVaga={() => {}}
-                      mostrarLegenda={false}
-                      abrirBalaoAoSelecionar={false}
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Mapa + como chegar */}
+              {vaga.latitude && vaga.longitude && <ComoChegar vaga={vaga} />}
             </div>
           </div>
         )}

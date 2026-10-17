@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Accessibility, List, Loader2, LocateFixed, Map as MapIcon, Search, SlidersHorizontal, X } from "lucide-react";
+import { Accessibility, List, Loader2, LocateFixed, Map as MapIcon, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
@@ -11,6 +11,7 @@ import LogoEmpresa from "@/components/LogoEmpresa";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import { formatarDistancia } from "@/lib/formatar";
+import { rotuloValor } from "@/lib/opcoesVaga";
 import {
   FAIXAS_SALARIO,
   FILTROS_VAZIOS,
@@ -21,6 +22,8 @@ import {
   type VagaComDistancia,
 } from "@/lib/filtrosVagas";
 import { useMinhaLocalizacao } from "@/lib/useMinhaLocalizacao";
+import { useRota } from "@/lib/useRota";
+import ResumoRota, { linkGoogleMaps } from "@/components/ResumoRota";
 import { useTelaGrande } from "@/lib/useTelaGrande";
 
 // Leaflet usa "window", então o mapa só carrega no navegador
@@ -47,6 +50,11 @@ export default function MapaPage() {
   const [filtrosAbertos, setFiltrosAbertos] = useState(false); // celular
   const [visaoCelular, setVisaoCelular] = useState<"mapa" | "lista">("mapa");
   const localizacao = useMinhaLocalizacao();
+  // "Como chegar" no balão: rota até essa vaga, a partir da localização da pessoa
+  const [vagaRota, setVagaRota] = useState<string | null>(null);
+  // "Marcar onde estou": o próximo toque no mapa vira a localização da pessoa (útil no computador)
+  const [marcando, setMarcando] = useState(false);
+  const rotaAtual = useRota(vagaRota, localizacao.posicao);
   const telaGrande = useTelaGrande();
 
   useEffect(() => {
@@ -57,6 +65,14 @@ export default function MapaPage() {
   }, []);
 
   const opcoes = useMemo(() => opcoesDosFiltros(vagas), [vagas]);
+  // No computador a localização vem do Wi-Fi/internet e pode errar por vários quarteirões
+  const avisoImpreciso =
+    localizacao.posicao?.origem === "gps" && (localizacao.posicao.precisaoM ?? 0) > 300 ? (
+      <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        Sua localização pode estar imprecisa (comum no computador). Arraste o ponto azul no mapa até onde você está.
+      </p>
+    ) : null;
+
   const filtradas = useMemo(() => aplicarFiltros(vagas, filtros, localizacao.posicao), [vagas, filtros, localizacao.posicao]);
   const ativos = contarFiltrosAtivos(filtros);
   const mudar = (parcial: Partial<Filtros>) => setFiltros((f) => ({ ...f, ...parcial }));
@@ -258,7 +274,7 @@ export default function MapaPage() {
             </span>
           </div>
           <p className="text-xs font-medium text-[#1D6FA5] mt-1.5 pl-10">
-            {vaga.salario != null ? `R$ ${vaga.salario.toLocaleString("pt-BR")}` : "Salário a combinar"}
+            {vaga.salario != null ? `R$ ${vaga.salario.toLocaleString("pt-BR")}` : `${rotuloValor(vaga.tipoContrato)} a combinar`}
           </p>
           {selecionada && (
             <Link
@@ -288,13 +304,96 @@ export default function MapaPage() {
     </>
   );
 
+  function comoChegar(vagaId: string) {
+    setVagaRota(vagaId);
+    if (!localizacao.posicao) localizacao.pedir();
+  }
+
+  const vagaDaRota = vagaRota ? vagas.find((v) => v.id === vagaRota) : null;
+  const painelRota = vagaDaRota && (
+    <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:w-[340px] z-[1000] bg-white rounded-xl shadow-lg p-3 space-y-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs text-slate-500">Rota até</p>
+          <p className="text-sm font-semibold text-[#0F2C4A] truncate">
+            {vagaDaRota.cargo} · {vagaDaRota.empresa.nomeEmpresa}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setVagaRota(null)}
+          aria-label="Fechar rota"
+          className="shrink-0 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {localizacao.buscando && (
+        <p className="text-sm text-slate-500 flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" /> Buscando sua localização...
+        </p>
+      )}
+      {!localizacao.posicao && !localizacao.buscando && (
+        <p className="text-xs text-slate-500">
+          {localizacao.erro || "Permita o acesso à localização para ver a rota."}{" "}
+          <button type="button" onClick={localizacao.pedir} className="font-semibold text-[#1D6FA5] hover:underline">
+            Tentar de novo
+          </button>{" "}
+          ou{" "}
+          <button type="button" onClick={() => setMarcando(true)} className="font-semibold text-[#1D6FA5] hover:underline">
+            marque no mapa
+          </button>
+        </p>
+      )}
+      {localizacao.posicao && <ResumoRota rota={rotaAtual.rota} calculando={rotaAtual.calculando} erro={rotaAtual.erro} />}
+      {localizacao.posicao && (
+        <p className="text-[11px] text-slate-400">Saindo de outro lugar? Arraste o ponto azul no mapa.</p>
+      )}
+      <a
+        href={linkGoogleMaps(vagaDaRota, localizacao.posicao)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block text-sm font-semibold text-[#1D6FA5] hover:underline"
+      >
+        Abrir no Google Maps
+      </a>
+    </div>
+  );
+
   const mapa = (
-    <MapaInterativo
-      vagas={filtradas}
-      vagaSelecionada={vagaSelecionada}
-      onSelecionarVaga={setVagaSelecionada}
-      minhaPosicao={localizacao.posicao}
-    />
+    <div className="relative h-full w-full">
+      <MapaInterativo
+        vagas={filtradas}
+        vagaSelecionada={vagaSelecionada}
+        onSelecionarVaga={setVagaSelecionada}
+        minhaPosicao={localizacao.posicao}
+        aoMoverMinhaPosicao={(lat, lng) => {
+          localizacao.definir(lat, lng);
+          setMarcando(false);
+        }}
+        marcandoMinhaPosicao={marcando}
+        rota={vagaDaRota ? rotaAtual.rota?.caminho : null}
+        onComoChegar={comoChegar}
+        seguirMinhaPosicao={!vagaRota}
+        margemRota={220}
+      />
+      <button
+        type="button"
+        onClick={() => setMarcando(!marcando)}
+        className={`absolute top-3 right-3 z-[1000] inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-md border transition-colors ${
+          marcando ? "bg-[#1D6FA5] text-white border-[#1D6FA5]" : "bg-white text-[#0F2C4A] border-slate-200 hover:bg-slate-50"
+        }`}
+      >
+        {marcando ? <X className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+        {marcando ? "Cancelar" : "Marcar onde estou"}
+      </button>
+      {marcando && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[1000] bg-[#0F2C4A] text-white text-xs font-semibold rounded-full px-3 py-1.5 shadow whitespace-nowrap">
+          Toque no mapa onde você está
+        </div>
+      )}
+      {painelRota}
+    </div>
   );
 
   return (
@@ -311,6 +410,7 @@ export default function MapaPage() {
             </div>
             {camposFiltro}
             {localizacao.erro && <p className="text-xs text-red-600">{localizacao.erro}</p>}
+            {avisoImpreciso}
           </div>
 
           <div className="flex-1 min-h-0 grid grid-cols-[380px_1fr] gap-4">
@@ -342,6 +442,7 @@ export default function MapaPage() {
               {botaoPertoDeMim}
             </div>
             {localizacao.erro && <p className="text-xs text-red-600">{localizacao.erro}</p>}
+            {avisoImpreciso}
             {filtrosAbertos && <div className="pt-1 border-t border-slate-100">{camposFiltro}</div>}
 
             <div className="grid grid-cols-2 bg-slate-100 rounded-lg p-1 text-sm font-semibold">

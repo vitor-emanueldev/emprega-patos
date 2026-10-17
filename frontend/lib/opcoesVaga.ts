@@ -1,7 +1,15 @@
 // Opções fixas usadas ao publicar/editar vaga e nos filtros.
 // Ter uma lista só garante que o que a empresa escolhe bate com o que o candidato filtra.
 
-export const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário", "Meio período", "Estágio"] as const;
+export const TIPOS_CONTRATO = ["CLT", "PJ / Freelance", "Temporário", "Meio período", "Estágio", "Jovem Aprendiz"] as const;
+
+// Nesses tipos o valor pago não é "salário" de carteira: chamamos de "remuneração"
+const TIPOS_REMUNERACAO = ["Estágio", "Jovem Aprendiz", "PJ / Freelance"];
+
+// "Salário" ou "Remuneração", conforme o tipo de contrato
+export function rotuloValor(tipoContrato?: string | null) {
+  return tipoContrato && TIPOS_REMUNERACAO.includes(tipoContrato) ? "Remuneração" : "Salário";
+}
 
 // Sugestões de um toque no formulário (a empresa ainda pode escrever outros)
 export const BENEFICIOS_COMUNS = [

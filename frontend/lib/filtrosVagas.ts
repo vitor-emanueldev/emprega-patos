@@ -25,7 +25,9 @@ export const FAIXAS_SALARIO = [
 // Mesma ordem do formulário de publicar vaga
 const ORDEM_CONTRATO: readonly string[] = TIPOS_CONTRATO;
 
-export type Posicao = { latitude: number; longitude: number };
+// origem: "gps" = veio do aparelho; "manual" = a pessoa arrastou o ponto ou tocou no mapa
+// precisaoM: margem de erro informada pelo aparelho (no computador costuma ser grande)
+export type Posicao = { latitude: number; longitude: number; origem?: "gps" | "manual"; precisaoM?: number };
 export type VagaComDistancia = Vaga & { distanciaKm: number | null };
 
 // Sem acento e minúsculo: "Temporário" = "temporario"

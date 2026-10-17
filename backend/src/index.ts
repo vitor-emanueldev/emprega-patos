@@ -10,6 +10,8 @@ import estatisticasRoutes from "./routes/estatisticas.routes";
 import candidaturaRoutes from "./routes/candidatura.routes";
 import vagaSalvaRoutes from "./routes/vagaSalva.routes";
 import adminRoutes from "./routes/admin.routes";
+import rotaRoutes from "./routes/rota.routes";
+import { rotaConfigurada } from "./controllers/rota.controller";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
 import { emailConfigurado } from "./utils/enviarEmail";
 import { prisma } from "./prisma";
@@ -27,6 +29,9 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 if (!process.env.ADMIN_EMAILS?.trim()) {
   console.warn("Aviso: ADMIN_EMAILS não configurada. Ninguém consegue entrar na área de administração.");
+}
+if (!rotaConfigurada()) {
+  console.warn("Aviso: ORS_API_KEY não configurada. O botão de rota até a vaga ficará indisponível.");
 }
 if (!emailConfigurado()) {
   console.warn("Aviso: GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN / EMAIL_REMETENTE não configuradas. Os avisos por e-mail ficarão desativados.");
@@ -127,6 +132,7 @@ app.use(estatisticasRoutes);
 app.use(candidaturaRoutes);
 app.use(vagaSalvaRoutes);
 app.use(adminRoutes);
+app.use(rotaRoutes);
 
 // ─── Rota não encontrada ───
 app.use((req, res) => {

@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { detalhesVaga, atualizarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
-import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, type OpcaoPcd } from "@/lib/opcoesVaga";
+import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloValor, type OpcaoPcd } from "@/lib/opcoesVaga";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
@@ -226,7 +226,7 @@ export default function EditarVagaPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário</label>
+                <label className="block text-sm text-[#0F2C4A] font-medium mb-1">{rotuloValor(tipoContrato)}</label>
                 <input
                   value={salario}
                   onChange={(e) => setSalario(formatSalario(e.target.value))}

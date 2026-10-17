@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, publicarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
-import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, type OpcaoPcd } from "@/lib/opcoesVaga";
+import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, rotuloValor, type OpcaoPcd } from "@/lib/opcoesVaga";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
@@ -343,7 +343,7 @@ export default function PublicarVagaPage() {
                     <p className="text-xs text-slate-400 mt-1">É por aqui que o candidato filtra as vagas.</p>
                   </div>
                   <div>
-                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">Salário</label>
+                    <label className="block text-sm text-[#0F2C4A] font-medium mb-1">{rotuloValor(tipoContrato)}</label>
                     <input
                       value={salario}
                       onChange={(e) => setSalario(formatSalario(e.target.value))}
@@ -582,7 +582,7 @@ export default function PublicarVagaPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <CampoRevisao label="Salário" valor={salario || "A combinar"} />
+                  <CampoRevisao label={rotuloValor(tipoContrato)} valor={salario || "A combinar"} />
                   <CampoRevisao label="Vagas disponíveis" valor={vagasDisponiveis} />
                 </div>
 
@@ -662,7 +662,7 @@ export default function PublicarVagaPage() {
                 <SeloPcd pcd={pcd} pequeno />
               </div>
               <p className="text-sm font-semibold text-[#0F2C4A] mt-2">
-                {salario ? `Salário: ${salario}` : "Salário a combinar"}
+                {salario ? `${rotuloValor(tipoContrato)}: ${salario}` : `${rotuloValor(tipoContrato)} a combinar`}
               </p>
               <p className="text-xs text-slate-500 mt-1">
                 {bairroExibicao || enderecoExibicao || "Local: ?"}

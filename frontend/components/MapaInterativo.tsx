@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polyline, Popup, useMap, useMapEvents } from "react-leaflet";
 import type { Marker as LeafletMarker } from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
@@ -24,6 +24,12 @@ type Props = {
   minhaPosicao?: Posicao | null;
   mostrarLegenda?: boolean; // sem efeito: a legenda saiu junto com os pontos de referência (o fundo já mostra os lugares)
   abrirBalaoAoSelecionar?: boolean; // false = só centraliza na vaga, sem abrir o balão
+  rota?: [number, number][] | null; // caminho até a vaga, desenhado como linha azul
+  aoMoverMinhaPosicao?: (latitude: number, longitude: number) => void; // ponto "Você" arrastável
+  marcandoMinhaPosicao?: boolean; // true = o próximo toque no mapa define onde a pessoa está
+  seguirMinhaPosicao?: boolean; // false = não centraliza na pessoa (ex: página da vaga, que enquadra a rota)
+  onComoChegar?: (vagaId: string) => void; // com isso, "Como chegar" no balão mostra a rota aqui mesmo
+  margemRota?: number; // espaço (px) livre embaixo ao enquadrar a rota, para um painel por cima do mapa
 };
 
 const CENTRO_PATOS: [number, number] = [-7.0241, -37.2803];
@@ -56,15 +62,17 @@ function FocarSelecionada({
   marcadores,
   posicoes,
   abrirBalao,
+  pausado,
 }: {
   abrirBalao: boolean;
+  pausado: boolean; // com rota na tela, não mexe no enquadramento
   vagaSelecionada: string | null;
   marcadores: React.RefObject<Map<string, LeafletMarker>>;
   posicoes: Map<string, [number, number]>;
 }) {
   const mapa = useMap();
   useEffect(() => {
-    if (!vagaSelecionada) return;
+    if (!vagaSelecionada || pausado) return;
     const pos = posicoes.get(vagaSelecionada);
     if (!pos) return;
     // setView (e não flyTo): com o fundo novo, o flyTo deixava os pinos "flutuando" fora do lugar
@@ -72,16 +80,43 @@ function FocarSelecionada({
     if (!abrirBalao) return;
     const t = setTimeout(() => marcadores.current?.get(vagaSelecionada)?.openPopup(), 400);
     return () => clearTimeout(t);
-  }, [vagaSelecionada, mapa, marcadores, posicoes, abrirBalao]);
+  }, [vagaSelecionada, mapa, marcadores, posicoes, abrirBalao, pausado]);
   return null;
 }
 
-// Chegou a localização da pessoa: centraliza nela
-function FocarMinhaPosicao({ posicao }: { posicao?: Posicao | null }) {
+// Chegou a localização do aparelho: centraliza nela (ajuste manual não move o mapa)
+function FocarMinhaPosicao({ posicao, desligado }: { posicao?: Posicao | null; desligado?: boolean }) {
   const mapa = useMap();
   useEffect(() => {
-    if (posicao) mapa.setView([posicao.latitude, posicao.longitude], 15, { animate: true });
-  }, [posicao, mapa]);
+    if (posicao && posicao.origem !== "manual" && !desligado) {
+      mapa.setView([posicao.latitude, posicao.longitude], 15, { animate: true });
+    }
+  }, [posicao, mapa, desligado]);
+  return null;
+}
+
+// Rota nova: enquadra o caminho inteiro na tela
+function EnquadrarRota({ rota, margemInferior = 0 }: { rota?: [number, number][] | null; margemInferior?: number }) {
+  const mapa = useMap();
+  useEffect(() => {
+    if (!rota || rota.length < 2) return;
+    // o mapinho cresce quando a rota aparece: espera o novo tamanho antes de enquadrar
+    const t = setTimeout(() => {
+      mapa.invalidateSize();
+      mapa.fitBounds(rota, { paddingTopLeft: [32, 32], paddingBottomRight: [32, 32 + margemInferior], maxZoom: 17, animate: true });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [rota, mapa, margemInferior]);
+  return null;
+}
+
+// Modo "marcar no mapa": o toque define onde a pessoa está
+function CliqueMinhaPosicao({ ativo, aoMarcar }: { ativo: boolean; aoMarcar?: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      if (ativo && aoMarcar) aoMarcar(e.latlng.lat, e.latlng.lng);
+    },
+  });
   return null;
 }
 
@@ -112,6 +147,12 @@ export default function MapaInterativo({
   onSelecionarVaga,
   minhaPosicao,
   abrirBalaoAoSelecionar = true,
+  rota,
+  aoMoverMinhaPosicao,
+  marcandoMinhaPosicao = false,
+  seguirMinhaPosicao = true,
+  onComoChegar,
+  margemRota = 0,
 }: Props) {
   const marcadores = useRef(new Map<string, LeafletMarker>());
   const posicoes = useMemo(() => posicoesSemSobreposicao(vagas), [vagas]);
@@ -128,12 +169,38 @@ export default function MapaInterativo({
       >
         <FundoMapa />
         <AjustarTamanho />
-        <FocarSelecionada vagaSelecionada={vagaSelecionada} marcadores={marcadores} posicoes={posicoes} abrirBalao={abrirBalaoAoSelecionar} />
-        <FocarMinhaPosicao posicao={minhaPosicao} />
+        <FocarSelecionada
+          vagaSelecionada={vagaSelecionada}
+          marcadores={marcadores}
+          posicoes={posicoes}
+          abrirBalao={abrirBalaoAoSelecionar}
+          pausado={!!rota}
+        />
+        <FocarMinhaPosicao posicao={minhaPosicao} desligado={!!rota || !seguirMinhaPosicao} />
+        <EnquadrarRota rota={rota} margemInferior={margemRota} />
+        <CliqueMinhaPosicao ativo={marcandoMinhaPosicao} aoMarcar={aoMoverMinhaPosicao} />
+
+        {rota && rota.length > 1 && (
+          <>
+            <Polyline positions={rota} pathOptions={{ color: "#ffffff", weight: 9, opacity: 0.9 }} />
+            <Polyline positions={rota} pathOptions={{ color: "#1D6FA5", weight: 5, opacity: 0.95 }} />
+          </>
+        )}
 
         {minhaPosicao && (
-          <Marker position={[minhaPosicao.latitude, minhaPosicao.longitude]} icon={iconeVoce} zIndexOffset={1000}>
-            <Popup>Você está aqui</Popup>
+          <Marker
+            position={[minhaPosicao.latitude, minhaPosicao.longitude]}
+            icon={iconeVoce}
+            zIndexOffset={1000}
+            draggable={!!aoMoverMinhaPosicao}
+            eventHandlers={{
+              dragend: (e) => {
+                const p = e.target.getLatLng();
+                aoMoverMinhaPosicao?.(p.lat, p.lng);
+              },
+            }}
+          >
+            <Popup>{aoMoverMinhaPosicao ? "Você está aqui. Arraste para ajustar." : "Você está aqui"}</Popup>
           </Marker>
         )}
 
@@ -182,6 +249,25 @@ export default function MapaInterativo({
                   >
                     Ver detalhes
                   </Link>
+                  {onComoChegar ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        marcadores.current.get(vaga.id)?.closePopup();
+                        onComoChegar(vaga.id);
+                      }}
+                      className="text-center text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5"
+                    >
+                      Como chegar
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/vagas/${vaga.id}#rota`}
+                      className="text-center !text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5"
+                    >
+                      Como chegar
+                    </Link>
+                  )}
                 </div>
               </Popup>
             </Marker>

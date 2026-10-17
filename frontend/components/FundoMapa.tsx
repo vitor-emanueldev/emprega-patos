@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -26,6 +27,41 @@ function temWebGL() {
   }
 }
 
+// O plugin agenda um ajuste para o quadro seguinte ao fim de um zoom. Se o mapa sai da tela
+// nesse meio tempo (ex: tocar em "Como chegar" e mudar de página), o ajuste quebrava com
+// "Cannot read properties of null". Mesma lógica do plugin, só que checando se o mapa ainda existe.
+// Precisa ser feito ANTES do addTo, que é quando o plugin registra esses eventos.
+type CamadaInterna = {
+  _map: L.Map | null;
+  _glMap: { once: (ev: string, fn: () => void) => void; jumpTo: (o: object) => void; _actualCanvas: HTMLElement } | null;
+  _resizeContainer: () => void;
+  _transitionEnd: () => void;
+  _zoomEnd: () => void;
+};
+
+function protegerAoSair(camada: unknown) {
+  const c = camada as CamadaInterna;
+  const zoomEndOriginal = c._zoomEnd;
+  c._zoomEnd = function (this: CamadaInterna) {
+    if (!this._map || !this._glMap) return;
+    zoomEndOriginal.call(this);
+  };
+  c._transitionEnd = function (this: CamadaInterna) {
+    L.Util.requestAnimFrame(() => {
+      const mapa = this._map;
+      const gl = this._glMap;
+      if (!mapa || !gl) return;
+      const zoom = mapa.getZoom();
+      const centro = mapa.getCenter();
+      const deslocamento = mapa.latLngToContainerPoint(mapa.getBounds().getNorthWest());
+      this._resizeContainer();
+      L.DomUtil.setTransform(gl._actualCanvas, deslocamento, 1);
+      gl.once("moveend", () => this._zoomEnd());
+      gl.jumpTo({ center: centro, zoom: zoom - 1 });
+    });
+  };
+}
+
 export default function FundoMapa() {
   const mapa = useMap();
   const [reserva, setReserva] = useState(false);
@@ -38,6 +74,7 @@ export default function FundoMapa() {
     }
 
     const camada = maplibreGL({ style: ESTILO, attributionControl: { customAttribution: CREDITOS } });
+    protegerAoSair(camada);
     camada.addTo(mapa);
 
     let carregou = false;

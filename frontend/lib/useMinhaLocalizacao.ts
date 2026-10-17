@@ -19,7 +19,7 @@ export function useMinhaLocalizacao() {
     setBuscando(true);
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setPosicao({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        setPosicao({ latitude: p.coords.latitude, longitude: p.coords.longitude, origem: "gps", precisaoM: p.coords.accuracy });
         setBuscando(false);
       },
       (e) => {
@@ -34,10 +34,16 @@ export function useMinhaLocalizacao() {
     );
   }
 
+  // A pessoa ajustou no mapa (arrastou o ponto ou tocou onde está)
+  function definir(latitude: number, longitude: number) {
+    setErro("");
+    setPosicao({ latitude, longitude, origem: "manual" });
+  }
+
   function limpar() {
     setPosicao(null);
     setErro("");
   }
 
-  return { posicao, buscando, erro, pedir, limpar };
+  return { posicao, buscando, erro, pedir, definir, limpar };
 }

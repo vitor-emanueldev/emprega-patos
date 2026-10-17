@@ -218,6 +218,17 @@ export async function detalhesVaga(id: string): Promise<Vaga> {
   return dados;
 }
 
+// Rota de carro até a vaga (calculada no servidor). caminho = lista de [lat, lng]
+export type Rota = { distanciaM: number; duracaoS: number; caminho: [number, number][] };
+
+export async function buscarRota(vagaId: string, latitude: number, longitude: number): Promise<Rota> {
+  const params = new URLSearchParams({ vagaId, lat: String(latitude), lng: String(longitude) });
+  const resposta = await fetchApi(`${API_URL}/rota?${params}`, { method: "GET" });
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(dados.erro || "Não foi possível calcular a rota agora.");
+  return dados;
+}
+
 export type DadosVaga = {
   cargo: string;
   descricao: string;
