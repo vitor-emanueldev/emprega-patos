@@ -45,7 +45,12 @@ export default function FundoMapa() {
     const marcarCarregado = () => {
       carregou = true;
     };
-    gl.once("style.load", marcarCarregado); // o estilo chegou: dali em diante é só desenhar
+    gl.once("style.load", () => {
+      marcarCarregado(); // o estilo chegou: dali em diante é só desenhar
+      // Prédios planos: tira o efeito 3D (deixava "sombras" escuras ao dar zoom)
+      if (gl.getLayer("building-3d")) gl.setLayoutProperty("building-3d", "visibility", "none");
+      if (gl.getLayer("building")) gl.setLayerZoomRange("building", 13, 24);
+    });
     gl.once("load", marcarCarregado);
     gl.on("error", () => {
       if (!carregou) setReserva(true); // o estilo nem chegou: usa o mapa reserva
