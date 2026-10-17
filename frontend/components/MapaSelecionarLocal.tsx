@@ -1,33 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import {
-  iconeEmpresa,
-  iconeHospital,
-  iconeFaculdade,
-  iconeShopping,
-  iconeFarmacia,
-  iconeEmergencia,
-  iconeSupermercado,
-} from "@/lib/mapaIcones";
-import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
+import { iconeEmpresa } from "@/lib/mapaIcones";
+import FundoMapa from "@/components/FundoMapa";
 
 const LIMITES_PATOS: LatLngBoundsExpression = [
   [-7.09, -37.35],
   [-6.96, -37.21],
 ];
-
-const iconesReferencia = {
-  hospital: iconeHospital,
-  faculdade: iconeFaculdade,
-  shopping: iconeShopping,
-  farmacia: iconeFarmacia,
-  emergencia: iconeEmergencia,
-  supermercado: iconeSupermercado,
-};
 
 function dentroDosLimites(lat: number, lng: number) {
   const [[sul, oeste], [norte, leste]] = LIMITES_PATOS as [[number, number], [number, number]];
@@ -94,11 +77,7 @@ export default function MapaSelecionarLocal({
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
       >
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxZoom={19}
-        />
+        <FundoMapa />
         {!somenteLeitura && (
           <CliqueNoMapa
             onSelecionar={onSelecionar}
@@ -108,20 +87,10 @@ export default function MapaSelecionarLocal({
 
         <SeguirPino latitude={latitude} longitude={longitude} />
 
-        {PONTOS_REFERENCIA.map((ponto) => (
-          <Marker
-            key={ponto.id}
-            position={[ponto.latitude, ponto.longitude]}
-            icon={iconesReferencia[ponto.tipo]}
-          >
-            <Popup>{ponto.nome}</Popup>
-          </Marker>
-        ))}
-
         {latitude !== null && longitude !== null && (
           <Marker position={[latitude, longitude]} icon={iconeEmpresa} />
         )}
       </MapContainer>
     </div>
   );
-}
+}

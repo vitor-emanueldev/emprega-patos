@@ -1,24 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef } from "react";
+import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 import type { Marker as LeafletMarker } from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import type { Vaga } from "@/lib/api";
 import type { Posicao } from "@/lib/filtrosVagas";
-import {
-  iconeVaga,
-  iconeVagaSelecionada,
-  iconeVoce,
-  iconeHospital,
-  iconeFaculdade,
-  iconeShopping,
-  iconeFarmacia,
-  iconeEmergencia,
-  iconeSupermercado,
-} from "@/lib/mapaIcones";
-import { PONTOS_REFERENCIA } from "@/lib/pontosReferencia";
+import { iconeVaga, iconeVagaSelecionada, iconeVoce } from "@/lib/mapaIcones";
+import FundoMapa from "@/components/FundoMapa";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
 import LogoEmpresa from "@/components/LogoEmpresa";
@@ -32,28 +22,9 @@ type Props = {
   vagaSelecionada: string | null;
   onSelecionarVaga: (id: string) => void;
   minhaPosicao?: Posicao | null;
-  mostrarLegenda?: boolean; // mapas pequenos (ex: página da vaga) escondem a legenda
+  mostrarLegenda?: boolean; // sem efeito: a legenda saiu junto com os pontos de referência (o fundo já mostra os lugares)
   abrirBalaoAoSelecionar?: boolean; // false = só centraliza na vaga, sem abrir o balão
 };
-
-const iconesReferencia = {
-  hospital: iconeHospital,
-  faculdade: iconeFaculdade,
-  shopping: iconeShopping,
-  farmacia: iconeFarmacia,
-  emergencia: iconeEmergencia,
-  supermercado: iconeSupermercado,
-};
-
-const LEGENDA = [
-  { cor: "#F0A93C", rotulo: "Vaga" },
-  { cor: "#E24C4C", rotulo: "Saúde" },
-  { cor: "#22A06B", rotulo: "Farmácia" },
-  { cor: "#E8813A", rotulo: "Emergência" },
-  { cor: "#0E9488", rotulo: "Supermercado" },
-  { cor: "#8E5FC9", rotulo: "Shopping" },
-  { cor: "#1D6FA5", rotulo: "Faculdade" },
-];
 
 const CENTRO_PATOS: [number, number] = [-7.0241, -37.2803];
 const LIMITES_PATOS: [[number, number], [number, number]] = [
@@ -139,10 +110,8 @@ export default function MapaInterativo({
   vagaSelecionada,
   onSelecionarVaga,
   minhaPosicao,
-  mostrarLegenda = true,
   abrirBalaoAoSelecionar = true,
 }: Props) {
-  const [mostrarReferencias, setMostrarReferencias] = useState(true);
   const marcadores = useRef(new Map<string, LeafletMarker>());
   const posicoes = useMemo(() => posicoesSemSobreposicao(vagas), [vagas]);
 
@@ -156,21 +125,10 @@ export default function MapaInterativo({
         maxBoundsViscosity={1.0}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxZoom={19}
-        />
+        <FundoMapa />
         <AjustarTamanho />
         <FocarSelecionada vagaSelecionada={vagaSelecionada} marcadores={marcadores} posicoes={posicoes} abrirBalao={abrirBalaoAoSelecionar} />
         <FocarMinhaPosicao posicao={minhaPosicao} />
-
-        {mostrarReferencias &&
-          PONTOS_REFERENCIA.map((ponto) => (
-            <Marker key={ponto.id} position={[ponto.latitude, ponto.longitude]} icon={iconesReferencia[ponto.tipo]} zIndexOffset={-500}>
-              <Popup>{ponto.nome}</Popup>
-            </Marker>
-          ))}
 
         {minhaPosicao && (
           <Marker position={[minhaPosicao.latitude, minhaPosicao.longitude]} icon={iconeVoce} zIndexOffset={1000}>
@@ -230,26 +188,6 @@ export default function MapaInterativo({
         })}
       </MapContainer>
 
-      {/* Legenda: dá para esconder os pontos de referência para ver só as vagas */}
-      {mostrarLegenda && (
-      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 rounded-lg shadow-md p-3 text-xs max-w-[180px]">
-        <div className="space-y-1.5">
-          {(mostrarReferencias ? LEGENDA : LEGENDA.slice(0, 1)).map((l) => (
-            <div key={l.rotulo} className="flex items-center gap-2 text-[#0F2C4A] font-medium">
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: l.cor }} />
-              {l.rotulo}
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setMostrarReferencias(!mostrarReferencias)}
-          className="mt-2 pt-2 border-t border-slate-200 w-full text-left text-[11px] font-semibold text-[#1D6FA5] hover:underline"
-        >
-          {mostrarReferencias ? "Esconder pontos de referência" : "Mostrar pontos de referência"}
-        </button>
-      </div>
-      )}
     </div>
   );
 }

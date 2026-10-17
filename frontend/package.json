@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@maplibre/maplibre-gl-leaflet": "^0.1.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.43.0",
+    "maplibre-gl": "^4.7.1",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
