@@ -13,7 +13,9 @@ import { useAuth } from "@/context/AuthContext";
 import { verificarEmpresa, publicarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
-import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, rotuloValor, type OpcaoPcd } from "@/lib/opcoesVaga";
+import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloPcd, rotuloValor, MODALIDADES, type Modalidade, type OpcaoPcd } from "@/lib/opcoesVaga";
+import EscolhaModalidade from "@/components/EscolhaModalidade";
+import SeloModalidade from "@/components/SeloModalidade";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
@@ -74,6 +76,7 @@ export default function PublicarVagaPage() {
   const [cargaHoraria, setCargaHoraria] = useState("");
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
   const [pcd, setPcd] = useState<OpcaoPcd>("nao");
+  const [modalidade, setModalidade] = useState<Modalidade>("presencial");
 
   // Etapa 1 - Localização
   const [usarNovoLocal, setUsarNovoLocal] = useState(false);
@@ -202,6 +205,7 @@ export default function PublicarVagaPage() {
         cargaHoraria: cargaHoraria.trim() || null,
         quantidadeVagas: Number(vagasDisponiveis),
         pcd,
+        modalidade,
       });
 
       router.push("/vagas");
@@ -328,6 +332,8 @@ export default function PublicarVagaPage() {
                     ))}
                   </div>
                 </div>
+
+                <EscolhaModalidade valor={modalidade} aoMudar={setModalidade} />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -594,6 +600,7 @@ export default function PublicarVagaPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <CampoRevisao label="Carga horária" valor={cargaHoraria || "Não informada"} />
                   <CampoRevisao label="Vaga PcD" valor={rotuloPcd(pcd) || "Não"} />
+                  <CampoRevisao label="Modalidade" valor={MODALIDADES.find((m) => m.valor === modalidade)?.rotulo || "Presencial"} />
                 </div>
 
                 <CampoRevisao label="Endereço" valor={enderecoExibicao || ""} />
@@ -660,6 +667,7 @@ export default function PublicarVagaPage() {
                 <span className="bg-slate-100 rounded px-2 py-0.5">{tipoContrato}</span>
                 {area && <span className="bg-slate-100 rounded px-2 py-0.5">{area}</span>}
                 <SeloPcd pcd={pcd} pequeno />
+                <SeloModalidade modalidade={modalidade} pequeno />
               </div>
               <p className="text-sm font-semibold text-[#0F2C4A] mt-2">
                 {salario ? `${rotuloValor(tipoContrato)}: ${salario}` : `${rotuloValor(tipoContrato)} a combinar`}

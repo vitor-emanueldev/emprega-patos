@@ -185,6 +185,22 @@ const experiencias = z.preprocess(
   z.array(experienciaSchema).max(20, "Máximo de 20 experiências.")
 );
 
+// Link público (https), ex: LinkedIn, GitHub, portfólio. "linkedin.com/in/x" vira "https://linkedin.com/in/x"
+const linkPublico = z
+  .string()
+  .trim()
+  .max(300, "Link muito longo.")
+  .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v))
+  .refine((v) => {
+    if (!v) return true;
+    try {
+      const u = new URL(v);
+      return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.includes(".");
+    } catch {
+      return false;
+    }
+  }, "Link inválido. Ex: linkedin.com/in/seunome");
+
 export const candidatoSchema = z.object({
   telefone: telefone("Telefone"),
   telefoneWhatsapp: z.boolean().optional(),
@@ -209,6 +225,11 @@ export const candidatoSchema = z.object({
   referenciaNome: textoOpcional("Nome da referência", 100),
   referenciaTelefone: telefone("Telefone da referência"),
   referenciaRelacao: textoOpcional("Relação com a referência", 60),
+  links: z
+    .array(linkPublico)
+    .max(3, "Máximo de 3 links.")
+    .transform((l) => l.filter(Boolean))
+    .optional(),
   formacoes: z.array(formacaoSchema).max(10, "Máximo de 10 formações.").optional(),
   cursos: z.array(cursoSchema).max(20, "Máximo de 20 cursos.").optional(),
   experiencias: experiencias.optional(),
@@ -219,6 +240,7 @@ export const candidatoSchema = z.object({
 export const STATUS_VAGA = ["aberta", "pausada", "encerrada"] as const;
 // "aceita" = vaga aberta a todos e também a pessoas com deficiência; "exclusiva" = só para PcD
 export const PCD_VAGA = ["nao", "aceita", "exclusiva"] as const;
+export const MODALIDADES = ["presencial", "hibrido", "remoto"] as const;
 
 const camposVaga = {
   cargo: texto("Cargo", 120),
@@ -241,6 +263,7 @@ const camposVaga = {
     .max(500, "Quantidade de vagas inválida.")
     .optional(),
   pcd: z.enum(PCD_VAGA, { errorMap: () => ({ message: "Opção de vaga PcD inválida." }) }).optional(),
+  modalidade: z.enum(MODALIDADES, { errorMap: () => ({ message: "Modalidade inválida." }) }).optional(),
 };
 
 export const publicarVagaSchema = z.object({
@@ -283,7 +306,22 @@ export const aceitarCandidaturaSchema = z.object({
     .refine((data) => data.getTime() > Date.now() - 24 * 60 * 60 * 1000, "A data da entrevista já passou.")
     .refine((data) => data.getTime() < Date.now() + 366 * 24 * 60 * 60 * 1000, "A data da entrevista está longe demais."),
   mensagem: textoOpcional("Mensagem", 1000),
-});
+  formato: z.enum(["presencial", "online", "telefone"], { errorMap: () => ({ message: "Formato da entrevista inválido." }) }).default("presencial"),
+  local: textoOpcional("Local da entrevista", 300),
+  link: z
+    .string()
+    .trim()
+    .max(500, "Link muito longo.")
+    .refine((v) => {
+      if (!v) return true;
+      try {
+        return new URL(v).protocol === "https:";
+      } catch {
+        return false;
+      }
+    }, "Cole o link completo da reunião, começando com https://")
+    .nullish(),
+}).refine((d) => d.formato !== "online" || !!d.link, { message: "Cole o link da reunião (Google Meet, Zoom...).", path: ["link"] });
 
 export const candidatarSchema = z.object({
   mensagem: textoOpcional("Mensagem para a empresa", 1000),

@@ -66,6 +66,7 @@ export type CurriculoVisao = {
   categoriaCnh?: string | null;
   possuiVeiculo?: boolean | null;
   referencia?: { nome: string; telefone?: string | null; relacao?: string | null } | null;
+  links?: string[];
 };
 
 export function calcularIdade(dataNascimento: string | null | undefined): number | null {
@@ -137,6 +138,7 @@ export function curriculoDaFicha(c: Candidato, email?: string | null): Curriculo
     possuiCnh: c.possuiCnh,
     categoriaCnh: c.categoriaCnh,
     possuiVeiculo: c.possuiVeiculo,
+    links: c.links ?? [],
     referencia: c.referenciaNome
       ? { nome: c.referenciaNome, telefone: c.referenciaTelefone, relacao: c.referenciaRelacao }
       : null,

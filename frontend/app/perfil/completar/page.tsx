@@ -104,6 +104,7 @@ function CompletarPerfilContent() {
   const [referenciaNome, setReferenciaNome] = useState("");
   const [referenciaTelefone, setReferenciaTelefone] = useState("");
   const [referenciaRelacao, setReferenciaRelacao] = useState("");
+  const [links, setLinks] = useState<string[]>(["", "", ""]);
 
   const sugestoesHabilidade = buscarSugestoesHabilidade(habilidadeDigitada, habilidades);
 
@@ -163,6 +164,7 @@ function CompletarPerfilContent() {
         setReferenciaNome(dados.referenciaNome || "");
         setReferenciaTelefone(dados.referenciaTelefone ? formatTelefone(dados.referenciaTelefone) : "");
         setReferenciaRelacao(dados.referenciaRelacao || "");
+        setLinks([...(dados.links ?? []), "", "", ""].slice(0, 3));
       } catch {
         // se der erro ao buscar, segue como cadastro novo — sem travar o usuário
       } finally {
@@ -299,6 +301,7 @@ function CompletarPerfilContent() {
         referenciaNome: referenciaNome.trim(),
         referenciaTelefone: referenciaNome.trim() ? referenciaTelefone : "",
         referenciaRelacao: referenciaNome.trim() ? referenciaRelacao.trim() : "",
+        links: links.map((l) => l.trim()).filter(Boolean),
       };
 
       if (modoEdicao) {
@@ -805,6 +808,29 @@ function CompletarPerfilContent() {
                     maxLength={15}
                     className={classeCampo}
                   />
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-base font-bold text-[#0F2C4A] mb-1">Links (opcional)</h2>
+                <p className="text-xs text-slate-500 mb-3">
+                  LinkedIn, GitHub, portfólio, Instagram profissional... A empresa vê junto com o seu contato.
+                </p>
+                <div className="space-y-2">
+                  {links.map((valor, i) => (
+                    <input
+                      key={i}
+                      value={valor}
+                      onChange={(e) => setLinks((atual) => atual.map((l, j) => (j === i ? e.target.value : l)))}
+                      placeholder={["linkedin.com/in/seunome", "github.com/seunome", "Link do seu portfólio"][i]}
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      maxLength={300}
+                      className={classeCampo}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

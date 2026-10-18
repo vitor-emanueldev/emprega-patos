@@ -160,6 +160,7 @@ export type Vaga = {
   cargaHoraria?: string | null;
   quantidadeVagas?: number;
   pcd?: "nao" | "aceita" | "exclusiva";
+  modalidade?: "presencial" | "hibrido" | "remoto";
   status: string;
   createdAt: string;
   empresa: {
@@ -245,6 +246,7 @@ export type DadosVaga = {
   cargaHoraria?: string | null;
   quantidadeVagas?: number;
   pcd?: "nao" | "aceita" | "exclusiva";
+  modalidade?: "presencial" | "hibrido" | "remoto";
 };
 
 export async function publicarVaga(token: string, dados: DadosVaga) {
@@ -309,6 +311,7 @@ export type DadosCandidato = {
   referenciaNome?: string;
   referenciaTelefone?: string;
   referenciaRelacao?: string;
+  links?: string[];
   possuiCnh?: boolean | null;
   categoriaCnh?: string;
   possuiVeiculo?: boolean | null;
@@ -348,6 +351,7 @@ export type Candidato = {
   referenciaNome: string | null;
   referenciaTelefone: string | null;
   referenciaRelacao: string | null;
+  links?: string[];
   createdAt: string;
   usuarioId: string;
   formacoes: (DadosFormacao & { id: string })[];
@@ -526,6 +530,9 @@ export type Candidatura = {
   candidatoId: string;
   mensagemResposta?: string | null;
   dataEntrevista?: string | null;
+  formatoEntrevista?: "presencial" | "online" | "telefone" | null;
+  localEntrevista?: string | null;
+  linkEntrevista?: string | null;
   respondidoEm?: string | null;
   mensagemCandidato?: string | null;
   vaga: Vaga;
@@ -541,6 +548,9 @@ export type CandidaturaComCandidato = {
   candidatoId: string;
   mensagemResposta?: string | null;
   dataEntrevista?: string | null;
+  formatoEntrevista?: "presencial" | "online" | "telefone" | null;
+  localEntrevista?: string | null;
+  linkEntrevista?: string | null;
   respondidoEm?: string | null;
   mensagemCandidato?: string | null;
   copiaDoMomentoDaCandidatura?: boolean;
@@ -633,7 +643,8 @@ export async function aceitarCandidatura(
   token: string,
   candidaturaId: string,
   dataEntrevista: string,
-  mensagem?: string
+  mensagem?: string,
+  como?: { formato: "presencial" | "online" | "telefone"; local?: string; link?: string }
 ) {
   const resposta = await fetchApi(`${API_URL}/candidaturas/${candidaturaId}/aceitar`, {
     method: "PATCH",
@@ -641,7 +652,7 @@ export async function aceitarCandidatura(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ dataEntrevista, mensagem }),
+    body: JSON.stringify({ dataEntrevista, mensagem, ...como }),
   });
 
   const resultado = await resposta.json();

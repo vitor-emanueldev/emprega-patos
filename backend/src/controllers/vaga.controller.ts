@@ -118,6 +118,7 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
     cargaHoraria,
     quantidadeVagas,
     pcd,
+    modalidade,
   } = req.body;
 
   if (
@@ -170,6 +171,7 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
         cargaHoraria: cargaHoraria || null,
         quantidadeVagas: quantidadeVagas ?? 1,
         pcd: pcd ?? "nao",
+        modalidade: modalidade ?? "presencial",
         status: "aberta",
         empresaId: empresa.id,
       },
@@ -193,7 +195,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
     cargo, descricao, tipoContrato, area, salario,
     endereco, bairro, latitude, longitude,
     requisitos, responsabilidades, beneficios, status,
-    cargaHoraria, quantidadeVagas, pcd,
+    cargaHoraria, quantidadeVagas, pcd, modalidade,
   } = req.body;
 
   try {
@@ -233,6 +235,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
         cargaHoraria, // null limpa; undefined mantém
         quantidadeVagas,
         pcd,
+        modalidade,
         status: status || undefined,
       },
     });

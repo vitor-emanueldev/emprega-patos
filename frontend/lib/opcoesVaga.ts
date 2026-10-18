@@ -25,6 +25,22 @@ export const BENEFICIOS_COMUNS = [
   "Folga aos domingos",
 ] as const;
 
+// Onde a pessoa vai trabalhar
+export type Modalidade = "presencial" | "hibrido" | "remoto";
+
+export const MODALIDADES: { valor: Modalidade; rotulo: string; explicacao: string }[] = [
+  { valor: "presencial", rotulo: "Presencial", explicacao: "Trabalho no endereço da empresa." },
+  { valor: "hibrido", rotulo: "Híbrido", explicacao: "Alguns dias na empresa, outros de casa." },
+  { valor: "remoto", rotulo: "Remoto", explicacao: "Trabalho de casa. A vaga continua no mapa, no endereço da empresa." },
+];
+
+// "Remoto" / "Híbrido"; presencial não ganha selo
+export function rotuloModalidade(m?: string | null) {
+  if (m === "remoto") return "Remoto";
+  if (m === "hibrido") return "Híbrido";
+  return null;
+}
+
 // Vaga para pessoas com deficiência (PcD)
 export type OpcaoPcd = "nao" | "aceita" | "exclusiva";
 

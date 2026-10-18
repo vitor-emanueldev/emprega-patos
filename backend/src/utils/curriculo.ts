@@ -71,6 +71,7 @@ export function contatoAtual(c: CandidatoCompleto) {
     telefone: c.telefone,
     telefoneWhatsapp: c.telefoneWhatsapp,
     email: c.usuario?.email ?? null,
+    links: c.links ?? [],
   };
 }
 

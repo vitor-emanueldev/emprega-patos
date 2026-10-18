@@ -1,6 +1,6 @@
 import type { Vaga } from "@/lib/api";
 import { distanciaKm } from "@/lib/formatar";
-import { TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
+import { MODALIDADES, TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
 // Filtros da aba Mapa
 export type Filtros = {
@@ -10,9 +10,10 @@ export type Filtros = {
   bairro: string; // "" = todos
   salarioMin: number | null;
   pcd: boolean; // só vagas para pessoas com deficiência
+  modalidades: string[]; // [] = todas
 };
 
-export const FILTROS_VAZIOS: Filtros = { busca: "", contratos: [], categoria: "", bairro: "", salarioMin: null, pcd: false };
+export const FILTROS_VAZIOS: Filtros = { busca: "", contratos: [], categoria: "", bairro: "", salarioMin: null, pcd: false, modalidades: [] };
 
 export const FAIXAS_SALARIO = [
   { valor: null, rotulo: "Qualquer" },
@@ -36,7 +37,7 @@ export function normalizar(texto: string) {
 }
 
 export function contarFiltrosAtivos(f: Filtros) {
-  return f.contratos.length + (f.categoria ? 1 : 0) + (f.bairro ? 1 : 0) + (f.salarioMin ? 1 : 0) + (f.pcd ? 1 : 0);
+  return f.contratos.length + f.modalidades.length + (f.categoria ? 1 : 0) + (f.bairro ? 1 : 0) + (f.salarioMin ? 1 : 0) + (f.pcd ? 1 : 0);
 }
 
 // As opções saem das vagas que existem: nunca aparece opção que dá zero resultado
@@ -60,6 +61,11 @@ export function opcoesDosFiltros(vagas: Vaga[]) {
     categorias: ordenarPorNome(contar((v) => v.area)),
     bairros: ordenarPorNome(contar((v) => v.bairro)),
     totalPcd: vagas.filter((v) => ehVagaPcd(v.pcd)).length,
+    // só aparece o filtro quando existe vaga remota ou híbrida
+    modalidades: MODALIDADES.filter((m) => vagas.some((v) => (v.modalidade || "presencial") === m.valor)).map((m) => ({
+      valor: m.valor,
+      rotulo: m.rotulo,
+    })),
   };
 }
 
@@ -76,6 +82,7 @@ export function aplicarFiltros(vagas: Vaga[], f: Filtros, origem?: Posicao | nul
       if (f.bairro && v.bairro !== f.bairro) return false;
       if (f.salarioMin && (v.salario == null || v.salario < f.salarioMin)) return false;
       if (f.pcd && !ehVagaPcd(v.pcd)) return false;
+      if (f.modalidades.length && !f.modalidades.includes(v.modalidade || "presencial")) return false;
       return true;
     })
     .map((v) => ({

@@ -121,8 +121,30 @@ export function emailCandidaturaAprovada(d: {
   enderecoVaga?: string | null;
   dataEntrevista?: Date | null;
   mensagem?: string | null;
+  formato?: string | null; // "presencial" | "online" | "telefone"
+  local?: string | null;
+  link?: string | null; // link da reunião (online)
 }): EmailPronto {
   const link = urlDoSite("/perfil/candidato/candidaturas");
+  const online = d.formato === "online" && !!d.link;
+  const porTelefone = d.formato === "telefone";
+  const local = d.local || d.enderecoVaga;
+  const ondeHtml = online
+    ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">Entrevista online (por vídeo)</p>
+        <p style="margin:12px 0 0;"><a href="${esc(d.link!)}" style="display:inline-block;background:#1D6FA5;color:#FFFFFF;text-decoration:none;font-weight:bold;font-size:14px;padding:9px 16px;border-radius:6px;">Entrar na reunião</a></p>
+        <p style="margin:8px 0 0;font-size:12px;color:#64748B;word-break:break-all;">${esc(d.link!)}</p>`
+    : porTelefone
+    ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">Por telefone: a empresa vai ligar para o número do seu currículo.</p>`
+    : local
+    ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">Local: ${esc(local)}</p>`
+    : "";
+  const ondeTexto = online
+    ? `Entrevista online: ${d.link}\n`
+    : porTelefone
+    ? "Por telefone: a empresa vai ligar para o número do seu currículo.\n"
+    : local
+    ? `Local: ${local}\n`
+    : "";
   const assunto = `Boa notícia! ${d.nomeEmpresa} quer te entrevistar`;
   const quando = d.dataEntrevista ? formatarDataEntrevista(d.dataEntrevista) : null;
   const detalhes = quando
@@ -131,7 +153,7 @@ export function emailCandidaturaAprovada(d: {
       <tr><td style="padding:14px 16px;">
         <p style="margin:0;font-size:12px;font-weight:bold;color:#B26B00;text-transform:uppercase;letter-spacing:.5px;">Entrevista</p>
         <p style="margin:6px 0 0;font-size:17px;font-weight:bold;color:${AZUL};">${esc(quando)}</p>
-        ${d.enderecoVaga ? `<p style="margin:6px 0 0;font-size:14px;color:#475569;">Local: ${esc(d.enderecoVaga)}</p>` : ""}
+        ${ondeHtml}
       </td></tr>
     </table>`
     : "";
@@ -153,7 +175,7 @@ export function emailCandidaturaAprovada(d: {
     texto:
       `Olá, ${primeiroNome(d.nomeCandidato)}!\n\nA empresa ${d.nomeEmpresa} aprovou sua candidatura para ${d.cargo}.\n` +
       (quando ? `\nEntrevista: ${quando}\n` : "") +
-      (quando && d.enderecoVaga ? `Local: ${d.enderecoVaga}\n` : "") +
+      (quando ? ondeTexto : "") +
       (d.mensagem ? `\nMensagem de ${d.nomeEmpresa}:\n${d.mensagem}\n` : "") +
       `\nVeja suas candidaturas: ${link}\n\nBoa sorte!\n— MapVagas`,
   };

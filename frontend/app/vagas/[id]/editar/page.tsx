@@ -10,7 +10,8 @@ import { useAuth } from "@/context/AuthContext";
 import { detalhesVaga, atualizarVaga } from "@/lib/api";
 import { formatSalario, parseSalario } from "@/lib/masks";
 import { CATEGORIAS_VAGA } from "@/lib/categoriasVagas";
-import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloValor, type OpcaoPcd } from "@/lib/opcoesVaga";
+import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloValor, type Modalidade, type OpcaoPcd } from "@/lib/opcoesVaga";
+import EscolhaModalidade from "@/components/EscolhaModalidade";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
 
@@ -55,6 +56,7 @@ export default function EditarVagaPage() {
   const [cargaHoraria, setCargaHoraria] = useState("");
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
   const [pcd, setPcd] = useState<OpcaoPcd>("nao");
+  const [modalidade, setModalidade] = useState<Modalidade>("presencial");
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -91,6 +93,7 @@ export default function EditarVagaPage() {
         setCargaHoraria(vaga.cargaHoraria || "");
         setVagasDisponiveis(String(vaga.quantidadeVagas ?? 1));
         setPcd((vaga.pcd as OpcaoPcd) || "nao");
+        setModalidade(vaga.modalidade || "presencial");
         setEndereco(vaga.endereco);
         setBairro(vaga.bairro);
         setLatitude(vaga.latitude);
@@ -153,6 +156,7 @@ export default function EditarVagaPage() {
         cargaHoraria: cargaHoraria.trim() || null,
         quantidadeVagas: Number(vagasDisponiveis),
         pcd,
+        modalidade,
         status,
       });
 
@@ -212,6 +216,8 @@ export default function EditarVagaPage() {
                 ))}
               </div>
             </div>
+
+            <EscolhaModalidade valor={modalidade} aoMudar={setModalidade} py="py-2" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

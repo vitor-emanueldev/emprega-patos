@@ -62,6 +62,7 @@ model Candidato {
   referenciaNome        String?
   referenciaTelefone    String?
   referenciaRelacao     String?
+  links                 String[] @default([]) // LinkedIn, GitHub, portfólio... (até 3)
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId String  @unique
@@ -155,6 +156,7 @@ model Vaga {
   cargaHoraria    String? // ex: "44h semanais", "Seg a sex, 8h às 17h"
   quantidadeVagas Int     @default(1)
   pcd             String  @default("nao") // "nao" | "aceita" (também para PcD) | "exclusiva" (só PcD)
+  modalidade      String  @default("presencial") // "presencial" | "hibrido" | "remoto"
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
@@ -186,6 +188,10 @@ model Candidatura {
   mensagemResposta String?
   dataEntrevista   DateTime?
   respondidoEm     DateTime?
+  // Como será a entrevista: "presencial" (localEntrevista) | "online" (linkEntrevista) | "telefone"
+  formatoEntrevista String?
+  localEntrevista   String?
+  linkEntrevista    String?
 
   // Mensagem do candidato e cópia do currículo no momento da candidatura
   mensagemCandidato String?

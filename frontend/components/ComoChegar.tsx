@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, LocateFixed, MapPin, Navigation, X } from "lucide-react";
+import { House, Loader2, LocateFixed, MapPin, Navigation, X } from "lucide-react";
 import type { Vaga } from "@/lib/api";
 import { useMinhaLocalizacao } from "@/lib/useMinhaLocalizacao";
 import { useRota } from "@/lib/useRota";
@@ -49,6 +49,29 @@ export default function ComoChegar({ vaga }: { vaga: Vaga }) {
   const imprecisa = posicao?.origem === "gps" && (posicao.precisaoM ?? 0) > 300;
   const botao =
     "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-sm font-semibold transition-colors";
+
+  // Vaga remota: mostra onde fica a empresa, sem rota (a pessoa trabalha de casa)
+  if (vaga.modalidade === "remoto") {
+    return (
+      <div id="rota" className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div style={{ height: 192 }}>
+          <MapaInterativo
+            vagas={vagas}
+            vagaSelecionada={vaga.id}
+            onSelecionarVaga={() => {}}
+            mostrarLegenda={false}
+            abrirBalaoAoSelecionar={false}
+          />
+        </div>
+        <div className="p-4 flex items-start gap-2.5">
+          <House className="w-4 h-4 text-violet-700 shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-600">
+            <b className="text-[#0F2C4A]">Trabalho remoto.</b> A empresa fica no {vaga.bairro}, Patos-PB.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="rota" className="bg-white rounded-xl shadow-md overflow-hidden">

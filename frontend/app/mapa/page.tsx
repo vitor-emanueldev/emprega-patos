@@ -7,6 +7,7 @@ import { Accessibility, List, Loader2, LocateFixed, Map as MapIcon, MapPin, Sear
 import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
+import SeloModalidade from "@/components/SeloModalidade";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
@@ -129,6 +130,29 @@ export default function MapaPage() {
 
   const camposFiltro = (
     <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-3">
+      {opcoes.modalidades.length > 1 && (
+        <div>
+          <p className="text-[11px] font-medium text-slate-500 mb-1">Modalidade</p>
+          <div className="flex flex-wrap gap-1.5">
+            {opcoes.modalidades.map((m) => {
+              const ativo = filtros.modalidades.includes(m.valor);
+              return (
+                <button
+                  key={m.valor}
+                  type="button"
+                  onClick={() => mudar({ modalidades: alternar(filtros.modalidades, m.valor) })}
+                  aria-pressed={ativo}
+                  className={`text-xs font-medium rounded-md px-3 py-2 border transition-colors ${
+                    ativo ? "bg-[#0F2C4A] text-white border-[#0F2C4A]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {m.rotulo}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {opcoes.contratos.length > 0 && (
         <div>
           <p className="text-[11px] font-medium text-slate-500 mb-1">Tipo de contrato</p>
@@ -268,6 +292,7 @@ export default function MapaPage() {
             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
             <SeloPcd pcd={vaga.pcd} pequeno />
+            <SeloModalidade modalidade={vaga.modalidade} pequeno />
             <span className="text-[11px] text-slate-500">
               📍 {vaga.bairro}
               {vaga.distanciaKm != null && <strong className="text-[#0F2C4A]"> · {formatarDistancia(vaga.distanciaKm)}</strong>}

@@ -7,8 +7,9 @@ import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
+import SeloModalidade from "@/components/SeloModalidade";
 import LogoEmpresa from "@/components/LogoEmpresa";
-import { TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
+import { MODALIDADES, TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
 
 function normalizar(texto: string) {
@@ -50,6 +51,9 @@ function VagasConteudo() {
   const [salarioMin, setSalarioMin] = useState(0);
   const [salarioMax, setSalarioMax] = useState(5000);
   const [somentePcd, setSomentePcd] = useState(false);
+  const [modalidadesSelecionadas, setModalidadesSelecionadas] = useState<string[]>([]);
+  // só mostra o filtro quando existe vaga remota ou híbrida
+  const modalidadesDisponiveis = MODALIDADES.filter((m) => vagas.some((v) => (v.modalidade || "presencial") === m.valor));
 
   useEffect(() => {
     async function carregar() {
@@ -114,13 +118,15 @@ function VagasConteudo() {
           (vaga.salario >= salarioMin && vaga.salario <= salarioMax);
 
         const batePcd = !somentePcd || ehVagaPcd(vaga.pcd);
+        const bateModalidade =
+          modalidadesSelecionadas.length === 0 || modalidadesSelecionadas.includes(vaga.modalidade || "presencial");
 
-        return bateBusca && bateTipo && bateArea && bateBairro && bateSalario && batePcd;
+        return bateBusca && bateTipo && bateArea && bateBairro && bateSalario && batePcd && bateModalidade;
       })
       .sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-  }, [vagas, busca, tiposSelecionados, areasSelecionadas, bairrosSelecionados, salarioMin, salarioMax, somentePcd]);
+  }, [vagas, busca, tiposSelecionados, areasSelecionadas, bairrosSelecionados, salarioMin, salarioMax, somentePcd, modalidadesSelecionadas]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -187,6 +193,28 @@ function VagasConteudo() {
               })}
             </div>
           </div>
+
+          {modalidadesDisponiveis.length > 1 && (
+            <div>
+              <p className="text-xs font-bold text-slate-500 tracking-wide mb-2">MODALIDADE</p>
+              <div className="flex flex-wrap gap-2">
+                {modalidadesDisponiveis.map((m) => {
+                  const ativo = modalidadesSelecionadas.includes(m.valor);
+                  return (
+                    <button
+                      key={m.valor}
+                      onClick={() => setModalidadesSelecionadas((prev) => alternarItem(prev, m.valor))}
+                      className={`text-xs font-medium rounded-md px-3 py-1.5 border transition-colors ${
+                        ativo ? "bg-[#0F2C4A] text-white border-[#0F2C4A]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {m.rotulo}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {totalPcd > 0 && (
             <div>
@@ -322,9 +350,10 @@ function VagasConteudo() {
                     <p className="text-xs font-medium text-[#1D6FA5]">
                       {vaga.empresa.nomeEmpresa}
                     </p>
-                    {vaga.pcd && vaga.pcd !== "nao" && (
-                      <div className="mt-1">
+                    {((vaga.pcd && vaga.pcd !== "nao") || (vaga.modalidade && vaga.modalidade !== "presencial")) && (
+                      <div className="mt-1 flex flex-wrap gap-1">
                         <SeloPcd pcd={vaga.pcd} pequeno />
+                        <SeloModalidade modalidade={vaga.modalidade} pequeno />
                       </div>
                     )}
                     <p className="text-xs text-slate-500 mt-0.5">

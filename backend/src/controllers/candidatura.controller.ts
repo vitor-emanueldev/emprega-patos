@@ -239,7 +239,7 @@ export async function rejeitarCandidatura(req: RequisicaoAutenticada, res: Respo
 export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Response) {
   const candidaturaId = req.params.id;
   // já validados (aceitarCandidaturaSchema): dataEntrevista chega como Date
-  const { mensagem, dataEntrevista: dataConvertida } = req.body;
+  const { mensagem, dataEntrevista: dataConvertida, formato, local, link } = req.body;
 
   const resultado = await buscarCandidaturaDaEmpresa(req, candidaturaId);
   if (!resultado.ok) {
@@ -253,6 +253,10 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
         status: "aprovada",
         mensagemResposta: mensagem || null,
         dataEntrevista: dataConvertida,
+        formatoEntrevista: formato,
+        // presencial sem local informado = endereço da vaga
+        localEntrevista: formato === "presencial" ? local || resultado.candidatura.vaga.endereco || null : null,
+        linkEntrevista: formato === "online" ? link : null,
         respondidoEm: new Date(),
       },
     });
@@ -266,6 +270,9 @@ export async function aceitarCandidatura(req: RequisicaoAutenticada, res: Respon
         nomeEmpresa: empresa.nomeEmpresa,
         enderecoVaga: candidatura.vaga.endereco,
         dataEntrevista: candidaturaAtualizada.dataEntrevista,
+        formato: candidaturaAtualizada.formatoEntrevista,
+        local: candidaturaAtualizada.localEntrevista,
+        link: candidaturaAtualizada.linkEntrevista,
         mensagem: candidaturaAtualizada.mensagemResposta,
       })
     );

@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Header from "@/components/Header";
 import CurriculoVisual from "@/components/CurriculoVisual";
 import { linkWhatsapp, rotuloTurno, type CurriculoVisao } from "@/lib/curriculo";
-import { BadgeCheck, MessageCircle, UserRound } from "lucide-react";
+import { BadgeCheck, MapPin, MessageCircle, Phone, UserRound, Video } from "lucide-react";
+import { FORMATOS_ENTREVISTA, type FormatoEntrevista } from "@/lib/entrevista";
 import { useAuth } from "@/context/AuthContext";
 import {
   candidaturasDaVaga,
@@ -85,6 +86,9 @@ export default function CandidatosDaVagaPage() {
 
   const [dataEntrevista, setDataEntrevista] = useState("");
   const [horaEntrevista, setHoraEntrevista] = useState("");
+  const [formatoEntrevista, setFormatoEntrevista] = useState<FormatoEntrevista>("presencial");
+  const [localEntrevista, setLocalEntrevista] = useState("");
+  const [linkEntrevista, setLinkEntrevista] = useState("");
   const [mensagemAceite, setMensagemAceite] = useState("");
   const [mensagemRejeicao, setMensagemRejeicao] = useState("");
   const [mensagemContratacao, setMensagemContratacao] = useState("");
@@ -126,6 +130,9 @@ export default function CandidatosDaVagaPage() {
     setErroFormulario("");
     setDataEntrevista("");
     setHoraEntrevista("");
+    setFormatoEntrevista(vaga?.modalidade === "remoto" ? "online" : "presencial");
+    setLocalEntrevista(vaga ? [vaga.endereco, vaga.bairro].filter(Boolean).join(", ") : "");
+    setLinkEntrevista("");
     setMensagemAceite("");
     setMensagemRejeicao("");
     setMensagemContratacao("");
@@ -146,11 +153,20 @@ export default function CandidatosDaVagaPage() {
       return;
     }
 
+    if (formatoEntrevista === "online" && !/^https:\/\/\S+\.\S+/.test(linkEntrevista.trim())) {
+      setErroFormulario("Cole o link da reunião, começando com https:// (ex: https://meet.google.com/...).");
+      return;
+    }
+
     const dataHoraIso = new Date(`${dataEntrevista}T${horaEntrevista}`).toISOString();
 
     setProcessandoId(candidaturaId);
     try {
-      const atualizada = await aceitarCandidatura(token, candidaturaId, dataHoraIso, mensagemAceite);
+      const atualizada = await aceitarCandidatura(token, candidaturaId, dataHoraIso, mensagemAceite, {
+        formato: formatoEntrevista,
+        local: formatoEntrevista === "presencial" ? localEntrevista.trim() : undefined,
+        link: formatoEntrevista === "online" ? linkEntrevista.trim() : undefined,
+      });
       setCandidaturas((prev) =>
         prev.map((c) => (c.id === candidaturaId ? { ...c, ...atualizada } : c))
       );
@@ -367,9 +383,29 @@ export default function CandidatosDaVagaPage() {
                       </p>
                     )}
                     {candidatura.status.toLowerCase().includes("aprov") && (
-                      <p className="text-sm font-semibold text-green-800">
-                        Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
-                      </p>
+                      <>
+                        <p className="text-sm font-semibold text-green-800">
+                          Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
+                        </p>
+                        {candidatura.formatoEntrevista === "online" && candidatura.linkEntrevista && (
+                          <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5 min-w-0">
+                            <Video className="w-3.5 h-3.5 shrink-0" /> Online:{" "}
+                            <a href={candidatura.linkEntrevista} target="_blank" rel="noopener noreferrer" className="text-[#1D6FA5] hover:underline truncate">
+                              {candidatura.linkEntrevista}
+                            </a>
+                          </p>
+                        )}
+                        {candidatura.formatoEntrevista === "telefone" && (
+                          <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5" /> Por telefone: ligue para o número do currículo
+                          </p>
+                        )}
+                        {candidatura.formatoEntrevista === "presencial" && candidatura.localEntrevista && (
+                          <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5" /> {candidatura.localEntrevista}
+                          </p>
+                        )}
+                      </>
                     )}
                     {candidatura.mensagemResposta && (
                       <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">
@@ -455,7 +491,7 @@ export default function CandidatosDaVagaPage() {
                 {formularioAberto && tipoFormulario === "aceitar" && (
                   <div className="mt-5 border-t border-slate-200 pt-5 bg-green-50 -mx-5 -mb-5 px-5 pb-5 rounded-b-xl">
                     <h3 className="text-sm font-bold text-[#0F2C4A] mb-3">
-                      Marcar entrevista presencial
+                      Marcar entrevista
                     </h3>
 
                     {erroFormulario && (
@@ -486,6 +522,68 @@ export default function CandidatosDaVagaPage() {
                     </div>
 
                     <div className="mt-3">
+                      <label className="block text-xs text-[#0F2C4A] font-medium mb-1">Como vai ser *</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {FORMATOS_ENTREVISTA.map((f) => (
+                          <button
+                            key={f.valor}
+                            type="button"
+                            onClick={() => setFormatoEntrevista(f.valor)}
+                            aria-pressed={formatoEntrevista === f.valor}
+                            className={`rounded-md border px-2 py-2 text-xs sm:text-sm font-medium transition-colors ${
+                              formatoEntrevista === f.valor
+                                ? "border-green-700 bg-white text-green-800"
+                                : "border-slate-200 bg-white/60 text-slate-500 hover:border-slate-300"
+                            }`}
+                          >
+                            {f.rotulo}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {formatoEntrevista === "presencial" && (
+                      <div className="mt-3">
+                        <label className="block text-xs text-[#0F2C4A] font-medium mb-1">Local da entrevista</label>
+                        <input
+                          value={localEntrevista}
+                          onChange={(e) => setLocalEntrevista(e.target.value)}
+                          maxLength={300}
+                          placeholder="Endereço da entrevista"
+                          className="w-full rounded-md bg-white border border-slate-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                        <p className="text-[11px] text-slate-500 mt-1">Já vem com o endereço da vaga. Mude se for em outro lugar.</p>
+                      </div>
+                    )}
+
+                    {formatoEntrevista === "online" && (
+                      <div className="mt-3">
+                        <label className="block text-xs text-[#0F2C4A] font-medium mb-1">Link da reunião *</label>
+                        <input
+                          value={linkEntrevista}
+                          onChange={(e) => setLinkEntrevista(e.target.value)}
+                          maxLength={500}
+                          inputMode="url"
+                          placeholder="https://meet.google.com/abc-defg-hij"
+                          className="w-full rounded-md bg-white border border-slate-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Google Meet, Zoom, Teams ou outro.{" "}
+                          <a href="https://meet.google.com/new" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1D6FA5] hover:underline">
+                            Criar uma reunião no Google Meet
+                          </a>{" "}
+                          e colar o link aqui.
+                        </p>
+                      </div>
+                    )}
+
+                    {formatoEntrevista === "telefone" && (
+                      <p className="mt-3 text-xs text-slate-600 bg-white/70 border border-green-200 rounded-md px-3 py-2">
+                        O candidato fica avisado de que você vai ligar no horário marcado, para o número do currículo.
+                      </p>
+                    )}
+
+                    <div className="mt-3">
                       <label className="block text-xs text-[#0F2C4A] font-medium mb-1">
                         Mensagem para o candidato (opcional)
                       </label>
@@ -493,7 +591,7 @@ export default function CandidatosDaVagaPage() {
                         value={mensagemAceite}
                         onChange={(e) => setMensagemAceite(e.target.value)}
                         rows={3}
-                        placeholder="Ex: Compareça com um documento com foto. Endereço: ..."
+                        placeholder="Ex: Traga um documento com foto e a carteira de trabalho."
                         className="w-full rounded-md bg-white border border-slate-200 px-3 py-2 text-sm text-gray-900 resize-none"
                       />
                     </div>

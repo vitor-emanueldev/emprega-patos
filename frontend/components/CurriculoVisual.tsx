@@ -1,6 +1,7 @@
 "use client";
 
-import { Briefcase, Car, Clock, GraduationCap, MapPin, MessageCircle, Phone, Mail, UserRound, Star, Users } from "lucide-react";
+import { Briefcase, Car, Clock, GraduationCap, Link2, MapPin, MessageCircle, Phone, Mail, UserRound, Star, Users } from "lucide-react";
+import { textoDoLink } from "@/lib/links";
 import { type CurriculoVisao, linkWhatsapp, rotuloDuracao, rotuloTurno } from "@/lib/curriculo";
 
 type Props = {
@@ -94,6 +95,18 @@ export default function CurriculoVisual({ curriculo: c, modo = "candidato", text
             {c.email}
           </a>
         )}
+        {(c.links ?? []).map((url) => (
+          <a
+            key={url}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 text-sm text-[#1D6FA5] px-3 py-2 hover:bg-slate-50 break-all"
+          >
+            <Link2 className="w-4 h-4 shrink-0" />
+            {textoDoLink(url)}
+          </a>
+        ))}
       </div>
 
       {/* Sobre mim */}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
+import SeloModalidade from "@/components/SeloModalidade";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { rotuloValor } from "@/lib/opcoesVaga";
 import { Camera } from "lucide-react";
@@ -188,6 +189,7 @@ export default function DetalhesVagaPage() {
                       {vaga.tipoContrato}
                     </span>
                     <SeloPcd pcd={vaga.pcd} />
+                    <SeloModalidade modalidade={vaga.modalidade} />
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       📍 {vaga.bairro}, Patos - PB
                     </span>
@@ -281,7 +283,9 @@ export default function DetalhesVagaPage() {
                   <p className="flex items-center gap-2">
                     📍 {vaga.endereco}, {vaga.bairro} - PB
                   </p>
-                  <p className="flex items-center gap-2">🏢 Presencial</p>
+                  <p className="flex items-center gap-2">
+                    {vaga.modalidade === "remoto" ? "🏠 Remoto (de casa)" : vaga.modalidade === "hibrido" ? "🔁 Híbrido" : "🏢 Presencial"}
+                  </p>
                   <p className="flex items-center gap-2">
                     📄 {vaga.tipoContrato}
                   </p>

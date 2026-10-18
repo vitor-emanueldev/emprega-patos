@@ -11,6 +11,7 @@ import { iconeVaga, iconeVagaSelecionada, iconeVoce } from "@/lib/mapaIcones";
 import FundoMapa from "@/components/FundoMapa";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
+import SeloModalidade from "@/components/SeloModalidade";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { getIconePorCargo } from "@/lib/icones";
 
@@ -238,6 +239,7 @@ export default function MapaInterativo({
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
                     <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
                     <SeloPcd pcd={vaga.pcd} pequeno />
+                    <SeloModalidade modalidade={vaga.modalidade} pequeno />
                   </div>
                   <p className="text-xs text-slate-500 !m-0">
                     📍 {vaga.bairro}
@@ -249,7 +251,7 @@ export default function MapaInterativo({
                   >
                     Ver detalhes
                   </Link>
-                  {onComoChegar ? (
+                  {vaga.modalidade === "remoto" ? null : onComoChegar ? (
                     <button
                       type="button"
                       onClick={() => {

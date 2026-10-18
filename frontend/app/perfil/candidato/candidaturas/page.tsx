@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { minhasCandidaturas, cancelarCandidatura, type Candidatura } from "@/lib/api";
+import { CalendarPlus, MapPin, Phone, Video } from "lucide-react";
+import { linkAgendaGoogle } from "@/lib/entrevista";
 
 function corDoStatus(status: string) {
   const normalizado = status.toLowerCase();
@@ -178,11 +180,68 @@ export default function MinhasCandidaturasPage() {
                         Parabéns! A empresa confirmou sua contratação.
                       </p>
                     )}
-                    {aprovada && candidatura.dataEntrevista && (
-                      <p className="text-sm font-semibold text-green-800">
-                        🗓️ Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
-                      </p>
-                    )}
+                    {aprovada && candidatura.dataEntrevista && (() => {
+                      const online = candidatura.formatoEntrevista === "online" && candidatura.linkEntrevista;
+                      const telefone = candidatura.formatoEntrevista === "telefone";
+                      const local = candidatura.localEntrevista || (!online && !telefone ? candidatura.vaga.endereco : null);
+                      const agenda = linkAgendaGoogle({
+                        titulo: `Entrevista: ${candidatura.vaga.cargo} (${candidatura.vaga.empresa.nomeEmpresa})`,
+                        inicio: candidatura.dataEntrevista,
+                        local: online ? candidatura.linkEntrevista : local,
+                        detalhes: [
+                          online ? `Link da reunião: ${candidatura.linkEntrevista}` : null,
+                          telefone ? "A empresa vai ligar para o número do seu currículo." : null,
+                          candidatura.mensagemResposta || null,
+                          "Marcado pelo MapVagas.",
+                        ]
+                          .filter(Boolean)
+                          .join("\n\n"),
+                      });
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-green-800">
+                            🗓️ Entrevista marcada para {formatarDataHora(candidatura.dataEntrevista)}
+                          </p>
+                          {online && (
+                            <p className="text-sm text-slate-700 flex items-center gap-1.5">
+                              <Video className="w-4 h-4 text-green-700" /> Entrevista online, por vídeo
+                            </p>
+                          )}
+                          {telefone && (
+                            <p className="text-sm text-slate-700 flex items-center gap-1.5">
+                              <Phone className="w-4 h-4 text-green-700" /> Por telefone: a empresa vai ligar para o número do seu currículo
+                            </p>
+                          )}
+                          {!online && !telefone && local && (
+                            <p className="text-sm text-slate-700 flex items-center gap-1.5">
+                              <MapPin className="w-4 h-4 text-green-700" /> {local}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {online && (
+                              <a
+                                href={candidatura.linkEntrevista!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-md bg-green-700 text-white text-xs font-semibold px-3 py-2 hover:bg-green-800"
+                              >
+                                <Video className="w-3.5 h-3.5" /> Entrar na reunião
+                              </a>
+                            )}
+                            {agenda && (
+                              <a
+                                href={agenda}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-md border border-green-300 bg-white text-green-800 text-xs font-semibold px-3 py-2 hover:bg-green-50"
+                              >
+                                <CalendarPlus className="w-3.5 h-3.5" /> Adicionar à agenda
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {candidatura.mensagemResposta && (
                       <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">
                         “{candidatura.mensagemResposta}”
