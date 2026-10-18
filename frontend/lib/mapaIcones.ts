@@ -98,3 +98,39 @@ export const iconeVoce = L.divIcon({
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
+
+// Várias vagas no mesmo endereço: um pino só, com o número de vagas no lugar da bolinha
+const cacheGrupo = new Map<string, L.DivIcon>();
+export function iconeGrupoVagas(quantidade: number, selecionado: boolean) {
+  const chave = `${quantidade}-${selecionado}`;
+  const pronto = cacheGrupo.get(chave);
+  if (pronto) return pronto;
+  const fundo = selecionado ? "#0F2C4A" : "#F0A93C";
+  const borda = selecionado ? "#F0A93C" : "#0F2C4A";
+  const texto = selecionado ? "#0F2C4A" : "#0F2C4A";
+  const icone = L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 34px;
+        height: 34px;
+        border-radius: 50% 50% 50% 0;
+        background: ${fundo};
+        border: 2px solid ${borda};
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="transform: rotate(45deg); width: 18px; height: 18px; border-radius: 50%; background: white; color: ${texto};
+          font: 700 11px/18px system-ui, sans-serif; text-align: center;">${quantidade > 9 ? "9+" : quantidade}</div>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -30],
+  });
+  cacheGrupo.set(chave, icone);
+  return icone;
+}

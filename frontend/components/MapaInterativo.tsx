@@ -7,7 +7,7 @@ import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import type { Vaga } from "@/lib/api";
 import type { Posicao } from "@/lib/filtrosVagas";
-import { iconeVaga, iconeVagaSelecionada, iconeVoce } from "@/lib/mapaIcones";
+import { iconeGrupoVagas, iconeVaga, iconeVagaSelecionada, iconeVoce } from "@/lib/mapaIcones";
 import FundoMapa from "@/components/FundoMapa";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
@@ -39,22 +39,22 @@ const LIMITES_PATOS: [[number, number], [number, number]] = [
   [-6.96, -37.21],
 ];
 
-// Vagas no mesmo endereço ficariam uma em cima da outra: espalha em círculo pequeno (~40 m)
-function posicoesSemSobreposicao(vagas: Vaga[]) {
-  const grupos = new Map<string, Vaga[]>();
+// Vagas no mesmo endereço viram um grupo: um pino só, no lugar exato, e o balão lista todas
+type GrupoVagas = { chave: string; posicao: [number, number]; vagas: Vaga[] };
+
+function agruparPorLocal(vagas: Vaga[]) {
+  const grupos = new Map<string, GrupoVagas>();
   for (const v of vagas) {
     const chave = `${v.latitude.toFixed(5)},${v.longitude.toFixed(5)}`;
-    grupos.set(chave, [...(grupos.get(chave) || []), v]);
+    const g = grupos.get(chave);
+    if (g) g.vagas.push(v);
+    else grupos.set(chave, { chave, posicao: [v.latitude, v.longitude], vagas: [v] });
   }
+  const lista = Array.from(grupos.values());
+  // posição de cada vaga = posição do seu grupo (para centralizar ao escolher na lista)
   const posicoes = new Map<string, [number, number]>();
-  for (const grupo of grupos.values()) {
-    grupo.forEach((v, i) => {
-      if (grupo.length === 1) return posicoes.set(v.id, [v.latitude, v.longitude]);
-      const angulo = (2 * Math.PI * i) / grupo.length;
-      posicoes.set(v.id, [v.latitude + 0.00035 * Math.sin(angulo), v.longitude + 0.00035 * Math.cos(angulo)]);
-    });
-  }
-  return posicoes;
+  for (const g of lista) for (const v of g.vagas) posicoes.set(v.id, g.posicao);
+  return { grupos: lista, posicoes };
 }
 
 // Vaga escolhida na lista: leva o mapa até ela e abre o balão
@@ -132,6 +132,37 @@ function AjustarTamanho() {
   return null;
 }
 
+// "Como chegar" no balão: mostra a rota no próprio mapa (aba Mapa) ou leva para a página da vaga
+function LinkComoChegar({
+  vagaId,
+  onComoChegar,
+  fecharBalao,
+}: {
+  vagaId: string;
+  onComoChegar?: (vagaId: string) => void;
+  fecharBalao: () => void;
+}) {
+  if (onComoChegar) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          fecharBalao();
+          onComoChegar(vagaId);
+        }}
+        className="text-center text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5"
+      >
+        Como chegar
+      </button>
+    );
+  }
+  return (
+    <Link href={`/vagas/${vagaId}#rota`} className="text-center !text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5">
+      Como chegar
+    </Link>
+  );
+}
+
 // Sem logo: o mesmo ícone do cargo usado na lista
 function IconeDoCargo({ cargo }: { cargo: string }) {
   const Icone = getIconePorCargo(cargo);
@@ -156,7 +187,7 @@ export default function MapaInterativo({
   margemRota = 0,
 }: Props) {
   const marcadores = useRef(new Map<string, LeafletMarker>());
-  const posicoes = useMemo(() => posicoesSemSobreposicao(vagas), [vagas]);
+  const { grupos, posicoes } = useMemo(() => agruparPorLocal(vagas), [vagas]);
 
   return (
     <div className="relative h-full w-full rounded-xl overflow-hidden isolate">
@@ -205,72 +236,122 @@ export default function MapaInterativo({
           </Marker>
         )}
 
-        {vagas.map((vaga) => {
-          const selecionada = vaga.id === vagaSelecionada;
+        {grupos.map((grupo) => {
+          const selecionada = grupo.vagas.some((v) => v.id === vagaSelecionada);
+          const unica = grupo.vagas.length === 1 ? grupo.vagas[0] : null;
+          const paraRota = grupo.vagas.find((v) => v.modalidade !== "remoto");
+          const mesmaEmpresa = grupo.vagas.every((v) => v.empresa.nomeEmpresa === grupo.vagas[0].empresa.nomeEmpresa);
           return (
             <Marker
-              key={vaga.id}
-              position={posicoes.get(vaga.id) ?? [vaga.latitude, vaga.longitude]}
-              icon={selecionada ? iconeVagaSelecionada : iconeVaga}
+              key={grupo.chave}
+              position={grupo.posicao}
+              icon={unica ? (selecionada ? iconeVagaSelecionada : iconeVaga) : iconeGrupoVagas(grupo.vagas.length, selecionada)}
               zIndexOffset={selecionada ? 800 : 0}
               ref={(m) => {
-                if (m) marcadores.current.set(vaga.id, m);
-                else marcadores.current.delete(vaga.id);
+                for (const v of grupo.vagas) {
+                  if (m) marcadores.current.set(v.id, m);
+                  else marcadores.current.delete(v.id);
+                }
               }}
-              eventHandlers={{ click: () => onSelecionarVaga(vaga.id) }}
+              eventHandlers={{
+                click: () => {
+                  if (!selecionada) onSelecionarVaga(grupo.vagas[0].id);
+                },
+              }}
             >
-              <Popup minWidth={240} maxWidth={280}>
-                <div className="flex flex-col gap-2">
-                  {/* Logo em destaque no topo do balão */}
-                  <div className="flex items-start gap-2.5">
-                    <LogoEmpresa
-                      logoUrl={vaga.empresa.logoUrl}
-                      nome={vaga.empresa.nomeEmpresa}
-                      className="w-14 h-14 rounded-lg shadow-sm"
-                      semLogo={<IconeDoCargo cargo={vaga.cargo} />}
-                    />
-                    <div className="min-w-0 flex-1 pt-0.5">
-                      <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0">{vaga.cargo}</p>
-                      <p className="text-xs text-slate-500 !m-0 mt-0.5">{vaga.empresa.nomeEmpresa}</p>
+              <Popup minWidth={240} maxWidth={290}>
+                {unica ? (
+                  <div className="flex flex-col gap-2">
+                    {/* Logo em destaque no topo do balão */}
+                    <div className="flex items-start gap-2.5">
+                      <LogoEmpresa
+                        logoUrl={unica.empresa.logoUrl}
+                        nome={unica.empresa.nomeEmpresa}
+                        className="w-14 h-14 rounded-lg shadow-sm"
+                        semLogo={<IconeDoCargo cargo={unica.cargo} />}
+                      />
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0">{unica.cargo}</p>
+                        <p className="text-xs text-slate-500 !m-0 mt-0.5">{unica.empresa.nomeEmpresa}</p>
+                      </div>
+                      <BotaoSalvarVaga vagaId={unica.id} className="-mr-1 -mt-1" />
                     </div>
-                    <BotaoSalvarVaga vagaId={vaga.id} className="-mr-1 -mt-1" />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.tipoContrato}</span>
-                    <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
-                    <SeloPcd pcd={vaga.pcd} pequeno />
-                    <SeloModalidade modalidade={vaga.modalidade} pequeno />
-                  </div>
-                  <p className="text-xs text-slate-500 !m-0">
-                    📍 {vaga.bairro}
-                    {vaga.salario != null && <> · R$ {vaga.salario.toLocaleString("pt-BR")}</>}
-                  </p>
-                  <Link
-                    href={`/vagas/${vaga.id}`}
-                    className="mt-1 text-center !text-white bg-[#0F2C4A] text-xs font-semibold rounded-md py-2 hover:bg-[#123a63]"
-                  >
-                    Ver detalhes
-                  </Link>
-                  {vaga.modalidade === "remoto" ? null : onComoChegar ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        marcadores.current.get(vaga.id)?.closePopup();
-                        onComoChegar(vaga.id);
-                      }}
-                      className="text-center text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5"
-                    >
-                      Como chegar
-                    </button>
-                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{unica.tipoContrato}</span>
+                      <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{unica.area}</span>
+                      <SeloPcd pcd={unica.pcd} pequeno />
+                      <SeloModalidade modalidade={unica.modalidade} pequeno />
+                    </div>
+                    <p className="text-xs text-slate-500 !m-0">
+                      📍 {unica.bairro}
+                      {unica.salario != null && <> · R$ {unica.salario.toLocaleString("pt-BR")}</>}
+                    </p>
                     <Link
-                      href={`/vagas/${vaga.id}#rota`}
-                      className="text-center !text-[#1D6FA5] text-xs font-semibold hover:underline -mt-0.5"
+                      href={`/vagas/${unica.id}`}
+                      className="mt-1 text-center !text-white bg-[#0F2C4A] text-xs font-semibold rounded-md py-2 hover:bg-[#123a63]"
                     >
-                      Como chegar
+                      Ver detalhes
                     </Link>
-                  )}
-                </div>
+                    {paraRota && (
+                      <LinkComoChegar vagaId={paraRota.id} onComoChegar={onComoChegar} fecharBalao={() => marcadores.current.get(paraRota.id)?.closePopup()} />
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {/* Cabeçalho: a empresa (ou o local) e quantas vagas tem ali */}
+                    <div className="flex items-center gap-2.5">
+                      {mesmaEmpresa && (
+                        <LogoEmpresa
+                          logoUrl={grupo.vagas[0].empresa.logoUrl}
+                          nome={grupo.vagas[0].empresa.nomeEmpresa}
+                          className="w-11 h-11 rounded-lg shadow-sm"
+                          semLogo={<IconeDoCargo cargo={grupo.vagas[0].cargo} />}
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#0F2C4A] leading-tight !m-0">
+                          {mesmaEmpresa ? grupo.vagas[0].empresa.nomeEmpresa : "Vagas neste local"}
+                        </p>
+                        <p className="text-xs text-slate-500 !m-0 mt-0.5">
+                          {grupo.vagas.length} vagas abertas · 📍 {grupo.vagas[0].bairro}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto -mx-1 px-1">
+                      {grupo.vagas.map((v) => (
+                        <div
+                          key={v.id}
+                          className={`rounded-lg border p-2 ${v.id === vagaSelecionada ? "border-[#0F2C4A]/40 bg-slate-50" : "border-slate-200"}`}
+                        >
+                          <div className="flex items-start justify-between gap-1">
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-semibold text-[#0F2C4A] leading-tight !m-0">{v.cargo}</p>
+                              {!mesmaEmpresa && <p className="text-[11px] text-slate-500 !m-0">{v.empresa.nomeEmpresa}</p>}
+                            </div>
+                            <BotaoSalvarVaga vagaId={v.id} className="-mr-1 -mt-1" />
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">{v.tipoContrato}</span>
+                            <SeloPcd pcd={v.pcd} pequeno />
+                            <SeloModalidade modalidade={v.modalidade} pequeno />
+                            {v.salario != null && (
+                              <span className="text-[11px] text-slate-500 px-0.5 py-0.5">R$ {v.salario.toLocaleString("pt-BR")}</span>
+                            )}
+                          </div>
+                          <Link
+                            href={`/vagas/${v.id}`}
+                            className="mt-1.5 block text-center !text-white bg-[#0F2C4A] text-[11px] font-semibold rounded-md py-1.5 hover:bg-[#123a63]"
+                          >
+                            Ver detalhes
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                    {paraRota && (
+                      <LinkComoChegar vagaId={paraRota.id} onComoChegar={onComoChegar} fecharBalao={() => marcadores.current.get(paraRota.id)?.closePopup()} />
+                    )}
+                  </div>
+                )}
               </Popup>
             </Marker>
           );
