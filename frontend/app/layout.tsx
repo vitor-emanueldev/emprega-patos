@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { VagasSalvasProvider } from "@/context/VagasSalvasContext";
 import Rodape from "@/components/Rodape";
+import ReportarProblema from "@/components/ReportarProblema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
           <VagasSalvasProvider>
             {children}
             <Rodape />
+            <ReportarProblema />
           </VagasSalvasProvider>
         </AuthProvider>
       </body>

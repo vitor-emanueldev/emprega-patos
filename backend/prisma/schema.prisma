@@ -27,6 +27,7 @@ model Usuario {
   empresa   Empresa?
 
   vagasSalvas VagaSalva[]
+  reportes    Reporte[]
 }
 
 model Candidato {
@@ -204,4 +205,21 @@ model Candidatura {
   candidatoId String
 
   @@unique([vagaId, candidatoId])
+}
+
+// Problemas e sugestões enviados pelo botão "Reportar um problema"
+model Reporte {
+  id        String   @id @default(cuid())
+  tipo      String   // "problema" | "sugestao" | "outro"
+  mensagem  String
+  contato   String?
+  pagina    String?  // em qual página a pessoa estava
+  navegador String?  // celular/computador e navegador
+  situacao  String   @default("novo") // "novo" | "resolvido"
+  createdAt DateTime @default(now())
+
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuarioId String?
+
+  @@index([situacao, createdAt])
 }

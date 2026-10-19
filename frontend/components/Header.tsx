@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
-import { Bookmark, ShieldCheck } from "lucide-react";
+import { Bookmark, MessageSquareWarning, ShieldCheck } from "lucide-react";
+import { abrirReportarProblema } from "@/components/ReportarProblema";
 
 export default function Header() {
   const { usuario, sair } = useAuth();
@@ -105,6 +106,17 @@ export default function Header() {
           >
             Publicar Vaga
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuMobileAberto(false);
+              abrirReportarProblema();
+            }}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-[#0F2C4A] hover:bg-slate-50 mt-1"
+          >
+            <MessageSquareWarning className="w-5 h-4 text-[#F0A93C]" />
+            Reportar um problema
+          </button>
 
           <div className="border-t border-slate-100 mt-1 pt-1">
             {usuario ? (
@@ -223,6 +235,15 @@ export default function Header() {
                       Administração
                     </Link>
                   )}
+                  <button
+                    onClick={() => {
+                      setMenuAberto(false);
+                      abrirReportarProblema();
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[#0F2C4A] hover:bg-slate-50 border-t border-slate-100"
+                  >
+                    Reportar um problema
+                  </button>
                   <button
                     onClick={() => {
                       setMenuAberto(false);

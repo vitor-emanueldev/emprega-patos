@@ -520,6 +520,49 @@ export async function recusarEmpresaAdmin(token: string, empresaId: string, moti
   return chamarAdmin(token, `/admin/empresas/${empresaId}/recusar`, "PATCH", { motivo });
 }
 
+// ─── Reportar um problema ─────────────────────────────────────────────────────
+
+export type TipoReporte = "problema" | "sugestao" | "outro";
+export type SituacaoReporte = "novo" | "resolvido";
+
+export async function enviarReporte(
+  dados: { tipo: TipoReporte; mensagem: string; contato?: string; pagina?: string; navegador?: string },
+  token?: string | null
+) {
+  const resposta = await fetchApi(`${API_URL}/reportes`, {
+    method: "POST",
+    // Logado: manda o token só para saber quem enviou (não é obrigatório)
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(dados),
+  });
+  const resultado = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(resultado.erro || "Não foi possível enviar agora.");
+  return resultado;
+}
+
+export type ReporteAdmin = {
+  id: string;
+  tipo: TipoReporte;
+  mensagem: string;
+  contato: string | null;
+  pagina: string | null;
+  navegador: string | null;
+  situacao: SituacaoReporte;
+  createdAt: string;
+  usuario: { nome: string; email: string } | null;
+};
+
+export async function listarReportesAdmin(
+  token: string,
+  situacao: SituacaoReporte
+): Promise<{ reportes: ReporteAdmin[]; totais: Record<string, number> }> {
+  return chamarAdmin(token, `/admin/reportes?situacao=${situacao}`);
+}
+
+export async function atualizarReporteAdmin(token: string, reporteId: string, situacao: SituacaoReporte) {
+  return chamarAdmin(token, `/admin/reportes/${reporteId}`, "PATCH", { situacao });
+}
+
 // ─── Candidatura ──────────────────────────────────────────────────────────────
 
 export type Candidatura = {

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, ShieldCheck, Mail } from "lucide-react";
+import { MapPin, ShieldCheck, Mail, MessageSquareWarning } from "lucide-react";
+import { abrirReportarProblema } from "@/components/ReportarProblema";
 
 const EMAIL_CONTATO = "mapvagas.avisos@gmail.com";
 
@@ -96,9 +97,17 @@ export default function Rodape() {
       </div>
 
       <div className="border-t border-white/10">
-        <p className="max-w-6xl mx-auto px-6 py-4 text-xs text-slate-400">
-          © {new Date().getFullYear()} MapVagas · Patos-PB
-        </p>
+        <div className="max-w-6xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-slate-400">© {new Date().getFullYear()} MapVagas · Patos-PB</p>
+          <button
+            type="button"
+            onClick={abrirReportarProblema}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#F0A93C]"
+          >
+            <MessageSquareWarning className="w-3.5 h-3.5 text-[#F0A93C]" />
+            Encontrou um problema? Reportar
+          </button>
+        </div>
       </div>
     </footer>
   );

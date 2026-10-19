@@ -3,16 +3,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Camera, Check, ChevronDown, Mail, Map as MapIcon, MapPin, MessageCircle, Phone, Search, ShieldCheck, X } from "lucide-react";
+import { Building2, Camera, Check, ChevronDown, Mail, Map as MapIcon, MapPin, MessageCircle, MessageSquareWarning, Monitor, Phone, RotateCcw, Search, ShieldCheck, Smartphone, X } from "lucide-react";
 import Header from "@/components/Header";
 import { linkInstagram } from "@/lib/instagram";
 import { useAuth } from "@/context/AuthContext";
 import {
   aprovarEmpresaAdmin,
+  atualizarReporteAdmin,
   listarEmpresasAdmin,
+  listarReportesAdmin,
   recusarEmpresaAdmin,
   type EmpresaAdmin,
+  type ReporteAdmin,
   type SituacaoEmpresa,
+  type SituacaoReporte,
 } from "@/lib/api";
 
 const ABAS: { valor: SituacaoEmpresa; rotulo: string }[] = [
@@ -68,6 +72,22 @@ export default function AdminPage() {
   const [processandoId, setProcessandoId] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
   const [comoVerificarAberto, setComoVerificarAberto] = useState(false);
+
+  // Seção da página: verificação de empresas ou reportes enviados pelo site
+  const [secao, setSecao] = useState<"empresas" | "reportes">("empresas");
+  const [reportesNovos, setReportesNovos] = useState(0);
+
+  useEffect(() => {
+    // O e-mail de aviso abre direto em /admin?secao=reportes
+    if (new URLSearchParams(window.location.search).get("secao") === "reportes") setSecao("reportes");
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    listarReportesAdmin(token, "novo")
+      .then((r) => setReportesNovos(r.totais.novo ?? 0))
+      .catch(() => {});
+  }, [token]);
 
   const carregar = useCallback(async () => {
     if (!token) return;
@@ -153,11 +173,43 @@ export default function AdminPage() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#0F2C4A]">Administração</h1>
-            <p className="text-slate-500 text-sm">Verificação de empresas cadastradas sem CNPJ ativo</p>
+            <p className="text-slate-500 text-sm">
+              {secao === "empresas" ? "Verificação de empresas cadastradas sem CNPJ ativo" : "Problemas e sugestões enviados pelo site"}
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-8">
+        <div className="inline-flex rounded-lg bg-white border border-slate-200 p-1 mt-8">
+          {([
+            { valor: "empresas", rotulo: "Empresas", icone: Building2, total: totais.pendente ?? 0 },
+            { valor: "reportes", rotulo: "Reportes", icone: MessageSquareWarning, total: reportesNovos },
+          ] as const).map((s) => (
+            <button
+              key={s.valor}
+              onClick={() => {
+                setSecao(s.valor);
+                setAviso("");
+              }}
+              className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                secao === s.valor ? "bg-[#0F2C4A] text-white" : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <s.icone className="w-4 h-4" />
+              {s.rotulo}
+              {s.total > 0 && (
+                <span className={`text-xs rounded-full px-2 py-0.5 ${secao === s.valor ? "bg-white/20" : "bg-[#F0A93C] text-white"}`}>
+                  {s.total}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {secao === "reportes" && token ? (
+          <PainelReportes token={token} aoMudarTotal={setReportesNovos} />
+        ) : (
+        <>
+        <div className="flex flex-wrap gap-2 mt-6">
           {ABAS.map((a) => (
             <button
               key={a.valor}
@@ -372,7 +424,206 @@ export default function AdminPage() {
               </div>
             ))}
         </div>
+        </>
+        )}
       </main>
     </div>
+  );
+}
+
+// ─── Reportes enviados pelo botão "Reportar um problema" ───
+
+const NOMES_TIPO: Record<string, { rotulo: string; cor: string }> = {
+  problema: { rotulo: "Problema", cor: "bg-red-100 text-red-700" },
+  sugestao: { rotulo: "Sugestão", cor: "bg-sky-100 text-sky-700" },
+  outro: { rotulo: "Outro", cor: "bg-slate-100 text-slate-600" },
+};
+
+function dataHora(valor: string) {
+  return new Date(valor).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+// Resumo legível do navegador (o texto completo fica no "title")
+function aparelho(ua: string | null) {
+  if (!ua) return null;
+  const celular = /Android|iPhone|iPad|Mobile/i.test(ua);
+  const sistema = /Android/i.test(ua) ? "Android" : /iPhone|iPad/i.test(ua) ? "iPhone" : /Windows/i.test(ua) ? "Windows" : /Mac OS/i.test(ua) ? "Mac" : /Linux/i.test(ua) ? "Linux" : "";
+  const nav = /Edg\//.test(ua) ? "Edge" : /SamsungBrowser/.test(ua) ? "Samsung Internet" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "";
+  return { celular, texto: [sistema, nav].filter(Boolean).join(" · ") || "Navegador" };
+}
+
+function linkWhatsapp(contato: string | null) {
+  const digitos = (contato || "").replace(/\D/g, "");
+  if (digitos.length < 10 || digitos.length > 13 || /@/.test(contato || "")) return null;
+  return `https://wa.me/${digitos.length <= 11 ? "55" : ""}${digitos}`;
+}
+
+function PainelReportes({ token, aoMudarTotal }: { token: string; aoMudarTotal: (n: number) => void }) {
+  const [situacao, setSituacao] = useState<SituacaoReporte>("novo");
+  const [reportes, setReportes] = useState<ReporteAdmin[]>([]);
+  const [totais, setTotais] = useState<Record<string, number>>({});
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [processandoId, setProcessandoId] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    setErro("");
+    try {
+      const r = await listarReportesAdmin(token, situacao);
+      setReportes(r.reportes);
+      setTotais(r.totais);
+      aoMudarTotal(r.totais.novo ?? 0);
+    } catch (e: any) {
+      setErro(e.message || "Não foi possível carregar os reportes.");
+    } finally {
+      setCarregando(false);
+    }
+  }, [token, situacao, aoMudarTotal]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  async function mudar(r: ReporteAdmin, nova: SituacaoReporte) {
+    setProcessandoId(r.id);
+    try {
+      await atualizarReporteAdmin(token, r.id, nova);
+      await carregar();
+    } catch (e: any) {
+      setErro(e.message || "Não foi possível atualizar.");
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  return (
+    <>
+      <div className="flex flex-wrap gap-2 mt-6">
+        {([
+          { valor: "novo", rotulo: "Novos" },
+          { valor: "resolvido", rotulo: "Resolvidos" },
+        ] as const).map((a) => (
+          <button
+            key={a.valor}
+            onClick={() => setSituacao(a.valor)}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold border transition-colors ${
+              situacao === a.valor
+                ? "bg-[#0F2C4A] text-white border-[#0F2C4A]"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            {a.rotulo}
+            <span
+              className={`text-xs rounded-full px-2 py-0.5 ${
+                situacao === a.valor ? "bg-white/20" : a.valor === "novo" && totais.novo ? "bg-[#F0A93C] text-white" : "bg-slate-100"
+              }`}
+            >
+              {totais[a.valor] ?? 0}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {carregando && <p className="text-sm text-slate-400 text-center py-16">Carregando...</p>}
+      {erro && <p className="text-sm text-red-600 text-center py-16">{erro}</p>}
+
+      {!carregando && !erro && reportes.length === 0 && (
+        <div className="bg-white rounded-xl shadow-md text-center py-14 px-4 mt-6">
+          <p className="font-medium text-[#0F2C4A]">
+            {situacao === "novo" ? "Nenhum reporte novo 🎉" : "Nenhum reporte resolvido ainda."}
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-4 mt-6">
+        {!carregando &&
+          reportes.map((r) => {
+            const tipo = NOMES_TIPO[r.tipo] || NOMES_TIPO.outro;
+            const disp = aparelho(r.navegador);
+            const zap = linkWhatsapp(r.contato);
+            return (
+              <div key={r.id} className="bg-white rounded-xl shadow-md border border-slate-200 p-5">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-semibold rounded-full px-3 py-1 ${tipo.cor}`}>{tipo.rotulo}</span>
+                    <span className="text-sm text-slate-500">{dataHora(r.createdAt)}</span>
+                  </div>
+                  {r.situacao === "novo" ? (
+                    <button
+                      onClick={() => mudar(r, "resolvido")}
+                      disabled={processandoId === r.id}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-emerald-600 rounded-md px-4 py-1.5 hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      <Check className="w-4 h-4" />
+                      Marcar como resolvido
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => mudar(r, "novo")}
+                      disabled={processandoId === r.id}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-md px-4 py-1.5 hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reabrir
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[15px] text-slate-800 mt-3 whitespace-pre-line break-words">{r.mensagem}</p>
+
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-4 text-sm text-slate-600">
+                  <p className="flex items-center gap-1.5 min-w-0">
+                    {r.usuario || /@/.test(r.contato || "") ? (
+                      <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                    ) : (
+                      <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                    )}
+                    <span className="truncate">
+                      {r.usuario ? `${r.usuario.nome} (${r.usuario.email})` : r.contato || "Visitante, sem contato"}
+                    </span>
+                  </p>
+                  {r.pagina && (
+                    <p className="flex items-center gap-1.5 min-w-0">
+                      <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                      <a href={r.pagina} target="_blank" rel="noopener noreferrer" className="truncate text-[#1D6FA5] hover:underline">
+                        {r.pagina}
+                      </a>
+                    </p>
+                  )}
+                  {disp && (
+                    <p className="flex items-center gap-1.5" title={r.navegador || ""}>
+                      {disp.celular ? (
+                        <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
+                      ) : (
+                        <Monitor className="w-4 h-4 text-slate-400 shrink-0" />
+                      )}
+                      {disp.celular ? "Celular" : "Computador"} · {disp.texto}
+                    </p>
+                  )}
+                </div>
+
+                {(zap || r.usuario) && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {zap && (
+                      <a href={zap} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-3 py-1.5 border text-white bg-green-600 border-green-600 hover:bg-green-700">
+                        <MessageCircle className="w-3.5 h-3.5" /> Responder no WhatsApp
+                      </a>
+                    )}
+                    {(r.usuario?.email || /@/.test(r.contato || "")) && (
+                      <a
+                        href={`mailto:${r.usuario?.email || r.contato}?subject=${encodeURIComponent("Sobre o seu reporte no MapVagas")}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-3 py-1.5 border text-[#1D6FA5] border-[#1D6FA5]/40 hover:bg-[#1D6FA5]/5"
+                      >
+                        <Mail className="w-3.5 h-3.5" /> Responder por e-mail
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    </>
   );
 }

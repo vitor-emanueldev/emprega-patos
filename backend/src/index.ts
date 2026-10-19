@@ -11,6 +11,7 @@ import candidaturaRoutes from "./routes/candidatura.routes";
 import vagaSalvaRoutes from "./routes/vagaSalva.routes";
 import adminRoutes from "./routes/admin.routes";
 import rotaRoutes from "./routes/rota.routes";
+import reporteRoutes from "./routes/reporte.routes";
 import { rotaConfigurada } from "./controllers/rota.controller";
 import { limitarRequisicoes } from "./middlewares/limitarRequisicoes";
 import { emailConfigurado } from "./utils/enviarEmail";
@@ -133,6 +134,7 @@ app.use(candidaturaRoutes);
 app.use(vagaSalvaRoutes);
 app.use(adminRoutes);
 app.use(rotaRoutes);
+app.use(reporteRoutes);
 
 // ─── Rota não encontrada ───
 app.use((req, res) => {

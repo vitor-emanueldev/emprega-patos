@@ -311,3 +311,28 @@ export function emailNovaEmpresaParaVerificar(d: { nomeEmpresa: string; motivo: 
     texto: `${d.nomeEmpresa} está esperando verificação no MapVagas.\n\nAbrir a administração: ${link}\n\n— MapVagas`,
   };
 }
+
+// ─── 7. Administradores: chegou um reporte pelo site ───
+const NOMES_TIPO_REPORTE: Record<string, string> = { problema: "Problema", sugestao: "Sugestão", outro: "Outro" };
+
+export function emailNovoReporte(d: { tipo: string; mensagem: string; pagina?: string | null; quem?: string | null }): EmailPronto {
+  const link = urlDoSite("/admin?secao=reportes");
+  const tipo = NOMES_TIPO_REPORTE[d.tipo] || d.tipo;
+  const assunto = `[${tipo}] reportado no MapVagas`;
+  const corpo = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:${AZUL};">${esc(tipo)} reportado no site</p>
+    <p style="margin:12px 0 0;color:#64748B;font-size:14px;">${d.quem ? `Enviado por <b>${esc(d.quem)}</b>` : "Enviado por um visitante"}${
+      d.pagina ? ` na página <b>${esc(d.pagina)}</b>` : ""
+    }.</p>
+    ${caixaDeMensagem("Mensagem", d.mensagem)}`;
+  return {
+    assunto,
+    html: layout({
+      corpo,
+      botaoTexto: "Ver na administração",
+      botaoLink: link,
+      rodape: "Você recebeu este e-mail porque é administrador do MapVagas.",
+    }),
+    texto: `${tipo} reportado no MapVagas${d.pagina ? ` (página ${d.pagina})` : ""}:\n\n${d.mensagem}\n\nVer na administração: ${link}\n\n— MapVagas`,
+  };
+}

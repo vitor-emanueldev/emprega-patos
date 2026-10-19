@@ -346,3 +346,30 @@ export const rejeitarCandidaturaSchema = z.object({
     .min(1, "Escreva uma mensagem para o candidato.")
     .max(1000, "A mensagem pode ter no máximo 1000 caracteres."),
 });
+
+// ─── Reportar um problema ───
+export const TIPOS_REPORTE = ["problema", "sugestao", "outro"] as const;
+
+const textoCurtoOpcional = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((v) => (v ? v : undefined));
+
+export const criarReporteSchema = z.object({
+  tipo: z.enum(TIPOS_REPORTE, { errorMap: () => ({ message: "Escolha o tipo." }) }),
+  mensagem: z
+    .string({ required_error: "Conte o que aconteceu." })
+    .trim()
+    .min(5, "Conte um pouco mais sobre o que aconteceu.")
+    .max(2000, "A mensagem pode ter no máximo 2000 caracteres."),
+  contato: textoCurtoOpcional(120),
+  pagina: textoCurtoOpcional(300),
+  navegador: textoCurtoOpcional(300),
+});
+
+export const situacaoReporteSchema = z.object({
+  situacao: z.enum(["novo", "resolvido"], { errorMap: () => ({ message: "Situação inválida." }) }),
+});
