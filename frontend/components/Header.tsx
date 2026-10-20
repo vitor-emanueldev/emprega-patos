@@ -13,15 +13,18 @@ export default function Header() {
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuMobileRef = useRef<HTMLDivElement>(null);
+  const botaoMobileRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickFora(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuAberto(false);
       }
+      // Clique no próprio botão (☰ / X) não conta como "fora": quem abre e fecha é o onClick dele
       if (
         menuMobileRef.current &&
-        !menuMobileRef.current.contains(event.target as Node)
+        !menuMobileRef.current.contains(event.target as Node) &&
+        !botaoMobileRef.current?.contains(event.target as Node)
       ) {
         setMenuMobileAberto(false);
       }
@@ -33,31 +36,31 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[1100] bg-white border-b-4 border-[#0F2C4A] px-4 sm:px-8 py-3 flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-full bg-[#1D6FA5] flex items-center justify-center text-white text-xs font-bold">
-          MV
-        </div>
+      <Link href="/" className="flex items-center gap-2" aria-label="MapVagas - página inicial">
+        <Image
+          src="/icone-mapvagas.png"
+          alt=""
+          width={36}
+          height={36}
+          priority
+          className="w-9 h-9 rounded-full"
+        />
 
-        <span className="font-extrabold text-[#0F2C4A] tracking-wide text-sm flex items-center">
-          MAP
-
-          <span className="relative inline-block w-3.5 h-3.5 -mx-0.2">
-            <Image
-              src="/Logo sem fundo.png"
-              alt="V"
-              fill
-              className="object-contain"
-            />
-          </span>
-
-          AGAS
-        </span>
+        <Image
+          src="/logo-mapvagas.png"
+          alt="MapVagas"
+          width={584}
+          height={112}
+          priority
+          className="h-6 w-auto -translate-y-[3px]"
+        />
       </Link>
 
       {/* Botão hambúrguer - visível apenas no mobile */}
       <button
+        ref={botaoMobileRef}
         onClick={() => setMenuMobileAberto((prev) => !prev)}
-        aria-label="Abrir menu"
+        aria-label={menuMobileAberto ? "Fechar menu" : "Abrir menu"}
         aria-expanded={menuMobileAberto}
         className="md:hidden flex items-center justify-center w-10 h-10 text-[#0F2C4A]"
       >

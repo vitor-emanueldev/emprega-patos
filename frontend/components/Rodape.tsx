@@ -62,7 +62,7 @@ export default function Rodape() {
           <p className="text-xs text-slate-300 mt-4 leading-relaxed">
             <span className="text-slate-400">Parceria:</span> Prefeitura Municipal de Patos · CiTI-DE
             <br />
-            <span className="text-slate-400">Desenvolvido por</span> <b className="text-white">DevGum</b>
+            <span className="text-slate-400">Desenvolvido por</span> <b className="text-white">MapVagas</b>
           </p>
         </div>
 
