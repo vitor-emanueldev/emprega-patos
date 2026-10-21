@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Header from "@/components/Header";
 import CurriculoVisual from "@/components/CurriculoVisual";
 import { linkWhatsapp, rotuloTurno, type CurriculoVisao } from "@/lib/curriculo";
-import { BadgeCheck, MapPin, MessageCircle, Phone, UserRound, Video } from "lucide-react";
+import { BadgeCheck, Download, MapPin, MessageCircle, Phone, UserRound, Video } from "lucide-react";
+import { baixarCurriculoPdf } from "@/lib/curriculoPdf";
 import { FORMATOS_ENTREVISTA, type FormatoEntrevista } from "@/lib/entrevista";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -94,6 +95,23 @@ export default function CandidatosDaVagaPage() {
   const [mensagemContratacao, setMensagemContratacao] = useState("");
   const [avisoVaga, setAvisoVaga] = useState("");
   const [reabrindo, setReabrindo] = useState(false);
+  const [gerandoPdfId, setGerandoPdfId] = useState<string | null>(null);
+
+  async function baixarPdf(candidatura: CandidaturaComCandidato) {
+    setGerandoPdfId(candidatura.id);
+    try {
+      await baixarCurriculoPdf(candidatura.curriculo, {
+        cargoVaga: vaga?.cargo,
+        nomeEmpresa: vaga?.empresa?.nomeEmpresa,
+        dataCandidatura: candidatura.createdAt,
+      });
+    } catch (e) {
+      console.error("Erro ao gerar PDF:", e);
+      alert("Não foi possível gerar o PDF. Tente de novo.");
+    } finally {
+      setGerandoPdfId(null);
+    }
+  }
 
   const contratados = candidaturas.filter((c) => c.status === "contratada").length;
   const quantidadeVagas = vaga?.quantidadeVagas ?? 1;
@@ -421,6 +439,15 @@ export default function CandidatosDaVagaPage() {
                     className="text-xs font-semibold text-[#1D6FA5] border border-[#1D6FA5] rounded-md px-3 py-1.5 hover:bg-[#1D6FA5]/5"
                   >
                     {curriculoAberto ? "Ocultar currículo" : "Ver currículo completo"}
+                  </button>
+
+                  <button
+                    onClick={() => baixarPdf(candidatura)}
+                    disabled={gerandoPdfId === candidatura.id}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0F2C4A] border border-slate-300 rounded-md px-3 py-1.5 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {gerandoPdfId === candidatura.id ? "Gerando..." : "Baixar PDF"}
                   </button>
 
                   {c.telefoneWhatsapp !== false && linkWhatsapp(c.telefone) && (
