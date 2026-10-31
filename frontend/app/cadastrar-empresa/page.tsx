@@ -56,6 +56,8 @@ export default function CadastrarEmpresaPage() {
   const [avisoCnpj, setAvisoCnpj] = useState<{ tipo: "ok" | "alerta" | "erro"; texto: string } | null>(null);
   const [avisoLocal, setAvisoLocal] = useState("");
   const ultimoCnpj = useRef("");
+  // Se a pessoa já clicou no mapa, o pino dela nunca é trocado pelo endereço do CNPJ
+  const marcouNoMapa = useRef(false);
   // guarda o que foi preenchido automaticamente, para não apagar o que a pessoa digitou
   const preenchidoAuto = useRef<Record<string, string>>({});
 
@@ -90,9 +92,10 @@ export default function CadastrarEmpresaPage() {
       const ehDePatos = dados.cidade.toLowerCase() === "patos" && dados.uf === "PB";
       if (!ehDePatos) {
         setAvisoLocal(`Esse CNPJ é de ${dados.cidade}-${dados.uf}. Marque no mapa onde fica a unidade de Patos.`);
-      } else if (latitude === null) {
+      } else if (!marcouNoMapa.current) {
         const local = await localizarEndereco(dados);
-        if (local) {
+        // a busca do endereço demora alguns segundos: confere de novo se a pessoa não clicou no mapa enquanto isso
+        if (local && !marcouNoMapa.current) {
           setLatitude(local.latitude);
           setLongitude(local.longitude);
           setAvisoLocal(
@@ -314,6 +317,7 @@ export default function CadastrarEmpresaPage() {
                 latitude={latitude}
                 longitude={longitude}
                 onSelecionar={(lat, lng) => {
+                  marcouNoMapa.current = true;
                   setLatitude(lat);
                   setLongitude(lng);
                   enderecoAuto.aoMarcarPonto(lat, lng);
@@ -336,4 +340,4 @@ export default function CadastrarEmpresaPage() {
       </main>
     </div>
   );
-}
+}

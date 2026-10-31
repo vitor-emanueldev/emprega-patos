@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 import { enviarAviso } from "../utils/enviarEmail";
 import { emailEmpresaAprovada, emailEmpresaRecusada } from "../utils/modelosEmail";
+import { apenasDigitos, consultarCnpjReceita } from "../utils/cnpj";
 
 const SITUACOES = ["pendente", "aprovada", "recusada"] as const;
 
@@ -111,5 +112,42 @@ export async function recusarEmpresa(req: RequisicaoAutenticada, res: Response) 
   } catch (erro) {
     console.error("Erro ao recusar empresa:", erro);
     return res.status(500).json({ erro: "Erro ao recusar empresa." });
+  }
+}
+
+// POST /admin/empresas/:id/consultar-cnpj
+// Consulta o CNPJ de novo (útil quando o serviço da Receita estava fora do ar no cadastro).
+// Se estiver ATIVO, aprova na hora e avisa a empresa por e-mail.
+export async function consultarCnpjEmpresa(req: RequisicaoAutenticada, res: Response) {
+  try {
+    const empresa = await prisma.empresa.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, nomeEmpresa: true, cnpj: true, verificacao: true, usuario: { select: { nome: true, email: true } } },
+    });
+    if (!empresa) return res.status(404).json({ erro: "Empresa não encontrada." });
+    if (!apenasDigitos(empresa.cnpj)) return res.status(400).json({ erro: "Essa empresa não informou CNPJ." });
+
+    const r = await consultarCnpjReceita(empresa.cnpj!);
+    console.log(`Admin consultou CNPJ de ${empresa.nomeEmpresa}: ${r.tipo}`);
+
+    if (r.tipo === "ativa") {
+      if (empresa.verificacao !== "aprovada") {
+        await prisma.empresa.update({
+          where: { id: empresa.id },
+          data: { verificacao: "aprovada", verificadaEm: new Date(), motivoRecusa: null },
+        });
+        enviarAviso(
+          empresa.usuario?.email,
+          emailEmpresaAprovada({ nomeEmpresa: empresa.nomeEmpresa, nomeResponsavel: empresa.usuario?.nome || "" })
+        );
+      }
+      return res.json({ resultado: "ativa", razaoSocial: r.razaoSocial, fonte: r.fonte });
+    }
+    if (r.tipo === "inativa") return res.json({ resultado: "inativa", razaoSocial: r.razaoSocial, situacao: r.situacao });
+    if (r.tipo === "nao_encontrado") return res.json({ resultado: "nao_encontrado" });
+    return res.json({ resultado: "indisponivel" });
+  } catch (erro) {
+    console.error("Erro ao consultar CNPJ (admin):", erro);
+    return res.status(500).json({ erro: "Erro ao consultar o CNPJ." });
   }
 }

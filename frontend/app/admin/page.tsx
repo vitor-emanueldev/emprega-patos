@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   aprovarEmpresaAdmin,
   atualizarReporteAdmin,
+  consultarCnpjEmpresaAdmin,
   listarEmpresasAdmin,
   listarReportesAdmin,
   recusarEmpresaAdmin,
@@ -32,8 +33,9 @@ function linksVerificacao(e: EmpresaAdmin) {
   const digitos = (e.telefone || "").replace(/\D/g, "");
   const mensagem = `Olá! Aqui é da equipe do MapVagas. Recebemos o cadastro da empresa "${e.nomeEmpresa}" e queremos só confirmar alguns dados antes de liberar a publicação de vagas. Você é o responsável?`;
   return {
+    // "?q=lat,lng" marca o ponto exato. (A busca "search/?api=1" puxava o comércio mais próximo.)
     mapa: temPonto
-      ? `https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}`
+      ? `https://www.google.com/maps?q=${e.latitude},${e.longitude}&z=18`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoTexto)}`,
     streetView: temPonto
       ? `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${e.latitude},${e.longitude}`
@@ -124,6 +126,29 @@ export default function AdminPage() {
       await carregar();
     } catch (e: any) {
       setAviso(e.message || "Não foi possível aprovar.");
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function consultarCnpj(empresa: EmpresaAdmin) {
+    if (!token) return;
+    setProcessandoId(empresa.id);
+    setAviso("");
+    try {
+      const r = await consultarCnpjEmpresaAdmin(token, empresa.id);
+      if (r.resultado === "ativa") {
+        setAviso(`CNPJ ATIVO na Receita (${r.razaoSocial}). ${empresa.nomeEmpresa} foi aprovada e recebeu um e-mail.`);
+        await carregar();
+      } else if (r.resultado === "inativa") {
+        setAviso(`CNPJ com situação "${r.situacao}" na Receita (${r.razaoSocial}). Confira com a empresa antes de aprovar.`);
+      } else if (r.resultado === "nao_encontrado") {
+        setAviso("CNPJ não encontrado na Receita. Confira o número com a empresa.");
+      } else {
+        setAviso("Os serviços de consulta da Receita não responderam agora. Tente de novo em alguns minutos.");
+      }
+    } catch (e: any) {
+      setAviso(e.message || "Não foi possível consultar o CNPJ.");
     } finally {
       setProcessandoId(null);
     }
@@ -367,6 +392,16 @@ export default function AdminPage() {
 
                     {/* Ações */}
                     <div className="flex flex-wrap gap-2 mt-4">
+                      {e.verificacao !== "aprovada" && e.cnpj && (
+                        <button
+                          onClick={() => consultarCnpj(e)}
+                          disabled={processandoId === e.id}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D6FA5] border border-[#1D6FA5]/40 rounded-md px-4 py-2 hover:bg-[#1D6FA5]/5 disabled:opacity-60"
+                        >
+                          <Search className="w-4 h-4" />
+                          {processandoId === e.id ? "Consultando..." : "Consultar CNPJ na Receita"}
+                        </button>
+                      )}
                       {e.verificacao !== "aprovada" && (
                         <button
                           onClick={() => aprovar(e)}

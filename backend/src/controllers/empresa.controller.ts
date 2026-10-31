@@ -30,6 +30,12 @@ async function verificarPeloCnpj(
     return { erro: "CNPJ inválido. Confira os números ou deixe o campo em branco." };
   }
   const resultado = await consultarCnpjReceita(cnpj);
+  // Fica no log do Render: ajuda a entender por que uma empresa caiu na verificação manual
+  console.log(
+    `Consulta de CNPJ: ${resultado.tipo}` +
+      ("fonte" in resultado ? ` (${resultado.fonte})` : "") +
+      (resultado.tipo === "indisponivel" ? ` — ${resultado.detalhes.join("; ")}` : "")
+  );
   if (resultado.tipo === "nao_encontrado") {
     return { erro: "CNPJ não encontrado na Receita Federal. Confira os números ou deixe o campo em branco." };
   }
@@ -229,4 +235,4 @@ export async function atualizarMinhaEmpresa(req: RequisicaoAutenticada, res: Res
     console.error("Erro ao atualizar empresa:", erro);
     res.status(400).json({ erro: "Dados inválidos" });
   }
-}
+}

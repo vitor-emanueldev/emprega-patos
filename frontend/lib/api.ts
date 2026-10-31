@@ -516,6 +516,16 @@ export async function aprovarEmpresaAdmin(token: string, empresaId: string) {
   return chamarAdmin(token, `/admin/empresas/${empresaId}/aprovar`, "PATCH");
 }
 
+export type ResultadoConsultaCnpj =
+  | { resultado: "ativa"; razaoSocial: string; fonte: string }
+  | { resultado: "inativa"; razaoSocial: string; situacao: string }
+  | { resultado: "nao_encontrado" }
+  | { resultado: "indisponivel" };
+
+export async function consultarCnpjEmpresaAdmin(token: string, empresaId: string): Promise<ResultadoConsultaCnpj> {
+  return chamarAdmin(token, `/admin/empresas/${empresaId}/consultar-cnpj`, "POST");
+}
+
 export async function recusarEmpresaAdmin(token: string, empresaId: string, motivo: string) {
   return chamarAdmin(token, `/admin/empresas/${empresaId}/recusar`, "PATCH", { motivo });
 }
