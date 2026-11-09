@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
 import SeloModalidade from "@/components/SeloModalidade";
+import SeloPrazo from "@/components/SeloPrazo";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { listarVagas, type Vaga } from "@/lib/api";
 import { getIconePorCargo } from "@/lib/icones";
@@ -293,6 +294,7 @@ export default function MapaPage() {
             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{vaga.area}</span>
             <SeloPcd pcd={vaga.pcd} pequeno />
             <SeloModalidade modalidade={vaga.modalidade} pequeno />
+            <SeloPrazo inscricoesAte={vaga.inscricoesAte} pequeno />
             <span className="text-[11px] text-slate-500">
               📍 {vaga.bairro}
               {vaga.distanciaKm != null && <strong className="text-[#0F2C4A]"> · {formatarDistancia(vaga.distanciaKm)}</strong>}

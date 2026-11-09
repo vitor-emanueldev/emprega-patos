@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ehCategoriaValida } from "./categoriasVagas";
+import { hojeEmPatos } from "../utils/prazoVaga";
 
 // Mensagens padrão em português para os casos sem mensagem própria
 z.setErrorMap((issue, ctx) => {
@@ -242,6 +243,18 @@ export const STATUS_VAGA = ["aberta", "pausada", "encerrada"] as const;
 export const PCD_VAGA = ["nao", "aceita", "exclusiva"] as const;
 export const MODALIDADES = ["presencial", "hibrido", "remoto"] as const;
 
+// "Inscrições até": data AAAA-MM-DD entre hoje e 1 ano à frente (horário de Patos). "" ou null = sem prazo.
+const inscricoesAte = z.preprocess(
+  (v) => (v === "" ? null : v),
+  z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data de término inválida.")
+    .refine((d) => !Number.isNaN(new Date(`${d}T12:00:00Z`).getTime()), "Data de término inválida.")
+    .refine((d) => d >= hojeEmPatos(), "A data de término não pode ser antes de hoje.")
+    .refine((d) => d <= hojeEmPatos(new Date(Date.now() + 366 * 24 * 60 * 60 * 1000)), "A data de término pode ser no máximo 1 ano à frente.")
+    .nullish()
+);
+
 const camposVaga = {
   cargo: texto("Cargo", 120),
   descricao: texto("Descrição", 5000),
@@ -264,6 +277,7 @@ const camposVaga = {
     .optional(),
   pcd: z.enum(PCD_VAGA, { errorMap: () => ({ message: "Opção de vaga PcD inválida." }) }).optional(),
   modalidade: z.enum(MODALIDADES, { errorMap: () => ({ message: "Modalidade inválida." }) }).optional(),
+  inscricoesAte,
 };
 
 export const publicarVagaSchema = z.object({

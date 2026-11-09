@@ -3,6 +3,8 @@
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
 import SeloModalidade from "@/components/SeloModalidade";
+import SeloPrazo from "@/components/SeloPrazo";
+import { situacaoPrazo } from "@/lib/prazoVaga";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { rotuloValor } from "@/lib/opcoesVaga";
 import { Camera } from "lucide-react";
@@ -130,6 +132,9 @@ export default function DetalhesVagaPage() {
     }
   }
 
+  // Passou do "Inscrições até": a página continua abrindo, mas não aceita mais candidatura
+  const prazoEncerrado = vaga ? situacaoPrazo(vaga.inscricoesAte).tipo === "encerrada" : false;
+
   const curriculoRevisao = ficha ? curriculoDaFicha(ficha, usuario?.email) : null;
   const progressoRevisao = curriculoRevisao ? progressoCurriculo(curriculoRevisao) : null;
 
@@ -176,7 +181,7 @@ export default function DetalhesVagaPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 mt-3">
-                    {vaga.status === "aberta" ? (
+                    {vaga.status === "aberta" && !prazoEncerrado ? (
                       <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-3 py-1">
                         Vaga aberta
                       </span>
@@ -190,6 +195,7 @@ export default function DetalhesVagaPage() {
                     </span>
                     <SeloPcd pcd={vaga.pcd} />
                     <SeloModalidade modalidade={vaga.modalidade} />
+                    <SeloPrazo inscricoesAte={vaga.inscricoesAte} />
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       📍 {vaga.bairro}, Patos - PB
                     </span>
@@ -303,11 +309,13 @@ export default function DetalhesVagaPage() {
 
                 <button
                   onClick={abrirRevisao}
-                  disabled={candidatando || carregandoFicha || jaCandidatou || vaga.status !== "aberta"}
+                  disabled={candidatando || carregandoFicha || jaCandidatou || vaga.status !== "aberta" || prazoEncerrado}
                   className="mt-5 w-full text-center text-sm font-medium text-white bg-[#0F2C4A] rounded-md px-4 py-2.5 hover:bg-[#123a63] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {jaCandidatou
                     ? "Candidatura enviada ✓"
+                    : prazoEncerrado
+                    ? "Inscrições encerradas"
                     : vaga.status !== "aberta"
                     ? "Vaga encerrada"
                     : carregandoFicha

@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
 import { conteudoDoCurriculo, curriculoParaEmpresa, incluirCurriculo } from "../utils/curriculo";
 import { enviarAviso } from "../utils/enviarEmail";
+import { prazoVencido } from "../utils/prazoVaga";
 import {
   emailCandidaturaAprovada,
   emailCandidaturaContratada,
@@ -38,7 +39,7 @@ export async function candidatarVaga(req: RequisicaoAutenticada, res: Response) 
       return res.status(404).json({ erro: "Vaga não encontrada" });
     }
 
-    if (vaga.status !== "aberta") {
+    if (vaga.status !== "aberta" || prazoVencido(vaga.inscricoesAte)) {
       return res.status(400).json({ erro: "Esta vaga não está mais recebendo candidaturas" });
     }
 
@@ -380,4 +381,4 @@ export async function cancelarCandidatura(req: RequisicaoAutenticada, res: Respo
     console.error("Erro ao cancelar candidatura:", error);
     return res.status(500).json({ erro: "Erro ao cancelar candidatura" });
   }
-}
+}

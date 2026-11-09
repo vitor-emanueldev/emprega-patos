@@ -18,6 +18,8 @@ import EscolhaModalidade from "@/components/EscolhaModalidade";
 import SeloModalidade from "@/components/SeloModalidade";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
+import CampoPrazoInscricao from "@/components/CampoPrazoInscricao";
+import { formatarDataPrazo } from "@/lib/prazoVaga";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
   ssr: false,
@@ -77,6 +79,7 @@ export default function PublicarVagaPage() {
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
   const [pcd, setPcd] = useState<OpcaoPcd>("nao");
   const [modalidade, setModalidade] = useState<Modalidade>("presencial");
+  const [inscricoesAte, setInscricoesAte] = useState(""); // "" = sem prazo
 
   // Etapa 1 - Localização
   const [usarNovoLocal, setUsarNovoLocal] = useState(false);
@@ -206,6 +209,7 @@ export default function PublicarVagaPage() {
         quantidadeVagas: Number(vagasDisponiveis),
         pcd,
         modalidade,
+        inscricoesAte: inscricoesAte || null,
       });
 
       router.push("/vagas");
@@ -452,6 +456,8 @@ export default function PublicarVagaPage() {
                   </div>
                 </div>
 
+                <CampoPrazoInscricao valor={inscricoesAte} aoMudar={setInscricoesAte} classeCampo={classeCampo} />
+
                 <div>
                   <label className="block text-sm text-[#0F2C4A] font-medium mb-1">
                     Vaga para pessoas com deficiência (PcD)?
@@ -601,6 +607,7 @@ export default function PublicarVagaPage() {
                   <CampoRevisao label="Carga horária" valor={cargaHoraria || "Não informada"} />
                   <CampoRevisao label="Vaga PcD" valor={rotuloPcd(pcd) || "Não"} />
                   <CampoRevisao label="Modalidade" valor={MODALIDADES.find((m) => m.valor === modalidade)?.rotulo || "Presencial"} />
+                  <CampoRevisao label="Inscrições até" valor={inscricoesAte ? formatarDataPrazo(inscricoesAte) : "Sem prazo"} />
                 </div>
 
                 <CampoRevisao label="Endereço" valor={enderecoExibicao || ""} />

@@ -8,6 +8,7 @@ import { getIconePorCargo } from "@/lib/icones";
 import Link from "next/link";
 import SeloPcd from "@/components/SeloPcd";
 import SeloModalidade from "@/components/SeloModalidade";
+import SeloPrazo from "@/components/SeloPrazo";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { MODALIDADES, TIPOS_CONTRATO, ehVagaPcd } from "@/lib/opcoesVaga";
 
@@ -350,10 +351,11 @@ function VagasConteudo() {
                     <p className="text-xs font-medium text-[#1D6FA5]">
                       {vaga.empresa.nomeEmpresa}
                     </p>
-                    {((vaga.pcd && vaga.pcd !== "nao") || (vaga.modalidade && vaga.modalidade !== "presencial")) && (
+                    {((vaga.pcd && vaga.pcd !== "nao") || (vaga.modalidade && vaga.modalidade !== "presencial") || vaga.inscricoesAte) && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         <SeloPcd pcd={vaga.pcd} pequeno />
                         <SeloModalidade modalidade={vaga.modalidade} pequeno />
+                        <SeloPrazo inscricoesAte={vaga.inscricoesAte} pequeno />
                       </div>
                     )}
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -401,4 +403,4 @@ export default function VagasPage() {
       <VagasConteudo />
     </Suspense>
   );
-}
+}

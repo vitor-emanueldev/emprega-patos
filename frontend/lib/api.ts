@@ -161,6 +161,7 @@ export type Vaga = {
   quantidadeVagas?: number;
   pcd?: "nao" | "aceita" | "exclusiva";
   modalidade?: "presencial" | "hibrido" | "remoto";
+  inscricoesAte?: string | null; // Vaga: ISO do fim do dia; ao enviar: "AAAA-MM-DD" ou null
   status: string;
   createdAt: string;
   empresa: {
@@ -247,6 +248,7 @@ export type DadosVaga = {
   quantidadeVagas?: number;
   pcd?: "nao" | "aceita" | "exclusiva";
   modalidade?: "presencial" | "hibrido" | "remoto";
+  inscricoesAte?: string | null; // Vaga: ISO do fim do dia; ao enviar: "AAAA-MM-DD" ou null
 };
 
 export async function publicarVaga(token: string, dados: DadosVaga) {

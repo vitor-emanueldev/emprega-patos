@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { verificarEmpresa, minhasVagas, type Vaga } from "@/lib/api";
 import { Building2 } from "lucide-react";
 import AvisoVerificacao from "@/components/AvisoVerificacao";
+import { formatarDataPrazo, situacaoPrazo } from "@/lib/prazoVaga";
 
 type Empresa = {
   id: string;
@@ -284,17 +285,20 @@ export default function PerfilEmpregadorPage() {
                         <p className="text-xs text-slate-400 mt-1">
                           Publicada em {new Date(vaga.createdAt).toLocaleDateString("pt-BR")}
                         </p>
+                        {vaga.status === "aberta" && <LinhaPrazo inscricoesAte={vaga.inscricoesAte} />}
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         <span
                           className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap ${
-                            vaga.status === "aberta"
+                            vaga.status === "aberta" && situacaoPrazo(vaga.inscricoesAte).tipo !== "encerrada"
                               ? "bg-green-100 text-green-700"
                               : "bg-slate-100 text-slate-500"
                           }`}
                         >
-                          {vaga.status === "aberta" ? "Aberta" : vaga.status === "encerrada" ? "Encerrada" : vaga.status === "pausada" ? "Pausada" : vaga.status}
+                          {vaga.status === "aberta" && situacaoPrazo(vaga.inscricoesAte).tipo === "encerrada"
+                            ? "Prazo encerrado"
+                            : vaga.status === "aberta" ? "Aberta" : vaga.status === "encerrada" ? "Encerrada" : vaga.status === "pausada" ? "Pausada" : vaga.status}
                         </span>
                         <button
                           onClick={() => router.push(`/vagas/${vaga.id}/candidatos`)}
@@ -325,4 +329,23 @@ export default function PerfilEmpregadorPage() {
       </main>
     </div>
   );
-}
+}
+
+// Abaixo de cada vaga aberta: quanto falta do prazo, ou que ele acabou (com atalho para estender)
+function LinhaPrazo({ inscricoesAte }: { inscricoesAte?: string | null }) {
+  const s = situacaoPrazo(inscricoesAte);
+  if (s.tipo === "sem") return null;
+  if (s.tipo === "encerrada") {
+    return (
+      <p className="text-xs font-semibold text-orange-700 mt-1">
+        Inscrições encerradas em {formatarDataPrazo(s.data)}. A vaga saiu do mapa; edite para estender a data.
+      </p>
+    );
+  }
+  const quando = s.dias === 0 ? "hoje é o último dia" : s.dias === 1 ? "termina amanhã" : `termina em ${s.dias} dias`;
+  return (
+    <p className={`text-xs mt-1 ${s.tipo === "ultimos" ? "font-semibold text-orange-700" : "text-slate-500"}`}>
+      Inscrições até {formatarDataPrazo(s.data)} · {quando}
+    </p>
+  );
+}

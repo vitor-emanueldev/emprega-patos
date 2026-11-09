@@ -158,6 +158,7 @@ model Vaga {
   quantidadeVagas Int     @default(1)
   pcd             String  @default("nao") // "nao" | "aceita" (também para PcD) | "exclusiva" (só PcD)
   modalidade      String  @default("presencial") // "presencial" | "hibrido" | "remoto"
+  inscricoesAte   DateTime? // último dia para se candidatar (fim do dia em Patos); vazio = sem prazo
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String

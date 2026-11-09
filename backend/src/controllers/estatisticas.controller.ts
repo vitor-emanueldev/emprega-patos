@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { prisma } from "../prisma";
+import { filtroNoPrazo } from "../utils/prazoVaga";
 
 export async function buscarEstatisticas(req: Request, res: Response) {
   try {
     const [vagasAtivas, empresas, candidatos] = await Promise.all([
-      prisma.vaga.count({ where: { status: "aberta" } }),
+      prisma.vaga.count({ where: { status: "aberta", AND: [filtroNoPrazo()] } }),
       prisma.empresa.count(),
       prisma.candidato.count(),
     ]);

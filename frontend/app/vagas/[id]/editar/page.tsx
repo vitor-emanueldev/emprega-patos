@@ -14,6 +14,8 @@ import { BENEFICIOS_COMUNS, OPCOES_PCD, TIPOS_CONTRATO, rotuloValor, type Modali
 import EscolhaModalidade from "@/components/EscolhaModalidade";
 import AvisoEnderecoMapa from "@/components/AvisoEnderecoMapa";
 import { useEnderecoAutomatico } from "@/lib/useEnderecoAutomatico";
+import CampoPrazoInscricao from "@/components/CampoPrazoInscricao";
+import { dataDoPrazo, formatarDataPrazo, situacaoPrazo } from "@/lib/prazoVaga";
 
 const MapaSelecionarLocal = dynamic(() => import("@/components/MapaSelecionarLocal"), {
   ssr: false,
@@ -57,6 +59,9 @@ export default function EditarVagaPage() {
   const [vagasDisponiveis, setVagasDisponiveis] = useState("1");
   const [pcd, setPcd] = useState<OpcaoPcd>("nao");
   const [modalidade, setModalidade] = useState<Modalidade>("presencial");
+  const [inscricoesAte, setInscricoesAte] = useState(""); // "AAAA-MM-DD" ou "" (sem prazo)
+  const [prazoOriginal, setPrazoOriginal] = useState(""); // para só enviar se a empresa mudar
+  const [prazoVencido, setPrazoVencido] = useState(false);
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -94,6 +99,9 @@ export default function EditarVagaPage() {
         setVagasDisponiveis(String(vaga.quantidadeVagas ?? 1));
         setPcd((vaga.pcd as OpcaoPcd) || "nao");
         setModalidade(vaga.modalidade || "presencial");
+        setInscricoesAte(dataDoPrazo(vaga.inscricoesAte));
+        setPrazoOriginal(dataDoPrazo(vaga.inscricoesAte));
+        setPrazoVencido(situacaoPrazo(vaga.inscricoesAte).tipo === "encerrada");
         setEndereco(vaga.endereco);
         setBairro(vaga.bairro);
         setLatitude(vaga.latitude);
@@ -157,6 +165,8 @@ export default function EditarVagaPage() {
         quantidadeVagas: Number(vagasDisponiveis),
         pcd,
         modalidade,
+        // só envia se mudou (assim um prazo já vencido não trava o salvar de outros campos)
+        inscricoesAte: inscricoesAte !== prazoOriginal ? inscricoesAte || null : undefined,
         status,
       });
 
@@ -332,6 +342,15 @@ export default function EditarVagaPage() {
                   className={classeCampo}
                 />
               </div>
+            </div>
+
+            <div>
+              {prazoVencido && inscricoesAte === prazoOriginal && (
+                <p className="text-sm text-orange-800 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 mb-3">
+                  {`As inscrições desta vaga terminaram em ${formatarDataPrazo(prazoOriginal)} e ela saiu do mapa. Para reabrir, escolha uma nova data ou "Sem prazo".`}
+                </p>
+              )}
+              <CampoPrazoInscricao valor={inscricoesAte} aoMudar={setInscricoesAte} classeCampo={classeCampo} />
             </div>
 
             <div>

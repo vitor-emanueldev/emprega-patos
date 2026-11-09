@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../prisma";
 import { RequisicaoAutenticada } from "../middlewares/verificarToken";
+import { filtroNoPrazo, prazoParaBanco } from "../utils/prazoVaga";
 
 export async function listarVagas(req: Request, res: Response) {
   try {
@@ -10,6 +11,7 @@ export async function listarVagas(req: Request, res: Response) {
     const where: any = {
       status: "aberta",
       empresa: { verificacao: "aprovada" }, // empresa em verificação ou recusada não aparece
+      AND: [filtroNoPrazo()], // passou do "Inscrições até": some sozinha
     };
 
     if (busca) {
@@ -119,6 +121,7 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
     quantidadeVagas,
     pcd,
     modalidade,
+    inscricoesAte,
   } = req.body;
 
   if (
@@ -172,6 +175,7 @@ export async function publicarVaga(req: RequisicaoAutenticada, res: Response) {
         quantidadeVagas: quantidadeVagas ?? 1,
         pcd: pcd ?? "nao",
         modalidade: modalidade ?? "presencial",
+        inscricoesAte: prazoParaBanco(inscricoesAte) ?? null,
         status: "aberta",
         empresaId: empresa.id,
       },
@@ -195,7 +199,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
     cargo, descricao, tipoContrato, area, salario,
     endereco, bairro, latitude, longitude,
     requisitos, responsabilidades, beneficios, status,
-    cargaHoraria, quantidadeVagas, pcd, modalidade,
+    cargaHoraria, quantidadeVagas, pcd, modalidade, inscricoesAte,
   } = req.body;
 
   try {
@@ -236,6 +240,7 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
         quantidadeVagas,
         pcd,
         modalidade,
+        inscricoesAte: prazoParaBanco(inscricoesAte), // null tira o prazo; undefined mantém
         status: status || undefined,
       },
     });
@@ -246,4 +251,4 @@ export async function atualizarVaga(req: RequisicaoAutenticada, res: Response) {
     console.error("Erro ao atualizar vaga:", error);
     return res.status(500).json({ erro: "Erro ao atualizar vaga." });
   }
-}
+}

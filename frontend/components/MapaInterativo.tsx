@@ -12,6 +12,7 @@ import FundoMapa from "@/components/FundoMapa";
 import BotaoSalvarVaga from "@/components/BotaoSalvarVaga";
 import SeloPcd from "@/components/SeloPcd";
 import SeloModalidade from "@/components/SeloModalidade";
+import SeloPrazo from "@/components/SeloPrazo";
 import LogoEmpresa from "@/components/LogoEmpresa";
 import { getIconePorCargo } from "@/lib/icones";
 
@@ -281,6 +282,7 @@ export default function MapaInterativo({
                       <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-2 py-0.5">{unica.area}</span>
                       <SeloPcd pcd={unica.pcd} pequeno />
                       <SeloModalidade modalidade={unica.modalidade} pequeno />
+                      <SeloPrazo inscricoesAte={unica.inscricoesAte} pequeno />
                     </div>
                     <p className="text-xs text-slate-500 !m-0">
                       📍 {unica.bairro}
@@ -334,6 +336,7 @@ export default function MapaInterativo({
                             <span className="text-[11px] bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">{v.tipoContrato}</span>
                             <SeloPcd pcd={v.pcd} pequeno />
                             <SeloModalidade modalidade={v.modalidade} pequeno />
+                            <SeloPrazo inscricoesAte={v.inscricoesAte} pequeno />
                             {v.salario != null && (
                               <span className="text-[11px] text-slate-500 px-0.5 py-0.5">R$ {v.salario.toLocaleString("pt-BR")}</span>
                             )}
